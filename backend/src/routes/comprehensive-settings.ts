@@ -2,15 +2,13 @@ import express from 'express';
 import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { spawn } from 'child_process';
+import { exec } from 'child_process';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { validatePath } from './fs';
 
 const router = express.Router();
 
 // Rate limiting for settings API
 const settingsLimiter = new RateLimiterMemory({
-  keyGenerator: (req) => req.ip,
   points: 30, // 30 requests per window
   duration: 60, // per 1 minute window
   blockDuration: 60, // block for 1 minute if exceeded
@@ -91,7 +89,7 @@ async function getSystemInfo() {
     const total = Object.keys(commands).length;
 
     Object.entries(commands).forEach(([key, command]) => {
-      spawn(command, { shell: true }, (error, stdout, stderr) => {
+      exec(command, { encoding: 'utf8' }, (error, stdout) => {
         if (error) {
           results[key] = `Error: ${error.message}`;
         } else {
@@ -384,7 +382,7 @@ router.get('/storage/volumes', async (req, res) => {
       error: 'Failed to get storage volumes',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
-  });
+  }
 });
 
 // Get services

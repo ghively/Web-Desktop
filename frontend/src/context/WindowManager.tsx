@@ -58,6 +58,20 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
         });
     }, [layoutMode]);
 
+    const validateWindowBounds = useCallback((x: number, y: number, width: number, height: number) => {
+        const minX = 0;
+        const minY = 48; // Top bar height
+        const maxX = Math.max(minX, globalThis.window.innerWidth - width);
+        const maxY = Math.max(minY, globalThis.window.innerHeight - height);
+
+        return {
+            x: Math.max(minX, Math.min(x, maxX)),
+            y: Math.max(minY, Math.min(y, maxY)),
+            width: Math.max(300, Math.min(width, globalThis.window.innerWidth - 16)),
+            height: Math.max(200, Math.min(height, globalThis.window.innerHeight - 56))
+        };
+    }, []);
+
     const openWindow = useCallback((title: string, component: ReactNode, options?: { desktopId?: string; isSticky?: boolean }) => {
         const id = Math.random().toString(36).substr(2, 9);
 
@@ -299,12 +313,12 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                         const isLeft = index % 2 === 0;
                         return {
                             ...window,
-                            x: isLeft ? 8 : window.innerWidth * ratio + 8,
+                            x: isLeft ? 8 : globalThis.window.innerWidth * ratio + 8,
                             y: 48,
                             width: isLeft
-                                ? window.innerWidth * ratio - 16
-                                : window.innerWidth * (1 - ratio) - 16,
-                            height: window.innerHeight - 56
+                                ? globalThis.window.innerWidth * ratio - 16
+                                : globalThis.window.innerWidth * (1 - ratio) - 16,
+                            height: globalThis.window.innerHeight - 56
                         };
                     });
 
@@ -316,11 +330,11 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                         return {
                             ...window,
                             x: 8,
-                            y: isTop ? 48 : window.innerHeight * hRatio + 8,
-                            width: window.innerWidth - 16,
+                            y: isTop ? 48 : globalThis.window.innerHeight * hRatio + 8,
+                            width: globalThis.window.innerWidth - 16,
                             height: isTop
-                                ? window.innerHeight * hRatio - 40
-                                : window.innerHeight * (1 - hRatio) - 16
+                                ? globalThis.window.innerHeight * hRatio - 40
+                                : globalThis.window.innerHeight * (1 - hRatio) - 16
                         };
                     });
 
@@ -359,31 +373,31 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                                 x: 8,
                                 y: 48,
                                 width: stackDirection === 'right'
-                                    ? window.innerWidth * masterRatio - 16
-                                    : window.innerWidth - 16,
+                                    ? globalThis.window.innerWidth * masterRatio - 16
+                                    : globalThis.window.innerWidth - 16,
                                 height: stackDirection === 'right'
-                                    ? window.innerHeight - 56
-                                    : window.innerHeight * masterRatio - 40
+                                    ? globalThis.window.innerHeight - 56
+                                    : globalThis.window.innerHeight * masterRatio - 40
                             };
                         } else { // Stack windows
                             const stackIndex = index - 1;
                             const stackCount = nonMinimizedWindows.length - 1;
                             const stackSize = stackDirection === 'right'
-                                ? window.innerWidth * (1 - masterRatio) - 16
-                                : window.innerHeight * (1 - masterRatio) - 40;
+                                ? globalThis.window.innerWidth * (1 - masterRatio) - 16
+                                : globalThis.window.innerHeight * (1 - masterRatio) - 40;
                             const cellSize = stackSize / Math.max(stackCount, 1);
 
                             return {
                                 ...window,
                                 x: stackDirection === 'right'
-                                    ? window.innerWidth * masterRatio + 8
+                                    ? globalThis.window.innerWidth * masterRatio + 8
                                     : 8,
                                 y: stackDirection === 'right'
                                     ? 48 + (stackIndex * cellSize)
-                                    : window.innerHeight * masterRatio + 8,
+                                    : globalThis.window.innerHeight * masterRatio + 8,
                                 width: stackDirection === 'right'
                                     ? stackSize
-                                    : window.innerWidth - 16,
+                                    : globalThis.window.innerWidth - 16,
                                 height: stackDirection === 'right'
                                     ? cellSize - 2
                                     : cellSize - 2
@@ -395,21 +409,6 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                     return prev;
             }
         });
-    }, []);
-
-    // Helper function to validate and constrain window bounds
-    const validateWindowBounds = useCallback((x: number, y: number, width: number, height: number) => {
-        const minX = 0;
-        const minY = 48; // Top bar height
-        const maxX = Math.max(minX, globalThis.window.innerWidth - width);
-        const maxY = Math.max(minY, globalThis.window.innerHeight - height);
-
-        return {
-            x: Math.max(minX, Math.min(x, maxX)),
-            y: Math.max(minY, Math.min(y, maxY)),
-            width: Math.max(300, Math.min(width, globalThis.window.innerWidth - 16)),
-            height: Math.max(200, Math.min(height, globalThis.window.innerHeight - 56))
-        };
     }, []);
 
     // Window snapping
@@ -594,5 +593,3 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
         </WindowManagerContext.Provider>
     );
 };
-
-

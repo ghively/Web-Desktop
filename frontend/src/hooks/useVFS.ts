@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { VFSManager, VFSNode, VFSMount, FileOperation, FileWatchEvent } from '../types/vfs';
+import { VFSManager, VFSNode, VFSMount, FileOperation, FileWatchEvent, VFSAdapter, FileWatcher } from '../types/vfs';
 import { WebDesktopVFSManager } from '../lib/vfs/VFSManager';
 
 // Create a global VFS instance
@@ -37,6 +37,7 @@ export interface UseVFSReturn {
   // Search and utilities
   search: (query: string, basePath?: string) => Promise<VFSNode[]>;
   normalizePath: (path: string) => string;
+  getAdapter: (name: string) => VFSAdapter | null;
 
   // State
   currentPath: string;
@@ -72,7 +73,7 @@ export const useVFS = (options: UseVFSOptions = {}): UseVFSReturn => {
     } finally {
       setLoading(false);
     }
-  }, [vfs]);
+  }, []); // Remove vfs dependency to prevent infinite loop
 
   // Initialize and load initial directory
   useEffect(() => {
@@ -94,23 +95,41 @@ export const useVFS = (options: UseVFSOptions = {}): UseVFSReturn => {
 
       mountMemoryFS();
     }
-  }, [vfs, currentPath, options.autoMount, loadDirectory]);
+  }, [options.autoMount]); // Remove vfs, currentPath, and loadDirectory to prevent infinite loop
 
   // Watch for changes if specified
   useEffect(() => {
     if (options.watchPath) {
-      const watcher = vfs.watch(options.watchPath, (event: FileWatchEvent) => {
-        // Refresh current directory if the change is relevant
+      let isCancelled = false;
+      let watcher: FileWatcher | null = null;
+
+      vfs.watch(options.watchPath, (event: FileWatchEvent) => {
         if (event.path.startsWith(currentPath) || options.watchPath.startsWith(currentPath)) {
           loadDirectory(currentPath);
+        }
+      }).then(w => {
+        if (isCancelled) {
+          w.close();
+        } else {
+          watcher = w;
         }
       });
 
       return () => {
-        watcher.close();
+        isCancelled = true;
+        if (watcher) {
+          watcher.close();
+        }
       };
     }
-  }, [vfs, currentPath, options.watchPath, loadDirectory]);
+  }, [options.watchPath]); // Remove vfs, currentPath, and loadDirectory to prevent infinite loop
+
+  // Load directory when currentPath changes (but only if it actually changes)
+  useEffect(() => {
+    if (currentPath && currentPath !== '/') {
+      loadDirectory(currentPath);
+    }
+  }, [currentPath]); // Only depend on currentPath
 
   // File operations
   const readFile = useCallback(async (path: string): Promise<Buffer> => {
@@ -237,10 +256,12 @@ export const useVFS = (options: UseVFSOptions = {}): UseVFSReturn => {
   const handleSetCurrentPath = useCallback((path: string) => {
     const normalized = vfs.normalizePath(path);
     setCurrentPath(normalized);
-    loadDirectory(normalized);
-  }, [vfs, loadDirectory]);
+    // Load directory in a setTimeout to break the infinite loop cycle
+    setTimeout(() => loadDirectory(normalized), 0);
+  }, []); // Remove dependencies to prevent infinite loop
 
   return {
+    getAdapter: (name: string) => (vfs as any).getAdapter ? (vfs as any).getAdapter(name) : null,
     // File operations
     readFile,
     writeFile,

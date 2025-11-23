@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Power, Lightbulb, Thermometer, Door, Camera, Lock, Waves, Wind, Settings, Play, Pause, AlertTriangle, CheckCircle, Wifi, WifiOff, RefreshCw, Globe, MapPin, Clock, Activity, Code, Zap, Droplets, Sun, Moon } from 'lucide-react';
+import { Home, Power, Lightbulb, Thermometer, DoorOpen, Camera, Lock, Waves, Wind, Settings, Play, Pause, AlertTriangle, CheckCircle, Wifi, WifiOff, RefreshCw, Globe, MapPin, Clock, Activity, Code, Zap, Droplets, Sun, Moon, Cloud } from 'lucide-react';
 
 interface HomeAssistantConfig {
   url: string;
@@ -75,7 +75,7 @@ interface Script {
   is_enabled: boolean;
 }
 
-export default function HomeAssistantIntegration() {
+export default function HomeAssistantIntegration({ windowId }: { windowId?: string }) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'devices' | 'automations' | 'scripts' | 'settings'>('dashboard');
   const [config, setConfig] = useState<HomeAssistantConfig | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -336,7 +336,7 @@ export default function HomeAssistantIntegration() {
     const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
       light: Lightbulb,
       switch: Power,
-      cover: Door,
+      cover: DoorOpen,
       camera: Camera,
       lock: Lock,
       climate: Thermometer,

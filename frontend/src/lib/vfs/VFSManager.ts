@@ -1,7 +1,29 @@
 import { VFSManager, VFSAdapter, VFSMount, VFSNode, FileOperation, VFSTransaction, FileWatcher, FileWatchEvent, VFSError, VFSErrorCodes, VFSAdapterCapabilities, FilePermissions } from '../../types/vfs';
-import { EventEmitter } from 'events';
 
-export class WebDesktopVFSManager extends EventEmitter implements VFSManager {
+class SimpleEmitter {
+  private listeners: Map<string, Array<(...args: any[]) => void>> = new Map();
+
+  on(event: string, listener: (...args: any[]) => void): this {
+    const arr = this.listeners.get(event) || [];
+    arr.push(listener);
+    this.listeners.set(event, arr);
+    return this;
+  }
+
+  off(event: string, listener: (...args: any[]) => void): this {
+    const arr = this.listeners.get(event) || [];
+    this.listeners.set(event, arr.filter(l => l !== listener));
+    return this;
+  }
+
+  emit(event: string, ...args: any[]): boolean {
+    const arr = this.listeners.get(event) || [];
+    arr.forEach(fn => fn(...args));
+    return arr.length > 0;
+  }
+}
+
+export class WebDesktopVFSManager extends SimpleEmitter implements VFSManager {
   private adapters: Map<string, VFSAdapter> = new Map();
   private mounts: Map<string, VFSMount> = new Map();
   private watchers: Map<string, FileWatcher[]> = new Map();
@@ -166,7 +188,7 @@ export class WebDesktopVFSManager extends EventEmitter implements VFSManager {
 
   // File operations
   async readFile(path: string): Promise<Buffer> {
-    const cached = this.getCached(path);
+    const cached = this.getCached<Buffer>(path);
     if (cached) {
       return cached;
     }
@@ -219,7 +241,7 @@ export class WebDesktopVFSManager extends EventEmitter implements VFSManager {
   }
 
   async stat(path: string): Promise<VFSNode> {
-    const cached = this.getCached(path);
+    const cached = this.getCached<VFSNode>(path);
     if (cached) {
       return cached;
     }
@@ -243,7 +265,7 @@ export class WebDesktopVFSManager extends EventEmitter implements VFSManager {
   }
 
   async readdir(path: string): Promise<VFSNode[]> {
-    const cached = this.getCached(path);
+    const cached = this.getCached<VFSNode[]>(path);
     if (cached) {
       return cached;
     }
@@ -469,7 +491,7 @@ export class WebDesktopVFSManager extends EventEmitter implements VFSManager {
       throw new VFSError(`Transaction not found: ${transactionId}`, VFSErrorCodes.FILE_NOT_FOUND);
     }
 
-    transaction.status = 'rolling back';
+    transaction.status = 'rolledback';
 
     try {
       for (const operation of transaction.rollbackOperations.reverse()) {

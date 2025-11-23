@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useState, useEffect, useCallback, useRef, useContext } from 'react';
 import type { ReactNode } from 'react';
 import type {
     VirtualDesktop,
@@ -383,4 +383,12 @@ export const VirtualDesktopManagerProvider: React.FC<{ children: ReactNode }> = 
             {children}
         </VirtualDesktopManagerContext.Provider>
     );
+};
+
+export const useVirtualDesktopManager = (): VirtualDesktopManagerContextType => {
+    const ctx = useContext(VirtualDesktopManagerContext);
+    if (!ctx) {
+        throw new Error('useVirtualDesktopManager must be used within VirtualDesktopManagerProvider');
+    }
+    return ctx;
 };

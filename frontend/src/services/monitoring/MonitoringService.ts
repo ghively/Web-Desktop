@@ -60,6 +60,11 @@ export class MonitoringService {
       const entries = list.getEntries();
       entries.forEach(entry => {
         if (entry.entryType === 'navigation') {
+          const nav: any = entry as any;
+          const domEnd = Number(nav.domContentLoadedEventEnd || 0);
+          const domStart = Number(nav.domContentLoadedEventStart || 0);
+          const fetchStart = Number(nav.fetchStart || 0);
+
           this.recordMetric({
             id: this.generateId(),
             timestamp: Date.now(),
@@ -68,8 +73,8 @@ export class MonitoringService {
             value: entry.duration,
             unit: 'ms',
             metadata: {
-              domContentLoaded: entry.domContentLoadedEventEnd - entry.domContentLoadedEventStart,
-              firstPaint: entry.domContentLoadedEventEnd - entry.fetchStart,
+              domContentLoaded: domEnd - domStart,
+              firstPaint: domEnd - fetchStart,
             }
           });
         }
@@ -178,7 +183,7 @@ export class MonitoringService {
           sessionId: this.sessionId,
           severity: 'medium',
           context: {
-            element: event.target?.tagName,
+            element: (event.target as HTMLElement | null)?.tagName,
             source: (event.target as any)?.src || (event.target as any)?.href,
           }
         });
@@ -213,11 +218,12 @@ export class MonitoringService {
 
     // Key tracking
     document.addEventListener('keydown', (event) => {
+      const targetEl = event.target as HTMLElement | null;
       this.recordInteraction({
         id: this.generateId(),
         timestamp: Date.now(),
         type: 'keydown',
-        target: (event.target as Element)?.tagName.toLowerCase() || 'unknown',
+        target: targetEl?.tagName.toLowerCase() || 'unknown',
         value: event.key,
       });
     });
@@ -231,7 +237,6 @@ export class MonitoringService {
     this.performHealthCheck('api-connectivity', async () => {
       const response = await fetch(this.config.endpoints.health, {
         method: 'GET',
-        timeout: this.config.healthMonitoring.timeoutThreshold,
       });
       return response.ok;
     });
@@ -271,7 +276,7 @@ export class MonitoringService {
   }
 
   // Public API methods
-  recordMetric(metric: Omit<PerformanceMetric, 'id'>): void {
+  recordMetric(metric: Omit<PerformanceMetric, 'id'> & { id?: string }): void {
     if (!this.config.performanceMonitoring.enabled) return;
     if (Math.random() > this.config.performanceMonitoring.sampleRate) return;
 
@@ -291,12 +296,12 @@ export class MonitoringService {
     this.checkPerformanceThresholds(fullMetric);
   }
 
-  recordError(error: Omit<ErrorEvent, 'id' | 'sessionId'>): void {
+  recordError(error: Omit<ErrorEvent, 'id' | 'sessionId'> & { id?: string; sessionId?: string }): void {
     if (!this.config.errorTracking.enabled) return;
 
     const fullError: ErrorEvent = {
-      id: this.generateId(),
-      sessionId: this.sessionId,
+      id: error.id || this.generateId(),
+      sessionId: error.sessionId || this.sessionId,
       ...error,
     };
 
@@ -330,12 +335,12 @@ export class MonitoringService {
     }
   }
 
-  recordInteraction(interaction: Omit<UserInteraction, 'id'>): void {
+  recordInteraction(interaction: Omit<UserInteraction, 'id'> & { id?: string }): void {
     if (!this.config.userAnalytics.enabled || !this.config.userAnalytics.trackInteractions) return;
     if (Math.random() > this.config.userAnalytics.sampleRate) return;
 
     const fullInteraction: UserInteraction = {
-      id: this.generateId(),
+      id: interaction.id || this.generateId(),
       ...interaction,
     };
 
@@ -411,9 +416,9 @@ export class MonitoringService {
     }
   }
 
-  createAlert(alert: Omit<MonitoringAlert, 'id'>): void {
+  createAlert(alert: Omit<MonitoringAlert, 'id'> & { id?: string }): void {
     const fullAlert: MonitoringAlert = {
-      id: this.generateId(),
+      id: alert.id || this.generateId(),
       ...alert,
     };
 

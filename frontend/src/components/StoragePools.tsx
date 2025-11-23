@@ -62,7 +62,7 @@ interface LocalDisk {
   }>;
 }
 
-const StoragePools: React.FC = () => {
+const StoragePools: React.FC<{ windowId?: string }> = () => {
   const [activeTab, setActiveTab] = useState('pools');
   const [pools, setPools] = useState<StoragePool[]>([]);
   const [stats, setStats] = useState<StorageStats | null>(null);

@@ -7,7 +7,7 @@ export type { WindowManagerContextType, WindowState } from './types';
 // Virtual Desktop context
 export { VirtualDesktopManagerProvider } from './VirtualDesktopManager';
 export { VirtualDesktopManagerContext } from './VirtualDesktopManager';
-export { useVirtualDesktopManager } from './useVirtualDesktopManager';
+export { useVirtualDesktopManager } from './VirtualDesktopManager';
 export type { VirtualDesktopManagerContextType } from '../types/virtualDesktops';
 
 // AppLauncher context

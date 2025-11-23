@@ -34,6 +34,30 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsButton.addEventListener('click', () => openSettings());
     }
 
+    const virtualBtn = document.getElementById('virtual-desktops-button');
+    if (virtualBtn) virtualBtn.addEventListener('click', openVirtualDesktops);
+
+    const aiBtn = document.getElementById('ai-integration-button');
+    if (aiBtn) aiBtn.addEventListener('click', openAIIntegration);
+
+    const poolsBtn = document.getElementById('storage-pools-button');
+    if (poolsBtn) poolsBtn.addEventListener('click', openStoragePools);
+
+    const proxyBtn = document.getElementById('nginx-proxy-button');
+    if (proxyBtn) proxyBtn.addEventListener('click', openProxyManager);
+
+    const sharesBtn = document.getElementById('shares-button');
+    if (sharesBtn) sharesBtn.addEventListener('click', openSharesManager);
+
+    const wifiBtn = document.getElementById('wifi-button');
+    if (wifiBtn) wifiBtn.addEventListener('click', openWiFiManager);
+
+    const mediaBtn = document.getElementById('media-server-button');
+    if (mediaBtn) mediaBtn.addEventListener('click', openMediaServer);
+
+    const haBtn = document.getElementById('home-assistant-button');
+    if (haBtn) haBtn.addEventListener('click', openHomeAssistant);
+
     initializeSettings();
     initializeLauncher();
 
@@ -130,6 +154,273 @@ function initializeSettings() {
 function openSettings() {
     const panel = document.getElementById('settings-panel');
     if (panel) panel.classList.remove('hidden');
+}
+
+function openVirtualDesktops() {
+    const content = `
+        <div class="app-grid">
+            <div class="app-card">
+                <h3>Desktops</h3>
+                <div id="vd-list" class="list"></div>
+                <div class="controls">
+                    <button id="vd-add" class="primary">Add Desktop</button>
+                </div>
+            </div>
+            <div class="app-card">
+                <h3>Actions</h3>
+                <div class="controls">
+                    <button id="vd-tiling" class="secondary">Tiling Mode</button>
+                    <button id="vd-floating" class="secondary">Floating Mode</button>
+                </div>
+            </div>
+        </div>
+    `;
+    const win = windowManager.createWindow('Virtual Desktops', content);
+    const list = win.element.querySelector('#vd-list');
+    const render = () => {
+        list.innerHTML = windowManager.windows.map((w, i) => `<div class="list-item">Desktop ${i + 1} • ${w.title || 'Window'}</div>`).join('');
+    };
+    render();
+    win.element.querySelector('#vd-add').addEventListener('click', () => {
+        windowManager.createWindow(`Desktop ${windowManager.windows.length + 1}`, '<div class="p-4">New desktop window</div>');
+        render();
+    });
+    win.element.querySelector('#vd-tiling').addEventListener('click', () => {
+        windowManager.mode = 'tiling';
+        windowManager.applyTiling();
+    });
+    win.element.querySelector('#vd-floating').addEventListener('click', () => {
+        windowManager.mode = 'floating';
+        windowManager.applyTiling();
+    });
+}
+
+function openAIIntegration() {
+    const content = `
+        <div class="app-grid">
+            <div class="app-card">
+                <h3>AI Services</h3>
+                <div id="ai-services" class="list">Loading...</div>
+                <button id="ai-refresh" class="secondary">Refresh</button>
+            </div>
+            <div class="app-card">
+                <h3>Chat</h3>
+                <textarea id="ai-prompt" class="input" rows="4" placeholder="Ask anything..."></textarea>
+                <button id="ai-send" class="primary">Send</button>
+                <div id="ai-response" class="output"></div>
+            </div>
+        </div>
+    `;
+    const win = windowManager.createWindow('AI Integration', content);
+    const servicesEl = win.element.querySelector('#ai-services');
+    const loadServices = async () => {
+        servicesEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/ai-integration/services');
+            const data = await res.json();
+            servicesEl.innerHTML = data.map(s => `<div class="list-item">${s.name} • ${s.type}</div>`).join('');
+        } catch {
+            servicesEl.textContent = 'Failed to load services';
+        }
+    };
+    loadServices();
+    win.element.querySelector('#ai-refresh').addEventListener('click', loadServices);
+    win.element.querySelector('#ai-send').addEventListener('click', async () => {
+        const prompt = win.element.querySelector('#ai-prompt').value;
+        const out = win.element.querySelector('#ai-response');
+        out.textContent = 'Sending...';
+        try {
+            const res = await fetch('/api/ai-integration/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: prompt, limit: 5 })
+            });
+            const data = await res.json();
+            out.innerHTML = (data.results || []).map(r => `<div class="list-item">${r.name || r.path}</div>`).join('') || 'No results';
+        } catch {
+            out.textContent = 'AI request failed';
+        }
+    });
+}
+
+function openStoragePools() {
+    const content = `
+        <div class="app-card">
+            <h3>Storage Pools</h3>
+            <div id="pools-list" class="list">Loading...</div>
+            <button id="pools-refresh" class="secondary">Refresh</button>
+        </div>
+    `;
+    const win = windowManager.createWindow('Storage Pools', content);
+    const list = win.element.querySelector('#pools-list');
+    const load = async () => {
+        list.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/storage-pools');
+            const data = await res.json();
+            list.innerHTML = data.map(p => `<div class="list-item">${p.name} • ${p.status || 'unknown'}</div>`).join('') || 'No pools';
+        } catch {
+            list.textContent = 'Failed to load pools';
+        }
+    };
+    load();
+    win.element.querySelector('#pools-refresh').addEventListener('click', load);
+}
+
+function openProxyManager() {
+    const content = `
+        <div class="app-card">
+            <h3>Nginx Proxy</h3>
+            <div id="proxy-status" class="list">Loading...</div>
+            <button id="proxy-refresh" class="secondary">Refresh</button>
+        </div>
+    `;
+    const win = windowManager.createWindow('Nginx Proxy', content);
+    const statusEl = win.element.querySelector('#proxy-status');
+    const load = async () => {
+        statusEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/nginx-proxy/status');
+            const data = await res.json();
+            statusEl.innerHTML = `<div class="list-item">Status: ${data.status || 'unknown'}</div>`;
+        } catch {
+            statusEl.textContent = 'Failed to load status';
+        }
+    };
+    load();
+    win.element.querySelector('#proxy-refresh').addEventListener('click', load);
+}
+
+function openSharesManager() {
+    const content = `
+        <div class="app-card">
+            <h3>Shares</h3>
+            <div id="shares-list" class="list">Loading...</div>
+            <button id="shares-refresh" class="secondary">Refresh</button>
+        </div>
+    `;
+    const win = windowManager.createWindow('Shares Manager', content);
+    const list = win.element.querySelector('#shares-list');
+    const load = async () => {
+        list.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/shares');
+            const data = await res.json();
+            list.innerHTML = data.map(s => `<div class="list-item">${s.name || s.id} • ${s.type || ''}</div>`).join('') || 'No shares';
+        } catch {
+            list.textContent = 'Failed to load shares';
+        }
+    };
+    load();
+    win.element.querySelector('#shares-refresh').addEventListener('click', load);
+}
+
+function openWiFiManager() {
+    const content = `
+        <div class="app-grid">
+            <div class="app-card">
+                <h3>Interfaces</h3>
+                <div id="wifi-interfaces" class="list">Loading...</div>
+            </div>
+            <div class="app-card">
+                <h3>Networks</h3>
+                <div id="wifi-networks" class="list">Loading...</div>
+                <button id="wifi-scan" class="primary">Scan</button>
+            </div>
+        </div>
+    `;
+    const win = windowManager.createWindow('WiFi Management', content);
+    const ifaces = win.element.querySelector('#wifi-interfaces');
+    const nets = win.element.querySelector('#wifi-networks');
+    const loadInterfaces = async () => {
+        ifaces.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/wifi-management/interfaces');
+            const data = await res.json();
+            ifaces.innerHTML = data.map(i => `<div class="list-item">${i.name} • ${i.state}</div>`).join('') || 'No interfaces';
+        } catch {
+            ifaces.textContent = 'Failed to load interfaces';
+        }
+    };
+    const scanNetworks = async () => {
+        nets.textContent = 'Scanning...';
+        try {
+            const res = await fetch('/api/wifi-management/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+            const data = await res.json();
+            nets.innerHTML = data.map(n => `<div class="list-item">${n.ssid} • ${n.signalStrength}dBm</div>`).join('') || 'No networks';
+        } catch {
+            nets.textContent = 'Scan failed';
+        }
+    };
+    loadInterfaces();
+    scanNetworks();
+    win.element.querySelector('#wifi-scan').addEventListener('click', scanNetworks);
+}
+
+function openMediaServer() {
+    const content = `
+        <div class="app-grid">
+            <div class="app-card">
+                <h3>Libraries</h3>
+                <div id="media-libraries" class="list">Loading...</div>
+                <button id="media-refresh" class="secondary">Refresh</button>
+            </div>
+            <div class="app-card">
+                <h3>Transcoding</h3>
+                <div id="media-transcodes" class="list">Loading...</div>
+            </div>
+        </div>
+    `;
+    const win = windowManager.createWindow('Media Server', content);
+    const libs = win.element.querySelector('#media-libraries');
+    const trans = win.element.querySelector('#media-transcodes');
+    const load = async () => {
+        libs.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/media-server/libraries');
+            const data = await res.json();
+            libs.innerHTML = data.map(l => `<div class="list-item">${l.name} • ${l.type}</div>`).join('') || 'No libraries';
+        } catch {
+            libs.textContent = 'Failed to load';
+        }
+    };
+    const loadTranscodes = async () => {
+        trans.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/media-server/transcoding');
+            const data = await res.json();
+            trans.innerHTML = data.map(t => `<div class="list-item">${t.itemId || ''} • ${t.status || ''}</div>`).join('') || 'No jobs';
+        } catch {
+            trans.textContent = 'Failed to load';
+        }
+    };
+    load();
+    loadTranscodes();
+    win.element.querySelector('#media-refresh').addEventListener('click', load);
+}
+
+function openHomeAssistant() {
+    const content = `
+        <div class="app-card">
+            <h3>Home Assistant</h3>
+            <div id="ha-status" class="list">Loading...</div>
+            <button id="ha-refresh" class="secondary">Refresh</button>
+        </div>
+    `;
+    const win = windowManager.createWindow('Home Assistant', content);
+    const statusEl = win.element.querySelector('#ha-status');
+    const load = async () => {
+        statusEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/home-assistant/status');
+            const data = await res.json();
+            statusEl.innerHTML = `<div class="list-item">Connected: ${data.connected ? 'Yes' : 'No'}</div><div class="list-item">Entities: ${data.entities || 0}</div>`;
+        } catch {
+            statusEl.textContent = 'Failed to load';
+        }
+    };
+    load();
+    win.element.querySelector('#ha-refresh').addEventListener('click', load);
 }
 
 function isAppRunning(appName) {
@@ -364,6 +655,15 @@ async function fetchInstalledApps() {
             { name: 'Text Editor', icon: '💻', id: 'editor', description: 'Monaco code editor' },
             { name: 'Containers', icon: '🐳', id: 'containers', description: 'Docker container management' },
             { name: 'Control Panel', icon: '⚙️', id: 'controlpanel', description: 'System settings and configuration' },
+            { name: 'Virtual Desktops', icon: '🖥️', id: 'virtual-desktops', description: 'Switch and manage desktops' },
+            { name: 'AI Integration', icon: '🤖', id: 'ai-integration', description: 'AI services and chat' },
+            { name: 'AI Models', icon: '🧠', id: 'ai-models', description: 'Model routing and status' },
+            { name: 'Storage Pools', icon: '💾', id: 'storage-pools', description: 'Manage pools and volumes' },
+            { name: 'Proxy', icon: '🌐', id: 'proxy', description: 'Nginx proxy status' },
+            { name: 'Shares', icon: '📁', id: 'shares', description: 'NFS/SMB shares' },
+            { name: 'WiFi', icon: '📶', id: 'wifi', description: 'WiFi interfaces and networks' },
+            { name: 'Media Server', icon: '🎬', id: 'media', description: 'Libraries and transcoding' },
+            { name: 'Home Assistant', icon: '🏠', id: 'home-assistant', description: 'Smart home status' },
             ...data.apps.map(app => ({
                 name: app.name,
                 icon: app.icon || '🖥️',
@@ -380,7 +680,16 @@ async function fetchInstalledApps() {
             { name: 'Notes', icon: '📝', id: 'notes', description: 'Markdown notes editor' },
             { name: 'Text Editor', icon: '💻', id: 'editor', description: 'Monaco code editor' },
             { name: 'Containers', icon: '🐳', id: 'containers', description: 'Docker container management' },
-            { name: 'Control Panel', icon: '⚙️', id: 'controlpanel', description: 'System settings and configuration' }
+            { name: 'Control Panel', icon: '⚙️', id: 'controlpanel', description: 'System settings and configuration' },
+            { name: 'Virtual Desktops', icon: '🖥️', id: 'virtual-desktops', description: 'Switch and manage desktops' },
+            { name: 'AI Integration', icon: '🤖', id: 'ai-integration', description: 'AI services and chat' },
+            { name: 'AI Models', icon: '🧠', id: 'ai-models', description: 'Model routing and status' },
+            { name: 'Storage Pools', icon: '💾', id: 'storage-pools', description: 'Manage pools and volumes' },
+            { name: 'Proxy', icon: '🌐', id: 'proxy', description: 'Nginx proxy status' },
+            { name: 'Shares', icon: '📁', id: 'shares', description: 'NFS/SMB shares' },
+            { name: 'WiFi', icon: '📶', id: 'wifi', description: 'WiFi interfaces and networks' },
+            { name: 'Media Server', icon: '🎬', id: 'media', description: 'Libraries and transcoding' },
+            { name: 'Home Assistant', icon: '🏠', id: 'home-assistant', description: 'Smart home status' }
         ];
     }
 }
@@ -482,6 +791,33 @@ function launchApp(appId) {
             break;
         case 'terminal':
             launchTerminal();
+            return;
+        case 'virtual-desktops':
+            openVirtualDesktops();
+            return;
+        case 'ai-integration':
+            openAIIntegration();
+            return;
+        case 'ai-models':
+            openAIIntegration();
+            return;
+        case 'storage-pools':
+            openStoragePools();
+            return;
+        case 'proxy':
+            openProxyManager();
+            return;
+        case 'shares':
+            openSharesManager();
+            return;
+        case 'wifi':
+            openWiFiManager();
+            return;
+        case 'media':
+            openMediaServer();
+            return;
+        case 'home-assistant':
+            openHomeAssistant();
             return;
         default:
             title = appId;

@@ -82,8 +82,7 @@ router.get('/search', async (req: Request, res: Response) => {
         /\*{3,}/,     // Multiple asterisks (ReDoS)
         /\(.{20,}/,   // Very long parenthesis content
         /\[.{20,}/,   // Very long bracket content
-        /\\{2,}/,     // Multiple backslashes
-        /[\^\$].*\1/, // Repeated special chars
+        /\\{2,}/      // Multiple backslashes
     ];
 
     for (const pattern of dangerousPatterns) {

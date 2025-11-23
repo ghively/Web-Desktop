@@ -251,8 +251,8 @@ export const ContainerManager: React.FC<ContainerManagerProps> = () => {
 
     useEffect(() => {
         loadContainers();
-        // Auto-refresh every 5 seconds
-        const interval = setInterval(loadContainers, 5000);
+        // Auto-refresh every 30 seconds (reduced from 5 seconds to prevent API spam)
+        const interval = setInterval(loadContainers, 30000);
 
         return () => {
             clearInterval(interval);

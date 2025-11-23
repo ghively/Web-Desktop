@@ -421,7 +421,7 @@ export const FileMetadataManager: React.FC<{ windowId: string }> = ({ windowId }
                               </div>
                             </div>
                             {file.hash && (
-                              <Hash className="w-4 h-4 text-gray-400 flex-shrink-0" title={`SHA-256: ${file.hash.substring(0, 16)}...`} />
+                              <Hash className="w-4 h-4 text-gray-400 flex-shrink-0" />
                             )}
                           </div>
                         </div>

@@ -39,6 +39,7 @@ interface SecurityEvent {
   type: 'anomaly' | 'threat' | 'suspicious';
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
+  title?: string;
   timestamp: string;
   resolved: boolean;
 }
@@ -51,7 +52,11 @@ interface Recommendation {
   solution: string;
 }
 
-const AIIntegration: React.FC = () => {
+interface AIIntegrationProps {
+  windowId?: string;
+}
+
+const AIIntegration: React.FC<AIIntegrationProps> = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'files' | 'search' | 'workflows' | 'security' | 'performance'>('overview');
   const [services, setServices] = useState<AIService[]>([]);
   const [fileAnalyses, setFileAnalyses] = useState<FileAnalysis[]>([]);

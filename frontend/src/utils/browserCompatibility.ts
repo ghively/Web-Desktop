@@ -15,7 +15,8 @@ export const BrowserFeatures = {
   asyncAwait: () => (async () => {})() instanceof Promise,
   arrowFunctions: () => {
     try {
-      eval('() => {}');
+      // eslint-disable-next-line no-new-func
+      new Function('return () => {}')();
       return true;
     } catch {
       return false;
@@ -23,16 +24,18 @@ export const BrowserFeatures = {
   },
   destructuring: () => {
     try {
-      eval('const {x} = {x: 1}');
-      return true;
+      // eslint-disable-next-line no-new-func
+      const fn = new Function('const {x} = {x: 1}; return x === 1;');
+      return fn() === true;
     } catch {
       return false;
     }
   },
   spreadOperator: () => {
     try {
-      eval('const arr = [...[1,2,3]]');
-      return true;
+      // eslint-disable-next-line no-new-func
+      const fn = new Function('const arr = [...[1,2,3]]; return arr.length === 3;');
+      return fn() === true;
     } catch {
       return false;
     }
@@ -239,14 +242,15 @@ export const Polyfills = {
     }
 
     // Fallback to XMLHttpRequest if fetch is not available
-    return (url: string, options?: RequestInit): Promise<Response> => {
+    const fetchPolyfill = (url: string, options?: RequestInit): Promise<Response> => {
+      const opts = options || {};
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open(options?.method || 'GET', url);
+        xhr.open(opts.method || 'GET', url);
 
         // Set headers
-        if (options?.headers) {
-          Object.entries(options.headers).forEach(([key, value]) => {
+        if (opts.headers) {
+          Object.entries(opts.headers).forEach(([key, value]) => {
             xhr.setRequestHeader(key, value as string);
           });
         }
@@ -262,19 +266,20 @@ export const Polyfills = {
             json: () => Promise.resolve(JSON.parse(xhr.responseText)),
             blob: () => Promise.resolve(new Blob([xhr.responseText])),
             arrayBuffer: () => Promise.resolve(xhr.response as ArrayBuffer),
-            clone: () => this.getFetch()(url, options),
+            clone: () => fetchPolyfill(url, opts),
             body: null,
             bodyUsed: false,
             formData: () => Promise.reject(new Error('Not implemented')),
             redirected: false,
             type: 'basic',
-          } as Response);
+          } as unknown as Response);
         };
 
         xhr.onerror = () => reject(new Error('Network error'));
-        xhr.send(options?.body);
+        xhr.send(opts.body as any);
       });
     };
+    return fetchPolyfill;
   },
 
   // Fullscreen API polyfill

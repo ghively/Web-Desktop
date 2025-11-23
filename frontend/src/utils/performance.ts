@@ -366,7 +366,7 @@ export const memoryManagement = {
      */
     dispose: (element: Element): void => {
         LazyLoader.unobserve(element);
-        this.clearEventListeners(element);
+        memoryManagement.clearEventListeners(element);
     },
 
     /**

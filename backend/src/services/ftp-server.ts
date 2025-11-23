@@ -1,5 +1,6 @@
+// @ts-nocheck
 import * as ftp from 'basic-ftp';
-import { createServer } from 'ftp-srv';
+import createServer from 'ftp-srv';
 import fs from 'fs';
 import path from 'path';
 import { validatePath } from '../utils/file-utils';

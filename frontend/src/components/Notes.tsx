@@ -488,19 +488,6 @@ export const Notes: React.FC<NotesProps> = () => {
         }, 0);
     };
 
-    // Utility functions
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        const now = new Date();
-        const diff = now.getTime() - date.getTime();
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-        if (days === 0) return 'Today';
-        if (days === 1) return 'Yesterday';
-        if (days < 7) return `${days} days ago`;
-        return date.toLocaleDateString();
-    };
-
     const escapeHtml = useCallback((text: string) => {
         if (typeof text !== 'string') return '';
         const div = document.createElement('div');

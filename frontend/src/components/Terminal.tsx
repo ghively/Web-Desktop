@@ -483,7 +483,7 @@ export const TerminalComponent: React.FC<TerminalProps> = ({ windowId }) => {
                                 className="p-1.5 bg-blue-600 hover:bg-blue-700 rounded text-gray-100 transition-colors"
                                 title="Reconnect to terminal"
                             >
-                                <RefreshCw size={14} className={connectionState === 'connecting' ? 'animate-spin' : ''} />
+                                <RefreshCw size={14} />
                             </button>
                         )}
                         <button

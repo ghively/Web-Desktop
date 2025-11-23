@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme, ThemeConfig } from '../lib/theme/ThemeEngine';
 import { Palette, Settings, Download, Upload, RefreshCw, Plus, X, Eye, EyeOff, Monitor, Sun, Moon, Zap, Layers } from 'lucide-react';
 
-const ThemeCustomizer: React.FC = () => {
+const ThemeCustomizer: React.FC<{ windowId?: string }> = () => {
   const { theme, uiTheme, setTheme, setUITheme, themeEngine } = useTheme();
   const [activeTab, setActiveTab] = useState<'presets' | 'colors' | 'typography' | 'ui' | 'custom'>('presets');
   const [customTheme, setCustomTheme] = useState<ThemeConfig>(theme);

@@ -29,6 +29,7 @@ export interface Props {
     enableErrorLogging?: boolean;
     className?: string;
 }
+export type ErrorBoundaryProps = Props;
 
 interface State {
     hasError: boolean;

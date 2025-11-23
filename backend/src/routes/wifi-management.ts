@@ -116,8 +116,8 @@ async function scanWiFiNetworks(interfaceName?: string): Promise<WiFiNetwork[]> 
     const networks: WiFiNetwork[] = [];
     let currentNetwork: any = null;
 
-    for (const line of lines) {
-      line = line.trim();
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
       if (line.includes('*:') || line.includes('SSID:')) {
         if (currentNetwork && currentNetwork.ssid) {
           networks.push(currentNetwork);

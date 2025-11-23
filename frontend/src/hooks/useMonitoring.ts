@@ -17,7 +17,7 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
     component = 'Unknown',
   } = options;
 
-  const renderStartTime = useRef<number>();
+  const renderStartTime = useRef<number | undefined>(undefined);
   const mountTime = useRef<number>(Date.now());
 
   // Track component render performance

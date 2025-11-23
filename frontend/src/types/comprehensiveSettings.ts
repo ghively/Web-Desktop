@@ -659,7 +659,8 @@ export const defaultComprehensiveSettings: ComprehensiveSettings = {
     dnsServers: ['8.8.8.8', '8.8.4.4'],
     searchDomains: [],
     proxy: {
-      enabled: false
+      enabled: false,
+      noProxy: []
     },
     firewall: {
       enabled: false,

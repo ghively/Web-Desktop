@@ -46,13 +46,7 @@ interface InstallationProgress {
     appId?: string;
     appName?: string;
     error?: string;
-    details?: {
-        downloadedBytes?: number;
-        totalBytes?: number;
-        filesScanned?: number;
-        totalFiles?: number;
-        currentFile?: string;
-    };
+    details?: Record<string, any>;
 }
 
 // In-memory progress storage (in production, consider using Redis or database)

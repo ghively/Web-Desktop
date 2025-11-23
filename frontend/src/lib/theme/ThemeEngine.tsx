@@ -451,7 +451,7 @@ export class ThemeEngine {
   }
 
   // Theme creation helpers
-  private createCatppuccinMochaTheme(): ThemeConfig {
+  public createCatppuccinMochaTheme(): ThemeConfig {
     return {
       ...defaultDarkTheme,
       id: 'catppuccin-mocha',
@@ -477,7 +477,7 @@ export class ThemeEngine {
     };
   }
 
-  private createCatppuccinLatteTheme(): ThemeConfig {
+  public createCatppuccinLatteTheme(): ThemeConfig {
     return {
       ...defaultLightTheme,
       id: 'catppuccin-latte',
@@ -503,7 +503,7 @@ export class ThemeEngine {
     };
   }
 
-  private createSynologyTheme(): ThemeConfig {
+  public createSynologyTheme(): ThemeConfig {
     return {
       ...defaultDarkTheme,
       id: 'synology-dsm',
@@ -529,7 +529,7 @@ export class ThemeEngine {
     };
   }
 
-  private createWindowsTheme(): ThemeConfig {
+  public createWindowsTheme(): ThemeConfig {
     return {
       ...defaultLightTheme,
       id: 'windows-11',

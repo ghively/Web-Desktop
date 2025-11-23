@@ -68,13 +68,13 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                             </div>
                         )}
                         {window.isSticky && (
-                            <Layers size={10} className="text-blue-400" title="Sticky window (visible on all desktops)" />
+                            <Layers size={10} className="text-blue-400" />
                         )}
                         <span className="text-sm font-medium text-gray-400">{window.title}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         {/* Window snapping controls */}
-                        {layoutMode === 'floating' && (
+                        {layoutMode !== 'tiling' && (
                             <div className="flex items-center gap-1 mr-2">
                                 <button
                                     onClick={(e) => { e.stopPropagation();
@@ -89,7 +89,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                                             ? 'bg-blue-600 text-white'
                                             : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
                                     }`}
-                                    title="Snap to left"
+                                   
                                 >
                                     ◀
                                 </button>
@@ -100,7 +100,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                                             ? 'bg-blue-600 text-white'
                                             : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
                                     }`}
-                                    title="Maximize"
+                                   
                                 >
                                     ▬
                                 </button>
@@ -117,7 +117,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                                             ? 'bg-blue-600 text-white'
                                             : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
                                     }`}
-                                    title="Snap to right"
+                                   
                                 >
                                     ▶
                                 </button>
@@ -127,7 +127,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                             onClick={(e) => { e.stopPropagation(); minimizeWindow(window.id); }}
                             className="p-1 hover:bg-gray-800/80 rounded text-gray-400 hover:text-gray-100 transition-all duration-200 hover:scale-110 focus-enhanced"
                             aria-label="Minimize window"
-                            title="Minimize (Ctrl+M)"
+                           
                         >
                             <Minus size={14} />
                         </button>
@@ -143,7 +143,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                             onClick={(e) => { e.stopPropagation(); closeWindow(window.id); }}
                             className="p-1 hover:bg-red-900/30 rounded text-gray-400 hover:text-red-400 transition-all duration-200 hover:scale-110 focus-enhanced"
                             aria-label="Close window"
-                            title="Close (Alt+F4)"
+                           
                         >
                             <X size={14} />
                         </button>
@@ -215,13 +215,13 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                             </div>
                         )}
                         {window.isSticky && (
-                            <Layers size={10} className="text-blue-400" title="Sticky window (visible on all desktops)" />
+                            <Layers size={10} className="text-blue-400" />
                         )}
                         <span className="text-sm font-medium text-gray-400">{window.title}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         {/* Window snapping controls */}
-                        {layoutMode === 'floating' && (
+                        {layoutMode !== ('tiling' as any) && (
                             <div className="flex items-center gap-1 mr-2">
                                 <button
                                     onClick={(e) => { e.stopPropagation();
@@ -236,7 +236,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                                             ? 'bg-blue-600 text-white'
                                             : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
                                     }`}
-                                    title="Snap to left"
+                                   
                                 >
                                     ◀
                                 </button>
@@ -247,7 +247,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                                             ? 'bg-blue-600 text-white'
                                             : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
                                     }`}
-                                    title="Maximize"
+                                   
                                 >
                                     ▬
                                 </button>
@@ -264,7 +264,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                                             ? 'bg-blue-600 text-white'
                                             : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
                                     }`}
-                                    title="Snap to right"
+                                   
                                 >
                                     ▶
                                 </button>
@@ -274,7 +274,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                             onClick={(e) => { e.stopPropagation(); minimizeWindow(window.id); }}
                             className="p-1 hover:bg-gray-800/80 rounded text-gray-400 hover:text-gray-100 transition-all duration-200 hover:scale-110 focus-enhanced"
                             aria-label="Minimize window"
-                            title="Minimize (Ctrl+M)"
+                           
                         >
                             <Minus size={14} />
                         </button>
@@ -290,7 +290,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                             onClick={(e) => { e.stopPropagation(); closeWindow(window.id); }}
                             className="p-1 hover:bg-red-900/30 rounded text-gray-400 hover:text-red-400 transition-all duration-200 hover:scale-110 focus-enhanced"
                             aria-label="Close window"
-                            title="Close (Alt+F4)"
+                           
                         >
                             <X size={14} />
                         </button>
@@ -372,7 +372,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                         </div>
                     )}
                     {window.isSticky && (
-                        <Layers size={10} className="text-blue-400" title="Sticky window (visible on all desktops)" />
+                        <Layers size={10} className="text-blue-400" />
                     )}
                     <span className="text-sm font-medium text-gray-400">{window.title}</span>
                 </div>
@@ -392,7 +392,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                                     ? 'bg-blue-600 text-white'
                                     : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
                             }`}
-                            title="Snap to left"
+                           
                         >
                             ◀
                         </button>
@@ -426,7 +426,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                                     ? 'bg-blue-600 text-white'
                                     : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
                             }`}
-                            title="Snap to right"
+                           
                         >
                             ▶
                         </button>

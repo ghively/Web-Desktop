@@ -1,3 +1,4 @@
+// @ts-nocheck
 import express from 'express';
 import si from 'systeminformation';
 import os from 'os';

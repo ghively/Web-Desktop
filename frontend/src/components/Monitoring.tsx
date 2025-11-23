@@ -8,6 +8,7 @@ import { Activity, AlertTriangle, CheckCircle, Settings } from 'lucide-react';
 
 interface MonitoringProps {
   className?: string;
+  windowId?: string;
 }
 
 export function Monitoring({ className = '' }: MonitoringProps) {

@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import autoprefixer from 'autoprefixer'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -37,6 +38,7 @@ export default defineConfig(({ mode }) => {
     build: {
       // Generate source maps for debugging
       sourcemap: true,
+      chunkSizeWarningLimit: 2000,
       // Target browsers for transpilation
       target: [
         'es2020', // Base ECMAScript target
@@ -53,6 +55,8 @@ export default defineConfig(({ mode }) => {
             vendor: ['react', 'react-dom'],
             xterm: ['@xterm/xterm', '@xterm/addon-fit'],
             ui: ['framer-motion', 'lucide-react', 'react-rnd'],
+            charts: ['recharts'],
+            radix: ['@radix-ui/react-slot', '@radix-ui/react-tabs', '@radix-ui/react-progress'],
           },
         },
       },
@@ -93,7 +97,7 @@ export default defineConfig(({ mode }) => {
       postcss: {
         plugins: [
           // Tailwind includes Autoprefixer by default, but we ensure it here
-          require('autoprefixer')({
+          autoprefixer({
             grid: true, // Enable CSS Grid prefixes
             flexbox: true, // Enable Flexbox prefixes
             supports: true, // Enable @supports prefixes

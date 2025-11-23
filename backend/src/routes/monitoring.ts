@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { writeFile, readFile, mkdir, access } from 'fs/promises';
 import { join } from 'path';
-import { validatePath } from './fs';
 
 const router = Router();
 

@@ -9,6 +9,12 @@ interface AsyncErrorBoundaryProps {
     onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
     onRetry?: () => void;
     maxRetries?: number;
+    customMessages?: {
+        title?: string;
+        description?: string;
+        retry?: string;
+        close?: string;
+    };
 }
 
 /**
@@ -21,7 +27,8 @@ export const AsyncErrorBoundary: React.FC<AsyncErrorBoundaryProps> = ({
     loadingFallback,
     onError,
     onRetry,
-    maxRetries = 5
+    maxRetries = 5,
+    customMessages
 }) => {
     const defaultFallback = (
         <div className="flex flex-col items-center justify-center h-full bg-gray-900 p-8">
@@ -83,7 +90,8 @@ export const AsyncErrorBoundary: React.FC<AsyncErrorBoundaryProps> = ({
             customMessages={{
                 title: 'Async Operation Failed',
                 description: 'An async operation encountered an error. This might be due to network issues or server problems.',
-                retry: 'Retry Operation'
+                retry: 'Retry Operation',
+                ...customMessages
             }}
         >
             {children}

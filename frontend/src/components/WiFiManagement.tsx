@@ -8,7 +8,7 @@ interface WiFiNetwork {
   channel: number;
   signalStrength: number;
   security: string[];
-  mode: 'ad-hoc' | 'infrastructure' | 'mesh';
+  mode: 'adhoc' | 'infrastructure' | 'mesh';
   quality: 'poor' | 'fair' | 'good' | 'excellent';
   lastSeen: Date;
 }
@@ -45,7 +45,7 @@ interface NetworkInterface {
   mac: string;
 }
 
-export default function WiFiManagement() {
+export default function WiFiManagement({ windowId }: { windowId?: string }) {
   const [activeTab, setActiveTab] = useState<'networks' | 'status' | 'configs'>('networks');
   const [networks, setNetworks] = useState<WiFiNetwork[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({ connected: false, interface: '' });

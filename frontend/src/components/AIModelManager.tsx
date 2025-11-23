@@ -56,7 +56,7 @@ interface Status {
   };
 }
 
-const AIModelManager: React.FC = () => {
+const AIModelManager: React.FC<{ windowId?: string }> = () => {
   const [activeTab, setActiveTab] = useState('models');
   const [config, setConfig] = useState<Config | null>(null);
   const [status, setStatus] = useState<Status | null>(null);
@@ -402,7 +402,12 @@ const AIModelManager: React.FC = () => {
             <div className="space-y-6">
               {Object.entries(TASK_DEFINITIONS).map(([taskType, definition]) => {
                 const Icon = definition.icon;
-                const assignment = config.taskAssignments[taskType];
+                const assignment = config.taskAssignments[taskType] || {
+                  provider: 'ollama' as const,
+                  preferredModel: '',
+                  fallbackProvider: 'ollama' as const,
+                  fallbackModel: ''
+                };
 
                 return (
                   <div key={taskType} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
     Search, Download, Star, Clock, Shield, Filter, Grid, List,
     Package, ExternalLink, User, Tag, AlertCircle, CheckCircle, XCircle,
-    ArrowRight, ChevronDown, ChevronUp, RefreshCw, Trash2, Update,
+    ArrowRight, ChevronDown, ChevronUp, RefreshCw, Trash2,
     FileText, Code, Palette, Gamepad2, Briefcase, GraduationCap, Globe,
     Settings, Wrench, Play, Monitor
 } from 'lucide-react';
@@ -285,7 +285,7 @@ export const Marketplace = ({ windowId }: MarketplaceProps) => {
                                 className="px-3 py-1 bg-blue-600/80 hover:bg-blue-600 text-white text-sm rounded transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-600/20"
                                 aria-label={`Check updates for ${app.name}`}
                             >
-                                <Update size={14} />
+                                <RefreshCw size={14} />
                             </button>
                             <button
                                 onClick={(e) => {
@@ -718,7 +718,7 @@ export const Marketplace = ({ windowId }: MarketplaceProps) => {
                                                 onClick={() => checkForUpdates(app.id)}
                                                 className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
                                             >
-                                                <Update size={14} />
+                                                <RefreshCw size={14} />
                                             </button>
                                             <button
                                                 onClick={() => handleUninstallApp(app.id)}

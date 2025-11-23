@@ -1,13 +1,14 @@
 import express from 'express';
 import Database from 'better-sqlite3';
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import mm from 'music-metadata';
 import probeImageSize from 'probe-image-size';
-import { ExifReader } from 'exifr';
+import ExifReader from 'exifr';
 
 const execAsync = promisify(exec);
 const router = express.Router();
@@ -63,6 +64,9 @@ class FileMetadataManager {
   }
 
   private initializeDatabase(): void {
+    // Ensure parent directory exists before opening the database
+    fsSync.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+
     db = new Database(DB_PATH);
 
     // Create tables
@@ -123,7 +127,8 @@ class FileMetadataManager {
         mimeType: this.getMimeType(filePath),
         hash: fileHash,
         directoryId: await this.getOrCreateDirectoryId(path.dirname(resolvedPath)),
-        metadata: {}
+        metadata: {},
+        indexed: new Date()
       };
 
       // Extract extended metadata based on file type
@@ -460,7 +465,8 @@ class FileMetadataManager {
   private async extractImageMetadata(filePath: string): Promise<any> {
     try {
       const imageSize = await probeImageSize(fs.readFile(filePath));
-      const exifData = await ExifReader.load(filePath);
+      const exifBuffer = await fs.readFile(filePath);
+      const exifData = await ExifReader.parse(exifBuffer, { reviveValues: true }).catch(() => ({} as any));
 
       return {
         width: imageSize.width,
@@ -468,16 +474,16 @@ class FileMetadataManager {
         format: imageSize.type,
         size: imageSize.length,
         exif: {
-          make: exifData.Make?.description,
-          model: exifData.Model?.description,
-          dateTime: exifData.DateTime?.description,
-          iso: exifData.ISOSpeedRatings?.description,
-          aperture: exifData.FNumber?.description,
-          focalLength: exifData.FocalLength?.description,
-          exposureTime: exifData.ExposureTime?.description,
-          flash: exifData.Flash?.description,
-          gpsLat: exifData.GPSLatitude?.description,
-          gpsLng: exifData.GPSLongitude?.description
+          make: (exifData as any)?.Make,
+          model: (exifData as any)?.Model,
+          dateTime: (exifData as any)?.DateTimeOriginal || (exifData as any)?.DateTime,
+          iso: (exifData as any)?.ISO || (exifData as any)?.ISOSpeedRatings,
+          aperture: (exifData as any)?.FNumber,
+          focalLength: (exifData as any)?.FocalLength,
+          exposureTime: (exifData as any)?.ExposureTime,
+          flash: (exifData as any)?.Flash,
+          gpsLat: (exifData as any)?.GPSLatitude,
+          gpsLng: (exifData as any)?.GPSLongitude
         }
       };
     } catch (error) {

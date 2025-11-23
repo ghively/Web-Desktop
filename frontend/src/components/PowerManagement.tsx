@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Power, Zap, Battery, BatteryCharging, Thermometer, Cpu, Sun, Moon, Settings, AlertTriangle, CheckCircle, Clock, Activity, Monitor, Wifi, WifiOff, Play, Pause, Plus, Trash2, Edit, Save, X } from 'lucide-react';
+import { Power, Zap, Battery, BatteryCharging, Thermometer, Cpu, Sun, Moon, Settings, AlertTriangle, CheckCircle, Clock, Activity, Monitor, Wifi, WifiOff, Play, Pause, Plus, Trash2, Edit, Save, X, RefreshCw } from 'lucide-react';
 
 interface PowerStatus {
   battery: {
@@ -73,7 +73,7 @@ interface PowerPlan {
   };
 }
 
-export default function PowerManagement() {
+export default function PowerManagement({ windowId }: { windowId?: string }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'battery' | 'thermal' | 'plans' | 'rules'>('overview');
   const [status, setStatus] = useState<PowerStatus | null>(null);
   const [config, setConfig] = useState<PowerConfig | null>(null);
@@ -323,8 +323,8 @@ export default function PowerManagement() {
   };
 
   const toggleMonitoring = async (enabled: boolean) => {
+    const action = enabled ? 'start' : 'stop';
     try {
-      const action = enabled ? 'start' : 'stop';
       await fetch(`/api/power-management/monitoring/${action}`, {
         method: 'POST'
       });
@@ -920,23 +920,24 @@ export default function PowerManagement() {
                       </div>
 
                       <div className="mt-2 text-sm text-gray-400">
-                        {Object.entries(rule.conditions).map(([key, value]) => {
-                          if (!value) return null;
+                          {Object.entries(rule.conditions).map(([key, value]) => {
+                              if (!value) return null;
 
-                          let conditionText = '';
-                          switch (key) {
-                            case 'batteryLevel':
-                              conditionText = `Battery ≤ ${value.min}%`;
-                              break;
-                            case 'temperature':
-                              conditionText = `Temp ≥ ${value.max}°C for ${value.duration}s`;
-                              break;
-                            case 'timeOfDay':
-                              conditionText = `Time: ${value.start} - ${value.end}`;
-                              break;
-                            default:
-                              conditionText = `${key}: ${JSON.stringify(value)}`;
-                          }
+                              const val: any = value as any;
+                              let conditionText = '';
+                              switch (key) {
+                                case 'batteryLevel':
+                                  conditionText = `Battery ≤ ${val.min}%`;
+                                  break;
+                                case 'temperature':
+                                  conditionText = `Temp ≥ ${val.max}°C for ${val.duration || 0}s`;
+                                  break;
+                                case 'timeOfDay':
+                                  conditionText = `Time: ${val.start || ''} - ${val.end || ''}`;
+                                  break;
+                                default:
+                                  conditionText = `${key}: ${JSON.stringify(val)}`;
+                              }
 
                           return (
                             <span key={key} className="mr-4">

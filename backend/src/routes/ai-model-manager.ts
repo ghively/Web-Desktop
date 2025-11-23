@@ -539,7 +539,7 @@ router.post('/test/:provider', async (req, res) => {
       res.status(400).json({ error: 'Unknown provider' });
     }
   } catch (error) {
-    res.status(500).json({ error: `Failed to test ${provider} connection` });
+    res.status(500).json({ error: `Failed to test connection` });
   }
 });
 

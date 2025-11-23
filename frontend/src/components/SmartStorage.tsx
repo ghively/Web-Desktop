@@ -19,6 +19,7 @@ interface StorageStats {
 interface Duplicate {
   id: string;
   hash: string;
+  replacementItem?: string;
   files: Array<{
     path: string;
     size: number;
@@ -50,7 +51,7 @@ interface StoragePool {
   cleanupPolicy: 'none' | 'temp-files' | 'duplicates' | 'aggressive';
 }
 
-const SmartStorage: React.FC = () => {
+const SmartStorage: React.FC<{ windowId?: string }> = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState<StorageStats | null>(null);
   const [duplicates, setDuplicates] = useState<Duplicate[]>([]);

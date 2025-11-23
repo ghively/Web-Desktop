@@ -847,7 +847,7 @@ export const FileManager: React.FC<FileManagerProps> = ({ windowId }) => {
                 className="hidden"
                 onChange={(e) => {
                     if (e.target.files) {
-                        Array.from(e.target.files).forEach(handleFileUpload);
+                        Array.from(e.target.files).forEach(file => handleFileUpload(file));
                     }
                 }}
             />

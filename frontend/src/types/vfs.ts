@@ -104,6 +104,11 @@ export interface VFSTransaction {
 
 // Main VFS Manager interface
 export interface VFSManager {
+  // Event handling
+  on(event: string, listener: (...args: any[]) => void): this;
+  off(event: string, listener: (...args: any[]) => void): this;
+  emit(event: string, ...args: any[]): boolean;
+
   // Adapter management
   registerAdapter(adapter: VFSAdapter): void;
   unregisterAdapter(name: string): void;

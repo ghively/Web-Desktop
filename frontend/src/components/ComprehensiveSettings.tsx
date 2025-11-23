@@ -15,7 +15,7 @@ import {
   Server,
   Database,
   Bug,
-  Flask,
+  Beaker,
   User,
   Lock,
   Wifi,
@@ -121,7 +121,7 @@ const settingsCategories = [
     subcategories: [
       { id: 'modules', name: 'Modules', icon: Database },
       { id: 'services', name: 'Services', icon: Server },
-      { id: 'experimental', name: 'Experimental', icon: Flask }
+      { id: 'experimental', name: 'Experimental', icon: Beaker }
     ]
   }
 ];
@@ -494,7 +494,7 @@ export const ComprehensiveSettings: React.FC<ComprehensiveSettingsProps> = ({ wi
 };
 
 // Placeholder components for each subcategory
-const DesktopAppearanceSettings: React.FC<{ onSettingsChange: (settings: any) => void }> = ({ onSettingsChange }) => (
+const DesktopAppearanceSettings: React.FC<{ onSettingsChange: (category: string, field: string, value: any) => void }> = ({ onSettingsChange }) => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Desktop Appearance</h3>
     <div className="space-y-6">
@@ -530,7 +530,7 @@ const DesktopAppearanceSettings: React.FC<{ onSettingsChange: (settings: any) =>
   </div>
 );
 
-const SoundsSettings: React.FC<{ onSettingsChange: (settings: any) => void }> = () => (
+const SoundsSettings: React.FC<{ onSettingsChange: (category: string, field: string, value: any) => void }> = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Sounds & Notifications</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -539,7 +539,7 @@ const SoundsSettings: React.FC<{ onSettingsChange: (settings: any) => void }> = 
   </div>
 );
 
-const DateTimeSettings: React.FC<{ onSettingsChange: (settings: any) => void }> = () => (
+const DateTimeSettings: React.FC<{ onSettingsChange: (category: string, field: string, value: any) => void }> = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Date & Time</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -728,7 +728,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
   );
 };
 
-const SystemUpdatesSettings: React.FC<{ onSettingsChange: (settings: any) => void }> = () => (
+const SystemUpdatesSettings: React.FC<{ onSettingsChange: (category: string, field: string, value: any) => void }> = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">System Updates</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -737,7 +737,7 @@ const SystemUpdatesSettings: React.FC<{ onSettingsChange: (settings: any) => voi
   </div>
 );
 
-const SystemInfoSettings: React.FC<{ onSettingsChange: (settings: any) => void }> = () => (
+const SystemInfoSettings: React.FC<{ onSettingsChange: (category: string, field: string, value: any) => void }> = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">System Information</h3>
     <div className="bg-gray-800 rounded-lg p-6">
