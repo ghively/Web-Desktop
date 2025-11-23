@@ -200,166 +200,449 @@ function openVirtualDesktops() {
 }
 
 function openAIIntegration() {
+    const tabs = [
+        { id: 'overview', label: 'Overview' },
+        { id: 'files', label: 'File Analysis' },
+        { id: 'search', label: 'Smart Search' },
+        { id: 'workflows', label: 'Workflows' },
+        { id: 'security', label: 'Security' },
+        { id: 'performance', label: 'Performance' }
+    ];
+
     const content = `
-        <div class="app-grid">
-            <div class="app-card">
+        <div class="app-card">
+            <div class="controls" id="ai-tab-buttons" style="gap:0.5rem;flex-wrap:wrap;">
+                ${tabs.map(tab => `<button class="tab-btn" data-tab="${tab.id}">${tab.label}</button>`).join('')}
+            </div>
+            <div id="ai-tab-overview" class="ai-tab-section"></div>
+            <div id="ai-tab-files" class="ai-tab-section hidden"></div>
+            <div id="ai-tab-search" class="ai-tab-section hidden"></div>
+            <div id="ai-tab-workflows" class="ai-tab-section hidden"></div>
+            <div id="ai-tab-security" class="ai-tab-section hidden"></div>
+            <div id="ai-tab-performance" class="ai-tab-section hidden"></div>
+        </div>
+    `;
+
+    const win = windowManager.createWindow('AI Integration', content);
+    const tabButtons = win.element.querySelectorAll('#ai-tab-buttons .tab-btn');
+    const sections = {
+        overview: win.element.querySelector('#ai-tab-overview'),
+        files: win.element.querySelector('#ai-tab-files'),
+        search: win.element.querySelector('#ai-tab-search'),
+        workflows: win.element.querySelector('#ai-tab-workflows'),
+        security: win.element.querySelector('#ai-tab-security'),
+        performance: win.element.querySelector('#ai-tab-performance')
+    };
+
+    const state = {
+        services: [],
+        fileAnalyses: [],
+        searchResults: [],
+        workflows: [],
+        securityEvents: [],
+        recommendations: []
+    };
+
+    sections.overview.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div>
                 <h3>AI Services</h3>
-                <div id="ai-services" class="list">Loading...</div>
-                <div class="controls column">
-                    <input id="ai-service-name" class="input" placeholder="Service name" />
-                    <input id="ai-service-type" class="input" placeholder="Type (local/remote)" />
-                    <input id="ai-service-endpoint" class="input" placeholder="Endpoint or notes" />
-                    <input id="ai-service-key" class="input" placeholder="API key (optional)" />
-                    <button id="ai-add-service" class="primary">Add Service</button>
-                    <button id="ai-refresh" class="secondary">Refresh</button>
+                <div id="ai-services-list" class="list" style="min-height:140px">Loading...</div>
+            </div>
+            <div id="ai-overview-stats" class="list" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.5rem">
+                <div class="list-item">
+                    <div class="text-xs">Files Analyzed</div>
+                    <div class="font-bold text-lg" id="ai-stat-files">0</div>
                 </div>
-            </div>
-            <div class="app-card">
-                <h3>Chat</h3>
-                <textarea id="ai-prompt" class="input" rows="4" placeholder="Ask anything..."></textarea>
-                <button id="ai-send" class="primary">Send</button>
-                <div id="ai-response" class="output"></div>
-            </div>
-            <div class="app-card">
-                <h3>Workflows</h3>
-                <div id="ai-workflows" class="list">Loading...</div>
-                <div class="controls column">
-                    <input id="ai-workflow-name" class="input" placeholder="Workflow name" />
-                    <input id="ai-workflow-desc" class="input" placeholder="Description" />
-                    <label class="checkbox"><input type="checkbox" id="ai-workflow-active" /> Active</label>
-                    <button id="ai-workflow-save" class="primary">Save Workflow</button>
+                <div class="list-item">
+                    <div class="text-xs">Active Workflows</div>
+                    <div class="font-bold text-lg" id="ai-stat-workflows">0</div>
                 </div>
-            </div>
-            <div class="app-card">
-                <h3>Security Events</h3>
-                <div id="ai-events" class="list">Loading...</div>
+                <div class="list-item">
+                    <div class="text-xs">Pending Events</div>
+                    <div class="font-bold text-lg" id="ai-stat-events">0</div>
+                </div>
+                <div class="list-item">
+                    <div class="text-xs">Recommendations</div>
+                    <div class="font-bold text-lg" id="ai-stat-recs">0</div>
+                </div>
             </div>
         </div>
     `;
-    const win = windowManager.createWindow('AI Integration', content);
-    const servicesEl = win.element.querySelector('#ai-services');
-    const workflowsEl = win.element.querySelector('#ai-workflows');
-    const eventsEl = win.element.querySelector('#ai-events');
-    const loadServices = async () => {
-        servicesEl.textContent = 'Loading...';
+
+    sections.files.innerHTML = `
+        <div class="controls" style="justify-content:space-between;">
+            <h3>Smart File Organization</h3>
+            <button id="ai-analyze" class="secondary">Analyze Sample Paths</button>
+        </div>
+        <div id="ai-file-table" class="list" style="min-height:200px">No files analyzed yet</div>
+    `;
+
+    sections.search.innerHTML = `
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <input id="ai-search-input" class="input" placeholder="Enter search query" style="flex:1" />
+            <button id="ai-search-btn" class="primary">Search</button>
+        </div>
+        <div id="ai-search-results" class="list" style="margin-top:1rem;min-height:180px">No results</div>
+        <div class="controls column" style="margin-top:1rem;">
+            <h4>Chat</h4>
+            <textarea id="ai-chat-prompt" class="input" rows="3" placeholder="Ask the AI anything..."></textarea>
+            <button id="ai-chat-send" class="secondary">Send</button>
+            <div id="ai-chat-response" class="output" style="margin-top:0.5rem">No responses yet</div>
+        </div>
+    `;
+
+    sections.workflows.innerHTML = `
+        <div class="controls" style="justify-content:space-between;">
+            <h3>AI Workflows</h3>
+            <button id="ai-workflow-new" class="secondary">Go to form</button>
+        </div>
+        <div id="ai-workflows-list" class="list" style="min-height:200px">Loading workflows...</div>
+        <div class="controls column" style="margin-top:1rem;">
+            <input id="ai-workflow-name" class="input" placeholder="Workflow name" />
+            <input id="ai-workflow-desc" class="input" placeholder="Description" />
+            <label class="checkbox"><input type="checkbox" id="ai-workflow-active" /> Active</label>
+            <button id="ai-workflow-save" class="primary">Save Workflow</button>
+        </div>
+    `;
+
+    sections.security.innerHTML = `
+        <div class="controls" style="justify-content:space-between;">
+            <h3>Security Events</h3>
+            <button id="ai-security-refresh" class="secondary">Refresh</button>
+        </div>
+        <div id="ai-security-list" class="list" style="min-height:200px">Loading events...</div>
+    `;
+
+    sections.performance.innerHTML = `
+        <div class="controls" style="justify-content:space-between;">
+            <h3>Performance Recommendations</h3>
+            <button id="ai-performance-refresh" class="secondary">Analyze</button>
+        </div>
+        <div id="ai-performance-list" class="list" style="min-height:200px">No recommendations yet</div>
+    `;
+
+    const elements = {
+        services: win.element.querySelector('#ai-services-list'),
+        statFiles: win.element.querySelector('#ai-stat-files'),
+        statWorkflows: win.element.querySelector('#ai-stat-workflows'),
+        statEvents: win.element.querySelector('#ai-stat-events'),
+        statRecs: win.element.querySelector('#ai-stat-recs'),
+        fileTable: win.element.querySelector('#ai-file-table'),
+        searchResults: win.element.querySelector('#ai-search-results'),
+        chatResponse: win.element.querySelector('#ai-chat-response'),
+        workflowsList: win.element.querySelector('#ai-workflows-list'),
+        securityList: win.element.querySelector('#ai-security-list'),
+        recList: win.element.querySelector('#ai-performance-list')
+    };
+
+    const showTab = (tab) => {
+        Object.entries(sections).forEach(([key, section]) => {
+            if (!section) return;
+            section.classList.toggle('hidden', key !== tab);
+        });
+        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+    };
+
+    tabButtons.forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
+    showTab('overview');
+
+    const renderServices = () => {
+        if (!elements.services) return;
+        if (!state.services.length) {
+            elements.services.textContent = 'No AI services connected';
+            return;
+        }
+        elements.services.innerHTML = state.services.map(service => `
+            <div class="list-item">
+                <div class="flex justify-between">
+                    <strong>${service.name}</strong>
+                    <span class="text-xs ${service.status === 'active' ? 'text-green-400' : 'text-gray-400'}">${service.status || 'inactive'}</span>
+                </div>
+                <div class="text-xs text-gray-400">${service.type}</div>
+                <div class="flex flex-wrap gap-1 mt-2">
+                    ${(service.capabilities || []).map(cap => `<span class="px-2 py-1 rounded bg-purple-600 bg-opacity-30 text-xs">${cap}</span>`).join('')}
+                </div>
+            </div>
+        `).join('');
+    };
+
+    const renderOverviewStats = () => {
+        elements.statFiles && (elements.statFiles.textContent = state.fileAnalyses.length.toString());
+        elements.statWorkflows && (elements.statWorkflows.textContent = state.workflows.filter(w => w.active).length.toString());
+        elements.statEvents && (elements.statEvents.textContent = state.securityEvents.filter(e => !e.resolved).length.toString());
+        elements.statRecs && (elements.statRecs.textContent = state.recommendations.length.toString());
+    };
+
+    const renderFileTable = () => {
+        if (!elements.fileTable) return;
+        if (!state.fileAnalyses.length) {
+            elements.fileTable.textContent = 'No files analyzed yet';
+            return;
+        }
+        elements.fileTable.innerHTML = state.fileAnalyses.map(analysis => `
+            <div class="list-item">
+                <div><strong>${analysis.path}</strong></div>
+                <div class="subtle">${analysis.category} • ${(analysis.tags || []).slice(0,3).join(', ')}${analysis.tags?.length > 3 ? ' +' + (analysis.tags.length - 3) : ''}</div>
+                <div class="text-xs text-gray-400">${(analysis.confidence * 100).toFixed(1)}% confidence</div>
+                <div class="text-xs text-gray-500">${analysis.summary || 'No summary'}</div>
+            </div>
+        `).join('');
+    };
+
+    const renderSearchResults = () => {
+        if (!elements.searchResults) return;
+        if (!state.searchResults.length) {
+            elements.searchResults.textContent = 'No results';
+            return;
+        }
+        elements.searchResults.innerHTML = state.searchResults.map(result => `
+            <div class="list-item">
+                <div><strong>${result.name}</strong></div>
+                <div class="subtle">${result.path}</div>
+                <div class="text-xs text-gray-400">${(result.score * 100).toFixed(1)}% match • ${new Date(result.modified).toLocaleString()}</div>
+            </div>
+        `).join('');
+    };
+
+    const renderWorkflows = () => {
+        if (!elements.workflowsList) return;
+        if (!state.workflows.length) {
+            elements.workflowsList.textContent = 'No workflows defined';
+            return;
+        }
+        elements.workflowsList.innerHTML = state.workflows.map(workflow => `
+            <div class="list-item">
+                <div class="flex justify-between items-center">
+                    <strong>${workflow.name}</strong>
+                    <span class="text-xs ${workflow.active ? 'text-green-400' : 'text-gray-400'}">${workflow.active ? 'Active' : 'Inactive'}</span>
+                </div>
+                <div class="text-xs text-gray-400">${workflow.description || 'No description'}</div>
+                <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
+                    <span>${(workflow.triggers || []).length} triggers • ${(workflow.actions || []).length} actions</span>
+                    <div class="controls" style="gap:0.3rem;">
+                        <button class="secondary small ai-workflow-toggle" data-id="${workflow.id}" data-active="${workflow.active ? '0' : '1'}">${workflow.active ? 'Disable' : 'Enable'}</button>
+                        <button class="danger small ai-workflow-delete" data-id="${workflow.id}">Delete</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    };
+
+    const renderSecurityEvents = () => {
+        if (!elements.securityList) return;
+        if (!state.securityEvents.length) {
+            elements.securityList.textContent = 'No security alerts';
+            return;
+        }
+        elements.securityList.innerHTML = state.securityEvents.map(event => `
+            <div class="list-item">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <strong>${event.title || event.type}</strong>
+                        <div class="text-xs text-gray-400">${event.description}</div>
+                        <div class="text-[0.7rem] text-gray-500">${new Date(event.timestamp).toLocaleString()}</div>
+                    </div>
+                    <div class="text-center">
+                        <span class="text-xs ${event.severity === 'critical' ? 'text-red-500' : event.severity === 'high' ? 'text-orange-500' : event.severity === 'medium' ? 'text-yellow-500' : 'text-green-500'}">${event.severity}</span>
+                        <button class="ai-event-resolve secondary small" data-id="${event.id}" ${event.resolved ? 'disabled' : ''}>${event.resolved ? 'Resolved' : 'Resolve'}</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    };
+
+    const renderRecommendations = () => {
+        if (!elements.recList) return;
+        if (!state.recommendations.length) {
+            elements.recList.textContent = 'No recommendations yet';
+            return;
+        }
+        elements.recList.innerHTML = state.recommendations.map(rec => `
+            <div class="list-item">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <strong>${rec.title}</strong>
+                        <div class="text-xs text-gray-400">${rec.description}</div>
+                        <div class="text-[0.7rem] text-gray-500">${rec.solution}</div>
+                    </div>
+                    <span class="text-xs ${rec.severity === 'high' ? 'text-red-500' : rec.severity === 'medium' ? 'text-yellow-500' : 'text-blue-400'}">${rec.severity}</span>
+                </div>
+            </div>
+        `).join('');
+    };
+
+    const loadAIServices = async () => {
+        if (elements.services) elements.services.textContent = 'Loading services...';
         try {
             const res = await fetch('/api/ai-integration/services');
-            const data = await res.json();
-            servicesEl.innerHTML = data.map(s => `<div class="list-item">${s.name} • ${s.type}</div>`).join('');
+            state.services = (await res.json()).map(service => ({ ...service, status: service.status || 'active' }));
+            renderServices();
         } catch {
-            servicesEl.textContent = 'Failed to load services';
+            if (elements.services) elements.services.textContent = 'Failed to load services';
         }
     };
-    const loadWorkflows = async () => {
-        workflowsEl.textContent = 'Loading...';
+
+    const analyzeFiles = async () => {
+        if (elements.fileTable) elements.fileTable.textContent = 'Analyzing...';
         try {
-            const res = await fetch('/api/ai-integration/workflows');
-            const data = await res.json();
-            workflowsEl.innerHTML = (data || []).map(w => `
-                <div class="list-item">
-                    <div><strong>${w.name}</strong> • ${w.description || ''}</div>
-                    <div class="subtle">Active: ${w.active ? 'yes' : 'no'} • Triggers: ${(w.triggers || []).length} • Actions: ${(w.actions || []).length}</div>
-                    <div class="controls">
-                        <button class="secondary small ai-workflow-toggle" data-id="${w.id}" data-active="${w.active ? '0' : '1'}">${w.active ? 'Disable' : 'Enable'}</button>
-                        <button class="danger small ai-workflow-delete" data-id="${w.id}">Delete</button>
-                    </div>
-                </div>
-            `).join('') || 'No workflows';
+            const res = await fetch('/api/ai-integration/files/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filePaths: ['/home/user/Documents', '/home/user/Downloads', '/home/user/Desktop'] })
+            });
+            state.fileAnalyses = await res.json();
+            renderFileTable();
+            renderOverviewStats();
         } catch {
-            workflowsEl.textContent = 'Failed to load workflows';
+            if (elements.fileTable) elements.fileTable.textContent = 'Analysis failed';
         }
     };
-    const loadEvents = async () => {
-        eventsEl.textContent = 'Loading...';
-        try {
-            const res = await fetch('/api/ai-integration/security/events');
-            const data = await res.json();
-            eventsEl.innerHTML = (data || []).map(ev => `
-                <div class="list-item">
-                    <div><strong>${ev.type}</strong> • ${ev.severity}</div>
-                    <div class="subtle">${ev.description}</div>
-                    <div class="controls">
-                        <button class="secondary small ai-event-resolve" data-id="${ev.id}" ${ev.resolved ? 'disabled' : ''}>${ev.resolved ? 'Resolved' : 'Resolve'}</button>
-                    </div>
-                </div>
-            `).join('') || 'No events';
-        } catch {
-            eventsEl.textContent = 'Failed to load events';
-        }
-    };
-    loadServices();
-    loadWorkflows();
-    loadEvents();
-    win.element.querySelector('#ai-refresh').addEventListener('click', loadServices);
-    win.element.querySelector('#ai-add-service').addEventListener('click', async () => {
-        const name = win.element.querySelector('#ai-service-name').value.trim();
-        const type = win.element.querySelector('#ai-service-type').value.trim() || 'remote';
-        const endpoint = win.element.querySelector('#ai-service-endpoint').value.trim();
-        const apiKey = win.element.querySelector('#ai-service-key').value.trim();
-        await fetch('/api/ai-integration/services', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, type, endpoint, apiKey, capabilities: [] })
-        }).catch(() => {});
-        win.element.querySelector('#ai-service-name').value = '';
-        win.element.querySelector('#ai-service-endpoint').value = '';
-        win.element.querySelector('#ai-service-key').value = '';
-        loadServices();
-    });
-    win.element.querySelector('#ai-send').addEventListener('click', async () => {
-        const prompt = win.element.querySelector('#ai-prompt').value;
-        const out = win.element.querySelector('#ai-response');
-        out.textContent = 'Sending...';
+
+    const performSearch = async () => {
+        const searchInput = win.element.querySelector('#ai-search-input');
+        if (!searchInput) return;
+        const query = searchInput.value.trim();
+        if (!query) return;
+        if (elements.searchResults) elements.searchResults.textContent = 'Searching...';
         try {
             const res = await fetch('/api/ai-integration/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: prompt, limit: 5 })
+                body: JSON.stringify({ query, limit: 20, context: process.env.HOME || '/' })
             });
             const data = await res.json();
-            out.innerHTML = (data.results || []).map(r => `<div class="list-item">${r.name || r.path}</div>`).join('') || 'No results';
+            state.searchResults = data.results || [];
+            renderSearchResults();
+            if (elements.chatResponse) elements.chatResponse.textContent = 'Search completed';
         } catch {
-            out.textContent = 'AI request failed';
+            if (elements.searchResults) elements.searchResults.textContent = 'Search failed';
         }
-    });
-    win.element.querySelector('#ai-workflow-save').addEventListener('click', async () => {
-        const name = win.element.querySelector('#ai-workflow-name').value.trim();
-        if (!name) { alert('Name required'); return; }
-        const description = win.element.querySelector('#ai-workflow-desc').value.trim();
-        const active = win.element.querySelector('#ai-workflow-active').checked;
+    };
+
+    const sendChat = () => {
+        performSearch();
+    };
+
+    const loadWorkflows = async () => {
+        if (elements.workflowsList) elements.workflowsList.textContent = 'Loading workflows...';
+        try {
+            const res = await fetch('/api/ai-integration/workflows');
+            state.workflows = await res.json();
+            renderWorkflows();
+            renderOverviewStats();
+        } catch {
+            if (elements.workflowsList) elements.workflowsList.textContent = 'Failed to load workflows';
+        }
+    };
+
+    const createWorkflow = async () => {
+        const nameInput = win.element.querySelector('#ai-workflow-name');
+        const descInput = win.element.querySelector('#ai-workflow-desc');
+        const activeInput = win.element.querySelector('#ai-workflow-active');
+        if (!nameInput) return;
+        const name = nameInput.value.trim();
+        if (!name) {
+            alert('Workflow name is required');
+            return;
+        }
         await fetch('/api/ai-integration/workflows', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, description, active, actions: [], triggers: [] })
+            body: JSON.stringify({
+                name,
+                description: descInput?.value.trim() || '',
+                active: activeInput?.checked || false,
+                triggers: [],
+                actions: []
+            })
         }).catch(() => {});
-        win.element.querySelector('#ai-workflow-name').value = '';
-        win.element.querySelector('#ai-workflow-desc').value = '';
-        win.element.querySelector('#ai-workflow-active').checked = false;
+        nameInput.value = '';
+        descInput && (descInput.value = '');
+        activeInput && (activeInput.checked = false);
         loadWorkflows();
+    };
+
+    const updateWorkflow = async (id, active) => {
+        await fetch(`/api/ai-integration/workflows/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ active })
+        }).catch(() => {});
+        loadWorkflows();
+    };
+
+    const deleteWorkflow = async (id) => {
+        await fetch(`/api/ai-integration/workflows/${id}`, { method: 'DELETE' }).catch(() => {});
+        loadWorkflows();
+    };
+
+    const loadSecurityEvents = async () => {
+        if (elements.securityList) elements.securityList.textContent = 'Loading events...';
+        try {
+            const res = await fetch('/api/ai-integration/security/events');
+            state.securityEvents = await res.json();
+            renderSecurityEvents();
+            renderOverviewStats();
+        } catch {
+            if (elements.securityList) elements.securityList.textContent = 'Failed to load events';
+        }
+    };
+
+    const resolveSecurityEvent = async (id) => {
+        await fetch(`/api/ai-integration/security/events/${id}/resolve`, { method: 'PUT' }).catch(() => {});
+        loadSecurityEvents();
+    };
+
+    const loadRecommendations = async () => {
+        if (elements.recList) elements.recList.textContent = 'Analyzing...';
+        try {
+            const res = await fetch('/api/ai-integration/performance/recommendations');
+            const data = await res.json();
+            state.recommendations = data.recommendations || [];
+            renderRecommendations();
+            renderOverviewStats();
+        } catch {
+            if (elements.recList) elements.recList.textContent = 'Failed to fetch recommendations';
+        }
+    };
+
+    win.element.querySelector('#ai-analyze')?.addEventListener('click', analyzeFiles);
+    win.element.querySelector('#ai-search-btn')?.addEventListener('click', performSearch);
+    win.element.querySelector('#ai-search-input')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performSearch();
+        }
     });
-    workflowsEl.addEventListener('click', async (e) => {
+    win.element.querySelector('#ai-chat-send')?.addEventListener('click', sendChat);
+    win.element.querySelector('#ai-workflow-save')?.addEventListener('click', createWorkflow);
+    win.element.querySelector('#ai-workflow-new')?.addEventListener('click', () => showTab('workflows'));
+    win.element.querySelector('#ai-security-refresh')?.addEventListener('click', loadSecurityEvents);
+    win.element.querySelector('#ai-performance-refresh')?.addEventListener('click', loadRecommendations);
+
+    elements.workflowsList?.addEventListener('click', (e) => {
         const target = e.target;
-        if (target.classList.contains('ai-workflow-delete')) {
-            await fetch(`/api/ai-integration/workflows/${target.dataset.id}`, { method: 'DELETE' }).catch(() => {});
-            loadWorkflows();
-        }
         if (target.classList.contains('ai-workflow-toggle')) {
-            const active = target.dataset.active === '1';
-            await fetch(`/api/ai-integration/workflows/${target.dataset.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ active })
-            }).catch(() => {});
-            loadWorkflows();
+            updateWorkflow(target.dataset.id, target.dataset.active === '1');
+        }
+        if (target.classList.contains('ai-workflow-delete')) {
+            deleteWorkflow(target.dataset.id);
         }
     });
-    eventsEl.addEventListener('click', async (e) => {
+
+    elements.securityList?.addEventListener('click', (e) => {
         const target = e.target;
         if (target.classList.contains('ai-event-resolve')) {
-            await fetch(`/api/ai-integration/security/events/${target.dataset.id}/resolve`, { method: 'PUT' }).catch(() => {});
-            loadEvents();
+            resolveSecurityEvent(target.dataset.id);
         }
     });
+
+    loadAIServices();
+    analyzeFiles();
+    loadWorkflows();
+    loadSecurityEvents();
+    loadRecommendations();
 }
 
 function openStoragePools() {
@@ -1613,274 +1896,407 @@ function openWiFiManager() {
 }
 
 function openMediaServer() {
+    const tabs = [
+        { id: 'servers', label: 'Servers' },
+        { id: 'libraries', label: 'Libraries' },
+        { id: 'transcoding', label: 'Transcoding' },
+        { id: 'queues', label: 'Queues' }
+    ];
+
     const content = `
-        <div class="app-grid">
-            <div class="app-card">
-                <h3>Server Connections</h3>
-                <div id="media-config-status" class="list">Loading...</div>
-                <div class="controls column">
-                    <select id="media-server-select" class="input">
-                        <option value="jellyfin">Jellyfin</option>
-                        <option value="emby">Emby</option>
-                        <option value="sonarr">Sonarr</option>
-                        <option value="radarr">Radarr</option>
-                        <option value="sabnzbd">Sabnzbd</option>
-                    </select>
-                    <input id="media-url" class="input" placeholder="URL" />
-                    <input id="media-key" class="input" placeholder="API Key" />
-                    <label class="checkbox"><input type="checkbox" id="media-enabled" /> Enabled</label>
-                    <div class="controls">
-                        <button id="media-test" class="secondary">Test</button>
-                        <button id="media-save-config" class="primary">Save Config</button>
-                    </div>
-                </div>
+        <div class="app-card">
+            <div class="controls" id="media-tab-buttons" style="gap:0.5rem;flex-wrap:wrap;">
+                ${tabs.map(tab => `<button class="tab-btn" data-tab="${tab.id}">${tab.label}</button>`).join('')}
             </div>
-            <div class="app-card">
-                <h3>Libraries</h3>
-                <div id="media-libraries" class="list">Loading...</div>
-                <div class="controls">
-                    <button id="media-refresh" class="secondary">Refresh</button>
-                    <button id="media-scan" class="secondary">Scan Libraries</button>
-                </div>
-                <div id="media-items" class="list subtle">Select a library to browse items</div>
+            <div id="media-tab-servers" class="media-tab-section"></div>
+            <div id="media-tab-libraries" class="media-tab-section hidden"></div>
+            <div id="media-tab-transcoding" class="media-tab-section hidden"></div>
+            <div id="media-tab-queues" class="media-tab-section hidden"></div>
+        </div>
+    `;
+
+    const win = windowManager.createWindow('Media Server', content);
+    const tabButtons = win.element.querySelectorAll('#media-tab-buttons .tab-btn');
+    const sections = {
+        servers: win.element.querySelector('#media-tab-servers'),
+        libraries: win.element.querySelector('#media-tab-libraries'),
+        transcoding: win.element.querySelector('#media-tab-transcoding'),
+        queues: win.element.querySelector('#media-tab-queues')
+    };
+
+    const state = {
+        config: null,
+        libraries: [],
+        items: [],
+        transcodeQueue: [],
+        series: [],
+        movies: [],
+        sabnzbd: [],
+        selectedLibrary: null,
+        selectedServer: 'jellyfin'
+    };
+
+    sections.servers.innerHTML = `
+        <div class="controls" style="justify-content:space-between;">
+            <h3>Media Servers</h3>
+            <button id="media-test" class="secondary">Test Endpoint</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+            <select id="media-server-select" class="input" style="min-width:160px;">
+                <option value="jellyfin">Jellyfin</option>
+                <option value="emby">Emby</option>
+                <option value="sonarr">Sonarr</option>
+                <option value="radarr">Radarr</option>
+                <option value="sabnzbd">Sabnzbd</option>
+            </select>
+            <input id="media-url" class="input" placeholder="URL" style="flex:1" />
+            <input id="media-key" class="input" placeholder="API Key" />
+            <label class="checkbox" style="display:flex;align-items:center;">
+                <input type="checkbox" id="media-enabled" />
+                <span style="margin-left:0.3rem;">Enabled</span>
+            </label>
+            <button id="media-save-config" class="primary">Save Configuration</button>
+        </div>
+        <div id="media-config-status" class="list subtle mt-2">Loading configuration...</div>
+    `;
+
+    sections.libraries.innerHTML = `
+        <div class="controls" style="justify-content:space-between;">
+            <h3>Libraries</h3>
+            <div class="controls" style="gap:0.3rem;">
+                <button id="media-refresh" class="secondary">Refresh</button>
+                <button id="media-scan" class="secondary">Scan Libraries</button>
             </div>
-            <div class="app-card">
-                <h3>Transcoding</h3>
-                <div class="controls column">
-                    <input id="media-item-id" class="input" placeholder="Item ID (auto-filled when browsing)" />
-                    <div class="grid-2">
-                        <input id="media-quality" class="input" value="1080p" placeholder="Quality (720p/1080p/4k)" />
-                        <input id="media-format" class="input" value="mp4" placeholder="Format (mp4/mkv)" />
-                    </div>
-                    <div class="grid-2">
-                        <input id="media-video-codec" class="input" value="h264" placeholder="Video codec" />
-                        <input id="media-audio-codec" class="input" value="aac" placeholder="Audio codec" />
-                    </div>
-                    <label class="checkbox"><input type="checkbox" id="media-hw" /> Hardware acceleration</label>
-                    <button id="media-start-transcode" class="primary">Start Transcode</button>
-                </div>
-                <div id="media-transcodes" class="list">Loading...</div>
+        </div>
+        <div id="media-libraries" class="list" style="min-height:200px">Loading...</div>
+        <div id="media-library-items" class="list" style="margin-top:1rem;min-height:160px">Select a library to browse items</div>
+    `;
+
+    sections.transcoding.innerHTML = `
+        <div class="controls" style="justify-content:space-between;">
+            <h3>Transcoding</h3>
+            <button id="media-refresh-transcode" class="secondary">Refresh Queue</button>
+        </div>
+        <div class="controls column" style="gap:0.5rem;">
+            <input id="media-item-id" class="input" placeholder="Item ID" />
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                <input id="media-quality" class="input" placeholder="Quality (e.g. 1080p)" style="flex:1" />
+                <input id="media-format" class="input" placeholder="Format (mp4/mkv)" style="flex:1" />
             </div>
-            <div class="app-card">
-                <h3>Downloads</h3>
-                <div id="media-sonarr" class="list">Sonarr queue loading...</div>
-                <div id="media-radarr" class="list">Radarr queue loading...</div>
-                <div id="media-sab" class="list">Sabnzbd queue loading...</div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                <input id="media-video-codec" class="input" placeholder="Video codec" style="flex:1" />
+                <input id="media-audio-codec" class="input" placeholder="Audio codec" style="flex:1" />
+            </div>
+            <label class="checkbox">
+                <input type="checkbox" id="media-hw" />
+                <span style="margin-left:0.3rem;">Hardware acceleration</span>
+            </label>
+            <button id="media-start-transcode" class="primary">Start Transcode</button>
+        </div>
+        <div id="media-transcode-queue" class="list" style="min-height:200px;margin-top:1rem;">Loading queue...</div>
+    `;
+
+    sections.queues.innerHTML = `
+        <div class="grid" style="gap:1rem;">
+            <div>
+                <h4>Sonarr Series</h4>
+                <div id="media-sonarr" class="list" style="min-height:120px">Loading...</div>
+            </div>
+            <div>
+                <h4>Radarr Movies</h4>
+                <div id="media-radarr" class="list" style="min-height:120px">Loading...</div>
+            </div>
+            <div>
+                <h4>Sabnzbd Queue</h4>
+                <div id="media-sab" class="list" style="min-height:120px">Loading...</div>
             </div>
         </div>
     `;
-    const win = windowManager.createWindow('Media Server', content);
 
-    const configStatus = win.element.querySelector('#media-config-status');
-    const serverSelect = win.element.querySelector('#media-server-select');
-    const urlInput = win.element.querySelector('#media-url');
-    const keyInput = win.element.querySelector('#media-key');
-    const enabledInput = win.element.querySelector('#media-enabled');
-    const libs = win.element.querySelector('#media-libraries');
-    const items = win.element.querySelector('#media-items');
-    const trans = win.element.querySelector('#media-transcodes');
-    const itemInput = win.element.querySelector('#media-item-id');
-    const sonarrEl = win.element.querySelector('#media-sonarr');
-    const radarrEl = win.element.querySelector('#media-radarr');
-    const sabEl = win.element.querySelector('#media-sab');
-    const qualityInput = win.element.querySelector('#media-quality');
-    const formatInput = win.element.querySelector('#media-format');
-    const vCodecInput = win.element.querySelector('#media-video-codec');
-    const aCodecInput = win.element.querySelector('#media-audio-codec');
-    const hwInput = win.element.querySelector('#media-hw');
+    const elements = {
+        configStatus: win.element.querySelector('#media-config-status'),
+        serverSelect: win.element.querySelector('#media-server-select'),
+        urlInput: win.element.querySelector('#media-url'),
+        keyInput: win.element.querySelector('#media-key'),
+        enabledCheckbox: win.element.querySelector('#media-enabled'),
+        libraries: win.element.querySelector('#media-libraries'),
+        libraryItems: win.element.querySelector('#media-library-items'),
+        queueList: win.element.querySelector('#media-transcode-queue'),
+        itemInput: win.element.querySelector('#media-item-id'),
+        qualityInput: win.element.querySelector('#media-quality'),
+        formatInput: win.element.querySelector('#media-format'),
+        videoCodecInput: win.element.querySelector('#media-video-codec'),
+        audioCodecInput: win.element.querySelector('#media-audio-codec'),
+        hwCheckbox: win.element.querySelector('#media-hw'),
+        sonarr: win.element.querySelector('#media-sonarr'),
+        radarr: win.element.querySelector('#media-radarr'),
+        sabnzbd: win.element.querySelector('#media-sab')
+    };
 
-    let configCache = null;
+    const showTab = (tab) => {
+        Object.entries(sections).forEach(([key, section]) => {
+            if (!section) return;
+            section.classList.toggle('hidden', key !== tab);
+        });
+        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+    };
 
-    const renderConfigStatus = (cfg) => {
-        configStatus.innerHTML = `
-            <div class="list-item">Jellyfin: ${cfg?.jellyfin?.enabled ? 'Enabled' : 'Disabled'} ${cfg?.jellyfin?.url || ''}</div>
-            <div class="list-item">Emby: ${cfg?.emby?.enabled ? 'Enabled' : 'Disabled'} ${cfg?.emby?.url || ''}</div>
-            <div class="list-item">Sonarr: ${cfg?.sonarr?.enabled ? 'Enabled' : 'Disabled'} ${cfg?.sonarr?.url || ''}</div>
-            <div class="list-item">Radarr: ${cfg?.radarr?.enabled ? 'Enabled' : 'Disabled'} ${cfg?.radarr?.url || ''}</div>
-            <div class="list-item">Sabnzbd: ${cfg?.sabnzbd?.enabled ? 'Enabled' : 'Disabled'} ${cfg?.sabnzbd?.url || ''}</div>
+    tabButtons.forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
+    showTab('servers');
+
+    const renderConfigStatus = () => {
+        if (!elements.configStatus || !state.config) return;
+        elements.configStatus.innerHTML = `
+            ${['jellyfin','emby','sonarr','radarr','sabnzbd'].map(server => {
+                const cfg = state.config[server];
+                return `<div class="list-item">
+                    <strong>${server}</strong> ${cfg?.enabled ? '<span class="text-green-400">enabled</span>' : '<span class="text-gray-500">disabled</span>'}
+                    <div class="text-xs text-gray-400">${cfg?.url || 'Not configured'}</div>
+                </div>`;
+            }).join('')}
         `;
     };
 
-    const loadConfig = async () => {
-        configStatus.textContent = 'Loading config...';
+    const applyConfigForm = () => {
+        const server = state.selectedServer;
+        const cfg = state.config?.[server] || { url: '', apiKey: '', enabled: false };
+        elements.urlInput.value = cfg.url || '';
+        elements.keyInput.value = cfg.apiKey || '';
+        elements.enabledCheckbox.checked = !!cfg.enabled;
+        elements.serverSelect.value = server;
+    };
+
+    const loadMediaConfig = async () => {
+        elements.configStatus.textContent = 'Loading configuration...';
         try {
             const res = await fetch('/api/media-server/config');
-            const data = await res.json();
-            configCache = data;
-            renderConfigStatus(data);
+            state.config = await res.json();
+            renderConfigStatus();
             applyConfigForm();
         } catch {
-            configStatus.textContent = 'Failed to load config';
+            elements.configStatus.textContent = 'Failed to load configuration';
         }
     };
 
-    const applyConfigForm = () => {
-        const key = serverSelect.value;
-        const cfg = configCache?.[key] || {};
-        urlInput.value = cfg.url || '';
-        keyInput.value = cfg.apiKey || '';
-        enabledInput.checked = !!cfg.enabled;
-    };
-
-    const saveConfig = async () => {
-        const key = serverSelect.value;
-        const updated = { ...(configCache || {}) };
-        updated[key] = {
-            url: urlInput.value.trim(),
-            apiKey: keyInput.value.trim(),
-            enabled: enabledInput.checked
+    const saveMediaConfig = async () => {
+        if (!state.config) return;
+        const server = state.selectedServer;
+        state.config[server] = {
+            ...state.config[server],
+            url: elements.urlInput.value.trim(),
+            apiKey: elements.keyInput.value.trim(),
+            enabled: !!elements.enabledCheckbox.checked
         };
         await fetch('/api/media-server/config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updated)
+            body: JSON.stringify(state.config)
         }).catch(() => {});
-        await loadConfig();
+        loadMediaConfig();
     };
 
-    const testConnection = async () => {
-        const key = serverSelect.value;
+    const testMediaServer = async () => {
+        const server = state.selectedServer;
+        const payload = {
+            url: elements.urlInput.value.trim(),
+            apiKey: elements.keyInput.value.trim(),
+            enabled: !!elements.enabledCheckbox.checked
+        };
         try {
-            const res = await fetch(`/api/media-server/test/${key}`, {
+            const res = await fetch(`/api/media-server/test/${server}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: urlInput.value.trim(), apiKey: keyInput.value.trim(), enabled: enabledInput.checked })
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
-            alert(data.success ? `Connected (${data.version || 'ok'})` : `Failed: ${data.error || 'unknown error'}`);
-        } catch (err) {
-            alert(`Test failed: ${err.message || err}`);
+            alert(data.success ? `Test succeeded: ${data.version || 'ok'}` : `Test failed: ${data.error || 'unknown'}`);
+        } catch {
+            alert('Test failed');
         }
+    };
+
+    const renderLibraries = () => {
+        if (!elements.libraries) return;
+        if (!state.libraries.length) {
+            elements.libraries.textContent = 'No libraries configured';
+            return;
+        }
+        elements.libraries.innerHTML = state.libraries.map(lib => `
+            <div class="list-item media-library" data-id="${lib.libraryId}" data-server="${lib.server}">
+                <div class="flex justify-between">
+                    <strong>${lib.name}</strong>
+                    <span class="text-xs text-gray-400">${lib.type}</span>
+                </div>
+                <div class="subtle">${lib.path}</div>
+                <div class="text-xs text-gray-500">Server: ${lib.server}</div>
+            </div>
+        `).join('');
     };
 
     const loadLibraries = async () => {
-        libs.textContent = 'Loading...';
+        if (elements.libraries) elements.libraries.textContent = 'Loading...';
         try {
             const res = await fetch('/api/media-server/libraries');
-            const data = await res.json();
-            libs.innerHTML = data.map(l => `
-                <div class="list-item media-library" data-id="${l.libraryId}" data-server="${l.server}">
-                    <div><strong>${l.name}</strong> • ${l.type}</div>
-                    <div class="subtle">${l.path}</div>
-                </div>
-            `).join('') || 'No libraries';
+            state.libraries = await res.json();
+            renderLibraries();
         } catch {
-            libs.textContent = 'Failed to load';
+            if (elements.libraries) elements.libraries.textContent = 'Failed to load libraries';
         }
     };
 
-    const loadItems = async (libraryId, server) => {
-        items.textContent = 'Loading items...';
+    const renderLibraryItems = (items) => {
+        if (!elements.libraryItems) return;
+        if (!items.length) {
+            elements.libraryItems.textContent = 'No items found';
+            return;
+        }
+        elements.libraryItems.innerHTML = items.map(item => `
+            <div class="list-item media-item" data-id="${item.id}">
+                <div><strong>${item.name}</strong></div>
+                <div class="subtle">${item.type} • ${item.metadata?.year || ''}</div>
+                <div class="controls" style="justify-content:flex-end;">
+                    <button class="secondary small media-select-item" data-id="${item.id}">Use ID</button>
+                </div>
+            </div>
+        `).join('');
+    };
+
+    const loadLibraryItems = async (library) => {
+        if (!library || !library.libraryId) return;
+        if (elements.libraryItems) elements.libraryItems.textContent = 'Loading items...';
         try {
-            const res = await fetch(`/api/media-server/libraries/${libraryId}/items?server=${server}`);
+            const res = await fetch(`/api/media-server/libraries/${library.libraryId}/items?server=${library.server}`);
             const data = await res.json();
-            items.innerHTML = data.map(i => `
-                <div class="list-item media-item" data-id="${i.id}">
-                    <div><strong>${i.name}</strong> • ${i.type || ''}</div>
-                    <div class="subtle">${i.metadata?.year || ''} ${i.metadata?.overview || ''}</div>
-                    <div class="subtle">Duration: ${i.duration || '--'}s • Size: ${i.size || 0}</div>
-                    <button class="secondary small media-transcode" data-id="${i.id}">Transcode</button>
-                </div>
-            `).join('') || 'No items';
+            state.items = data;
+            renderLibraryItems(data);
         } catch {
-            items.textContent = 'Failed to load items';
+            if (elements.libraryItems) elements.libraryItems.textContent = 'Failed to load items';
         }
     };
 
-    const loadTranscodes = async () => {
-        trans.textContent = 'Loading...';
+    const renderTranscodeQueue = () => {
+        if (!elements.queueList) return;
+        if (!state.transcodeQueue.length) {
+            elements.queueList.textContent = 'No jobs in queue';
+            return;
+        }
+        elements.queueList.innerHTML = state.transcodeQueue.map(job => `
+            <div class="list-item">
+                <div class="flex justify-between">
+                    <strong>${job.itemId}</strong>
+                    <span class="text-xs text-gray-400">${job.status}</span>
+                </div>
+                <div class="text-xs text-gray-400">Progress: ${job.progress}% • Engine: ${job.settings?.engine || 'ffmpeg'}</div>
+            </div>
+        `).join('');
+    };
+
+    const loadTranscodeQueue = async () => {
+        if (elements.queueList) elements.queueList.textContent = 'Loading queue...';
         try {
             const res = await fetch('/api/media-server/transcoding/queue');
             const data = await res.json();
-            const queue = data.queue || [];
-            const active = data.active ? [data.active] : [];
-            const all = active.concat(queue);
-            trans.innerHTML = all.map(t => `
-                <div class="list-item">
-                    <div><strong>${t.itemId}</strong> • ${t.status || ''}</div>
-                    <div class="subtle">Progress: ${t.progress || 0}% • Engine: ${t.settings?.engine || ''}</div>
-                </div>
-            `).join('') || 'No jobs';
+            state.transcodeQueue = [...(data.active ? [data.active] : []), ...(data.queue || [])];
+            renderTranscodeQueue();
         } catch {
-            trans.textContent = 'Failed to load';
+            if (elements.queueList) elements.queueList.textContent = 'Failed to load queue';
         }
+    };
+
+    const renderQueueItems = (container, items) => {
+        if (!container) return;
+        if (!items.length) {
+            container.textContent = 'No entries';
+            return;
+        }
+        container.innerHTML = items.slice(0, 8).map(item => `
+            <div class="list-item">
+                <div><strong>${item.title || item.filename || 'Entry'}</strong></div>
+                <div class="text-xs text-gray-400">${item.status || item.progress || ''}</div>
+            </div>
+        `).join('');
     };
 
     const loadQueues = async () => {
-        sonarrEl.textContent = 'Loading Sonarr...';
-        radarrEl.textContent = 'Loading Radarr...';
-        sabEl.textContent = 'Loading Sabnzbd...';
+        renderQueueItems(elements.sonarr, []);
+        renderQueueItems(elements.radarr, []);
+        renderQueueItems(elements.sabnzbd, []);
         try {
-            const seriesRes = await fetch('/api/media-server/sonarr/series');
-            const series = await seriesRes.json();
-            sonarrEl.innerHTML = series.slice(0, 10).map(s => `<div class="list-item">${s.title || s.name} • ${s.status || ''}</div>`).join('') || 'No series';
+            const [sonarrRes, radarrRes, sabRes] = await Promise.all([
+                fetch('/api/media-server/sonarr/series'),
+                fetch('/api/media-server/radarr/movies'),
+                fetch('/api/media-server/sabnzbd/queue')
+            ]);
+            const [series, movies, sabData] = await Promise.all([sonarrRes.json(), radarrRes.json(), sabRes.json()]);
+            state.series = series;
+            state.movies = movies;
+            state.sabnzbd = sabData.queue || [];
+            renderQueueItems(elements.sonarr, series);
+            renderQueueItems(elements.radarr, movies);
+            renderQueueItems(elements.sabnzbd, state.sabnzbd);
         } catch {
-            sonarrEl.textContent = 'Sonarr unavailable';
-        }
-        try {
-            const moviesRes = await fetch('/api/media-server/radarr/movies');
-            const movies = await moviesRes.json();
-            radarrEl.innerHTML = movies.slice(0, 10).map(m => `<div class="list-item">${m.title || ''} • ${m.status || ''}</div>`).join('') || 'No movies';
-        } catch {
-            radarrEl.textContent = 'Radarr unavailable';
-        }
-        try {
-            const sabRes = await fetch('/api/media-server/sabnzbd/queue');
-            const sab = await sabRes.json();
-            sabEl.innerHTML = (sab?.queue || []).map(q => `<div class="list-item">${q.name || ''} • ${q.status || ''} • ${q.progress || 0}%</div>`).join('') || 'No downloads';
-        } catch {
-            sabEl.textContent = 'Sabnzbd unavailable';
+            if (elements.sonarr) elements.sonarr.textContent = 'Failed to load';
+            if (elements.radarr) elements.radarr.textContent = 'Failed to load';
+            if (elements.sabnzbd) elements.sabnzbd.textContent = 'Failed to load';
         }
     };
 
-    win.element.querySelector('#media-refresh').addEventListener('click', () => { loadLibraries(); loadTranscodes(); });
-    win.element.querySelector('#media-scan').addEventListener('click', async () => {
+    const startTranscode = async () => {
+        const itemId = elements.itemInput?.value.trim();
+        if (!itemId) {
+            alert('Item ID required');
+            return;
+        }
+        const payload = {
+            quality: elements.qualityInput?.value.trim() || '1080p',
+            format: elements.formatInput?.value.trim() || 'mp4',
+            videoCodec: elements.videoCodecInput?.value.trim() || 'h264',
+            audioCodec: elements.audioCodecInput?.value.trim() || 'aac',
+            hardwareAcceleration: !!elements.hwCheckbox?.checked,
+            engine: 'ffmpeg'
+        };
+        await fetch(`/api/media-server/transcode/${itemId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).catch(() => {});
+        loadTranscodeQueue();
+    };
+
+    elements.serverSelect?.addEventListener('change', (e) => {
+        state.selectedServer = e.target.value;
+        applyConfigForm();
+    });
+    win.element.querySelector('#media-test')?.addEventListener('click', testMediaServer);
+    win.element.querySelector('#media-save-config')?.addEventListener('click', saveMediaConfig);
+    win.element.querySelector('#media-refresh')?.addEventListener('click', loadLibraries);
+    win.element.querySelector('#media-scan')?.addEventListener('click', async () => {
         await fetch('/api/media-server/scan', { method: 'POST' }).catch(() => {});
         loadLibraries();
     });
-    win.element.querySelector('#media-start-transcode').addEventListener('click', async () => {
-        const id = itemInput.value.trim();
-        if (!id) { alert('Item ID required'); return; }
-        await fetch(`/api/media-server/transcode/${id}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                quality: qualityInput.value || '1080p',
-                format: formatInput.value || 'mp4',
-                videoCodec: vCodecInput.value || 'h264',
-                audioCodec: aCodecInput.value || 'aac',
-                hardwareAcceleration: hwInput.checked,
-                engine: 'ffmpeg'
-            })
-        }).catch(() => {});
-        loadTranscodes();
-    });
+    win.element.querySelector('#media-refresh-transcode')?.addEventListener('click', loadTranscodeQueue);
+    win.element.querySelector('#media-start-transcode')?.addEventListener('click', startTranscode);
 
-    libs.addEventListener('click', (e) => {
+    elements.libraries?.addEventListener('click', (e) => {
         const target = e.target.closest('.media-library');
         if (!target) return;
-        loadItems(target.dataset.id, target.dataset.server);
+        const library = state.libraries.find(lib => lib.libraryId === target.dataset.id && lib.server === target.dataset.server);
+        if (!library) return;
+        state.selectedLibrary = library;
+        loadLibraryItems(library);
+        showTab('transcoding');
     });
 
-    items.addEventListener('click', (e) => {
-        const target = e.target;
-        if (target.classList.contains('media-transcode')) {
-            const id = target.dataset.id;
-            itemInput.value = id;
-        }
-        const itemRow = e.target.closest('.media-item');
-        if (itemRow) {
-            itemInput.value = itemRow.dataset.id;
-        }
+    elements.libraryItems?.addEventListener('click', (e) => {
+        const target = e.target.closest('.media-select-item');
+        if (!target) return;
+        elements.itemInput.value = target.dataset.id;
+        showTab('transcoding');
     });
 
-    serverSelect.addEventListener('change', applyConfigForm);
-    win.element.querySelector('#media-test').addEventListener('click', testConnection);
-    win.element.querySelector('#media-save-config').addEventListener('click', saveConfig);
-
-    loadConfig();
+    loadMediaConfig();
     loadLibraries();
-    loadTranscodes();
+    loadTranscodeQueue();
     loadQueues();
 }
 
