@@ -7,6 +7,7 @@ class WindowManager {
         this.activeWindow = null;
         this.mode = 'tiling'; // 'tiling' or 'floating'
         this.desktopArea = document.getElementById('desktop-area');
+        this.runningAppsContainer = document.getElementById('running-apps');
     }
 
     createWindow(title, content) {
@@ -28,6 +29,7 @@ class WindowManager {
         this.windows.push(window);
         this.renderWindow(window);
         this.focusWindow(window.id);
+        this.updateRunningApps();
 
         if (this.mode === 'tiling') {
             this.applyTiling();
@@ -190,7 +192,11 @@ class WindowManager {
             window.element.style.zIndex = window.zIndex;
             window.element.classList.add('focused');
             this.activeWindow = window;
+            if (window.isMinimized) {
+                this.minimizeWindow(window.id); // Unminimize
+            }
         }
+        this.updateRunningApps();
     }
 
     minimizeWindow(windowId) {
@@ -201,6 +207,7 @@ class WindowManager {
             if (this.mode === 'tiling') {
                 this.applyTiling();
             }
+            this.updateRunningApps();
         }
     }
 
@@ -224,6 +231,41 @@ class WindowManager {
             if (this.mode === 'tiling') {
                 this.applyTiling();
             }
+            this.updateRunningApps();
+        }
+    }
+
+    updateRunningApps() {
+        if (!this.runningAppsContainer) return;
+        this.runningAppsContainer.innerHTML = '';
+        this.windows.forEach(window => {
+            const button = document.createElement('button');
+            button.className = 'app-button';
+            if (this.activeWindow && this.activeWindow.id === window.id) {
+                button.classList.add('focused');
+            }
+            if (window.isMinimized) {
+                button.classList.add('minimized');
+            }
+            button.dataset.windowId = window.id;
+            button.innerHTML = `
+                <span class="icon">${this.getIconForApp(window.title)}</span>
+                <span>${window.title}</span>
+            `;
+            button.addEventListener('click', () => this.focusWindow(window.id));
+            this.runningAppsContainer.appendChild(button);
+        });
+    }
+
+    getIconForApp(title) {
+        switch (title) {
+            case 'Terminal': return '📟';
+            case 'File Manager': return '📂';
+            case 'Notes': return '📝';
+            case 'Text Editor': return '💻';
+            case 'Containers': return '🐳';
+            case 'Control Panel': return '⚙️';
+            default: return '📦';
         }
     }
 

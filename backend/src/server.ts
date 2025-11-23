@@ -3,6 +3,8 @@ import http from 'http';
 import { WebSocketServer } from 'ws';
 import cors from 'cors';
 import path from 'path';
+import os from 'os';
+import pty from 'node-pty';
 import fsRoutes from './routes/fs';
 import systemRoutes from './routes/system';
 import appRoutes from './routes/apps';
@@ -33,11 +35,32 @@ app.use('/api/containers', containersRoutes);
 wss.on('connection', (ws) => {
     console.log('Client connected');
 
-    ws.on('message', (message) => {
-        console.log('Received:', message.toString());
+    const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+    const ptyProcess = pty.spawn(shell, [], {
+        name: 'xterm-color',
+        cols: 80,
+        rows: 30,
+        cwd: process.env.HOME,
+        env: process.env
     });
 
-    ws.send(JSON.stringify({ type: 'CONNECTED', message: 'Welcome to Web Desktop' }));
+    ptyProcess.onData(data => {
+        ws.send(data);
+    });
+
+    ws.on('message', (message) => {
+        ptyProcess.write(message.toString());
+    });
+
+    ws.on('close', () => {
+        console.log('Client disconnected');
+        ptyProcess.kill();
+    });
+
+    ptyProcess.onExit(({ exitCode, signal }) => {
+        console.log(`Pty process exited with code ${exitCode} and signal ${signal}`);
+        ws.close();
+    });
 });
 
 const PORT = process.env.PORT || 3001;

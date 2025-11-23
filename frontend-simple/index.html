@@ -14,30 +14,22 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js"></script>
     <!-- Monaco Editor -->
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+    <!-- xterm.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@4.18.0/css/xterm.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xterm@4.18.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.js"></script>
 </head>
 
 <body>
     <div id="desktop">
         <div id="topbar">
             <div class="topbar-left">
-                <span class="logo">Omarchy Web</span>
+                <button id="launcher-button" class="floating-button">
+                    <span class="icon">🚀</span>
+                    <span>Apps</span>
+                </button>
                 <div class="separator"></div>
-                <button class="app-button" data-app="terminal">
-                    <span class="icon">📟</span>
-                    <span>Terminal</span>
-                </button>
-                <button class="app-button" data-app="filemanager">
-                    <span class="icon">📂</span>
-                    <span>Files</span>
-                </button>
-                <button class="app-button" data-app="notes">
-                    <span class="icon">📝</span>
-                    <span>Notes</span>
-                </button>
-                <button class="app-button" data-app="editor">
-                    <span class="icon">💻</span>
-                    <span>Editor</span>
-                </button>
+                <div id="running-apps"></div>
             </div>
             <div class="topbar-right">
                 <span id="system-info">CPU: 0%</span>
@@ -48,10 +40,6 @@
         <div id="desktop-area"></div>
 
         <div class="floating-buttons">
-            <button id="launcher-button" class="floating-button">
-                <span class="icon">🚀</span>
-                <span>Apps</span>
-            </button>
             <button id="settings-button" class="floating-button">
                 <span class="icon">⚙️</span>
                 <span>Settings</span>

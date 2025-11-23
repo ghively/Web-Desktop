@@ -14,12 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     systemMonitor.init();
 
-    document.querySelectorAll('.app-button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            launchApp(btn.dataset.app);
-        });
-    });
-
     const modeToggle = document.getElementById('mode-toggle');
     const modeText = document.getElementById('mode-text');
     if (modeToggle) {
@@ -396,7 +390,29 @@ function launchApp(appId) {
             break;
         case 'terminal':
             title = 'Terminal';
-            content = '<div style="font-family: monospace; color: #a6e3a1;">user@omarchy:~$ <span style="animation: blink 1s infinite;">_</span></div>';
+            const terminalId = `terminal-container-${Date.now()}`;
+            content = `<div id="${terminalId}" style="height: 100%; width: 100%;"></div>`;
+            setTimeout(() => {
+                const term = new Terminal({
+                    cursorBlink: true,
+                    theme: {
+                        background: '#1e1e2e',
+                        foreground: '#cdd6f4',
+                        cursor: '#f5e0dc',
+                    }
+                });
+                const fitAddon = new FitAddon.FitAddon();
+                term.loadAddon(fitAddon);
+                term.open(document.getElementById(terminalId));
+                fitAddon.fit();
+
+                const ws = new WebSocket(`ws://${window.location.host}`);
+                ws.onopen = () => {
+                    term.onData(data => ws.send(data));
+                    ws.onmessage = (event) => term.write(event.data);
+                    ws.onclose = () => term.write('\\r\\nConnection closed.');
+                };
+            }, 100);
             break;
         default:
             title = appId;
