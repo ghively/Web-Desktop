@@ -45,6 +45,8 @@ interface MediaServerConfig {
     defaultQuality: string;
     outputPath: string;
     ffmpegPath: string;
+    handbrakePath: string;
+    defaultEngine: 'ffmpeg' | 'handbrake';
   };
   libraries: MediaLibrary[];
 }
@@ -112,6 +114,10 @@ interface TranscodingSettings {
   bitrate: number;
   hardwareAcceleration: boolean;
   customArgs?: string[];
+  engine: 'ffmpeg' | 'handbrake';
+  preset?: string; // HandBrake preset
+  tune?: string; // HandBrake tune
+  format?: string; // Output container format
 }
 
 interface DownloadItem {
@@ -147,7 +153,9 @@ class MediaServerManager extends EventEmitter {
         hardwareAcceleration: false,
         defaultQuality: '1080p',
         outputPath: '/tmp/media-transcode',
-        ffmpegPath: 'ffmpeg'
+        ffmpegPath: 'ffmpeg',
+        handbrakePath: 'HandBrakeCLI',
+        defaultEngine: 'ffmpeg'
       },
       libraries: []
     };
@@ -386,8 +394,10 @@ class MediaServerManager extends EventEmitter {
 
       job.inputPath = item.path;
 
-      // Build FFmpeg command
-      const cmd = this.buildFFmpegCommand(job);
+      // Build command based on engine
+      const cmd = job.settings.engine === 'handbrake'
+        ? this.buildHandBrakeCommand(job)
+        : this.buildFFmpegCommand(job);
 
       // Execute transcoding
       await execAsync(cmd);
@@ -440,6 +450,61 @@ class MediaServerManager extends EventEmitter {
     }
 
     return `${this.config.transcoding.ffmpegPath} ${args.join(' ')}`;
+  }
+
+  private buildHandBrakeCommand(job: TranscodingJob): string {
+    const { settings } = job;
+    const args = [
+      '-i', job.inputPath,
+      '-o', job.outputPath,
+      '--encoder', settings.videoCodec,
+      '--audio-codec', settings.audioCodec,
+      '--quality', String(Math.floor(settings.bitrate / 1000)), // Convert kbps to HandBrake quality scale
+      '--width', this.getResolutionWidth(settings.resolution),
+      '--height', this.getResolutionHeight(settings.resolution)
+    ];
+
+    if (settings.hardwareAcceleration) {
+      args.unshift('--hwaccel');
+    }
+
+    if (settings.preset) {
+      args.push('--preset', settings.preset);
+    }
+
+    if (settings.tune) {
+      args.push('--tune', settings.tune);
+    }
+
+    if (settings.format) {
+      args.push('--format', settings.format);
+    }
+
+    if (settings.customArgs) {
+      args.push(...settings.customArgs);
+    }
+
+    return `${this.config.transcoding.handbrakePath} ${args.join(' ')}`;
+  }
+
+  private getResolutionWidth(resolution: string): string {
+    const widths: Record<string, string> = {
+      '4k': '3840',
+      '1080p': '1920',
+      '720p': '1280',
+      '480p': '854'
+    };
+    return widths[resolution] || '1280';
+  }
+
+  private getResolutionHeight(resolution: string): string {
+    const heights: Record<string, string> = {
+      '4k': '2160',
+      '1080p': '1080',
+      '720p': '720',
+      '480p': '480'
+    };
+    return heights[resolution] || '720';
   }
 
   private getScaleFilter(resolution: string): string {
@@ -687,5 +752,68 @@ router.get('/sabnzbd/queue', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Get available HandBrake presets
+router.get('/handbrake/presets', async (req, res) => {
+  try {
+    const { handbrakePath } = mediaServerManager.getConfig().transcoding;
+
+    try {
+      const { stdout } = await execAsync(`${handbrakePath} --preset-list`);
+      const presets = parseHandBrakePresets(stdout);
+      res.json(presets);
+    } catch (error) {
+      // Fallback to common presets if command fails
+      const commonPresets = [
+        { name: 'Very Fast 1080p30', description: 'Fast encoding, good quality' },
+        { name: 'Fast 1080p30', description: 'Balanced speed and quality' },
+        { name: 'HQ 1080p30 Surround', description: 'High quality with surround audio' },
+        { name: 'Super HQ 1080p30 Surround', description: 'Best quality with surround audio' },
+        { name: 'Mobile 480p30', description: 'Optimized for mobile devices' }
+      ];
+      res.json(commonPresets);
+    }
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Test HandBrake availability
+router.get('/handbrake/test', async (req, res) => {
+  try {
+    const { handbrakePath } = mediaServerManager.getConfig().transcoding;
+    const { stdout } = await execAsync(`${handbrakePath} --version`);
+    res.json({
+      success: true,
+      version: stdout.split('\n')[0] || 'unknown',
+      path: handbrakePath
+    });
+  } catch (error: any) {
+    res.json({
+      success: false,
+      error: error.message,
+      path: mediaServerManager.getConfig().transcoding.handbrakePath
+    });
+  }
+});
+
+function parseHandBrakePresets(output: string): Array<{ name: string; description: string }> {
+  const lines = output.split('\n');
+  const presets: Array<{ name: string; description: string }> = [];
+
+  for (const line of lines) {
+    if (line.includes('+') && !line.includes('Favorites')) {
+      const match = line.match(/^\s*\+\s*([^:]+):\s*(.+)$/);
+      if (match) {
+        presets.push({
+          name: match[1].trim(),
+          description: match[2].trim()
+        });
+      }
+    }
+  }
+
+  return presets;
+}
 
 export default router;
