@@ -437,6 +437,71 @@ function openPowerManagement() {
     });
 }
 
+function openMonitoring() {
+    const content = `
+        <div class="app-grid">
+            <div class="app-card">
+                <h3>Summary</h3>
+                <div id="mon-summary" class="list">Loading...</div>
+                <button id="mon-refresh" class="secondary">Refresh</button>
+            </div>
+            <div class="app-card">
+                <h3>Performance</h3>
+                <div id="mon-performance" class="list">Loading...</div>
+            </div>
+            <div class="app-card">
+                <h3>Disk IO</h3>
+                <div id="mon-disk" class="list">Loading...</div>
+            </div>
+        </div>
+    `;
+    const win = windowManager.createWindow('Monitoring', content);
+    const summaryEl = win.element.querySelector('#mon-summary');
+    const perfEl = win.element.querySelector('#mon-performance');
+    const diskEl = win.element.querySelector('#mon-disk');
+
+    const loadSummary = async () => {
+        summaryEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/system-monitoring');
+            const data = await res.json();
+            summaryEl.innerHTML = `
+                <div class="list-item">CPU: ${data.cpu?.usage ?? '--'}%</div>
+                <div class="list-item">Memory: ${data.mem?.used ?? '--'} / ${data.mem?.total ?? '--'}</div>
+                <div class="list-item">Load: ${data.load?.avg1 ?? '--'}, ${data.load?.avg5 ?? '--'}, ${data.load?.avg15 ?? '--'}</div>
+            `;
+        } catch {
+            summaryEl.textContent = 'Failed to load';
+        }
+    };
+
+    const loadPerformance = async () => {
+        perfEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/system-monitoring/performance');
+            const data = await res.json();
+            perfEl.innerHTML = data.map(p => `<div class="list-item">${p.type}: ${p.value}${p.unit || ''}</div>`).join('') || 'No metrics';
+        } catch {
+            perfEl.textContent = 'Failed to load';
+        }
+    };
+
+    const loadDisk = async () => {
+        diskEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/system-monitoring/disk-io');
+            const data = await res.json();
+            diskEl.innerHTML = data.map(d => `<div class="list-item">${d.device || ''}: R ${d.readBytes || 0} B • W ${d.writeBytes || 0} B</div>`).join('') || 'No disk data';
+        } catch {
+            diskEl.textContent = 'Failed to load';
+        }
+    };
+
+    const refresh = () => { loadSummary(); loadPerformance(); loadDisk(); };
+    refresh();
+    win.element.querySelector('#mon-refresh').addEventListener('click', refresh);
+}
+
 function openProxyManager() {
     const content = `
         <div class="app-card">
@@ -491,6 +556,11 @@ function openSharesManager() {
                 <button id="shares-create" class="primary">Create</button>
                 <button id="shares-refresh" class="secondary">Refresh</button>
             </div>
+            <div class="controls hidden" id="shares-smbuser-form">
+                <input id="smb-username" class="input" placeholder="SMB username" />
+                <input id="smb-password" type="password" class="input" placeholder="Password (Linux user must exist)" />
+                <button id="smb-user-create" class="primary">Add SMB User</button>
+            </div>
         </div>
     `;
     const win = windowManager.createWindow('Shares Manager', content);
@@ -498,6 +568,9 @@ function openSharesManager() {
     const smbEl = win.element.querySelector('#shares-smb');
     const smbUsersEl = win.element.querySelector('#shares-smbusers');
     const tabs = win.element.querySelectorAll('.tab-button');
+    const smbUserForm = win.element.querySelector('#shares-smbuser-form');
+    const smbUserInput = win.element.querySelector('#smb-username');
+    const smbPassInput = win.element.querySelector('#smb-password');
     const nameInput = win.element.querySelector('#share-name');
     const pathInput = win.element.querySelector('#share-path');
     const typeSelect = win.element.querySelector('#share-type');
@@ -542,9 +615,10 @@ function openSharesManager() {
         smbEl.classList.add('hidden');
         smbUsersEl.classList.add('hidden');
         win.element.querySelector('#shares-form').classList.add('hidden');
+        smbUserForm.classList.add('hidden');
         if (selected === 'nfs') { nfsEl.classList.remove('hidden'); win.element.querySelector('#shares-form').classList.remove('hidden'); }
         if (selected === 'smb') { smbEl.classList.remove('hidden'); win.element.querySelector('#shares-form').classList.remove('hidden'); }
-        if (selected === 'smbusers') { smbUsersEl.classList.remove('hidden'); }
+        if (selected === 'smbusers') { smbUsersEl.classList.remove('hidden'); smbUserForm.classList.remove('hidden'); }
     }));
 
     win.element.querySelector('#shares-refresh').addEventListener('click', refreshAll);
@@ -577,6 +651,19 @@ function openSharesManager() {
             await fetch(endpoint, { method: 'DELETE' }).catch(() => {});
             refreshAll();
         }
+    });
+    win.element.querySelector('#smb-user-create').addEventListener('click', async () => {
+        const username = smbUserInput.value.trim();
+        const password = smbPassInput.value;
+        if (!username || !password) { alert('Username and password required'); return; }
+        await fetch('/api/shares/smb/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        }).catch(() => {});
+        smbUserInput.value = '';
+        smbPassInput.value = '';
+        loadSmbUsers();
     });
 }
 
@@ -1001,6 +1088,7 @@ async function fetchInstalledApps() {
             { name: 'Media Server', icon: '🎬', id: 'media', description: 'Libraries and transcoding' },
             { name: 'Home Assistant', icon: '🏠', id: 'home-assistant', description: 'Smart home status' },
             { name: 'Power', icon: '🔋', id: 'power', description: 'Power controls and status' },
+            { name: 'Monitoring', icon: '📊', id: 'monitoring', description: 'System monitoring dashboard' },
             ...data.apps.map(app => ({
                 name: app.name,
                 icon: app.icon || '🖥️',
@@ -1159,6 +1247,9 @@ function launchApp(appId) {
             return;
         case 'power':
             openPowerManagement();
+            return;
+        case 'monitoring':
+            openMonitoring();
             return;
         default:
             title = appId;
