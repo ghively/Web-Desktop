@@ -3,6 +3,7 @@ let selectedIndex = 0;
 let currentTab = 'installed';
 let installedApps = [];
 let availableApps = [];
+let fuse = null; // Fuse.js instance for fuzzy search
 
 document.addEventListener('DOMContentLoaded', () => {
     updateClock();
@@ -131,6 +132,13 @@ function openSettings() {
     if (panel) panel.classList.remove('hidden');
 }
 
+function isAppRunning(appName) {
+    // Check if a window with this app name is currently open
+    return windowManager.windows.some(win =>
+        win.title.toLowerCase() === appName.toLowerCase()
+    );
+}
+
 function renderLauncherApps(filter = '') {
     const appsContainer = document.getElementById('launcher-apps-list');
     if (!appsContainer) return;
@@ -155,17 +163,78 @@ function renderLauncherApps(filter = '') {
     // Limit results to top 50 to prevent lag
     filtered = filtered.slice(0, 50);
 
-    appsContainer.innerHTML = filtered.map((app, i) => `
-        <button class="launcher-app-item ${i === selectedIndex ? 'selected' : ''}" data-app-id="${app.id || app.name}">
-            <span class="icon">${app.icon || '📦'}</span>
-            <span>${app.name}${app.description ? '<br><small style="color: var(--subtext0);">' + app.description + '</small>' : ''}</span>
-            ${currentTab === 'available' ? `
-                <div class="app-actions">
-                    <button class="app-action-btn install-btn" data-package="${app.name}">Install</button>
-                </div>
-            ` : ''}
-        </button>
-    `).join('');
+    // Use fuzzy search if filter exists and Fuse.js is available
+    let filtered = [];
+    if (filter && filter.trim() && typeof Fuse !== 'undefined') {
+        // Initialize or update Fuse instance
+        if (!fuse || fuse._docs !== apps) {
+            fuse = new Fuse(apps, {
+                keys: [
+                    { name: 'name', weight: 2 },
+                    { name: 'description', weight: 1 },
+                    { name: 'categories', weight: 0.5 }
+                ],
+                threshold: 0.4,
+                includeScore: true,
+                minMatchCharLength: 1
+            });
+        }
+        filtered = fuse.search(filter).map(result => result.item);
+    } else {
+        // Fallback to simple filtering if no query or Fuse.js not available
+        filtered = filter
+            ? apps.filter(app => app.name.toLowerCase().includes(filter.toLowerCase()))
+            : apps;
+    }
+
+    // Separate running apps from available apps
+    const runningApps = filtered.filter(app => isAppRunning(app.name));
+    const notRunningApps = filtered.filter(app => !isAppRunning(app.name));
+
+    // Build HTML for running apps section
+    let html = '';
+
+    if (runningApps.length > 0) {
+        html += '<div style="padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 600; color: var(--overlay0); text-transform: uppercase; letter-spacing: 0.05em;">Running Apps</div>';
+        html += runningApps.map((app, i) => `
+            <button class="launcher-app-item ${i === selectedIndex ? 'selected' : ''}" data-app-id="${app.id || app.name}">
+                <span class="icon">${app.icon || '📦'}</span>
+                <span style="color: var(--green); font-size: 0.8em; margin-right: 0.5rem;">▶</span>
+                <span style="flex: 1;">${app.name}${app.description ? '<br><small style="color: var(--subtext0);">' + app.description + '</small>' : ''}</span>
+                ${currentTab === 'available' ? `
+                    <div class="app-actions">
+                        <button class="app-action-btn install-btn" data-package="${app.name}">Install</button>
+                    </div>
+                ` : ''}
+            </button>
+        `).join('');
+    }
+
+    if (notRunningApps.length > 0) {
+        if (runningApps.length > 0) {
+            html += '<div style="padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 600; color: var(--overlay0); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.5rem;">Available Apps</div>';
+        }
+        html += notRunningApps.map((app, i) => {
+            const globalIndex = runningApps.length + i;
+            return `
+                <button class="launcher-app-item ${globalIndex === selectedIndex ? 'selected' : ''}" data-app-id="${app.id || app.name}">
+                    <span class="icon">${app.icon || '📦'}</span>
+                    <span style="flex: 1;">${app.name}${app.description ? '<br><small style="color: var(--subtext0);">' + app.description + '</small>' : ''}</span>
+                    ${currentTab === 'available' ? `
+                        <div class="app-actions">
+                            <button class="app-action-btn install-btn" data-package="${app.name}">Install</button>
+                        </div>
+                    ` : ''}
+                </button>
+            `;
+        }).join('');
+    }
+
+    if (filtered.length === 0) {
+        html = '<div style="padding: 2rem; text-align: center; color: var(--overlay0);">No apps found</div>';
+    }
+
+    appsContainer.innerHTML = html;
 
     const launcher = document.getElementById('app-launcher');
 
@@ -290,27 +359,29 @@ async function fetchInstalledApps() {
         const data = await response.json();
 
         installedApps = [
-            { name: 'Terminal', icon: '📟', id: 'terminal' },
-            { name: 'File Manager', icon: '📂', id: 'filemanager' },
-            { name: 'Notes', icon: '📝', id: 'notes' },
-            { name: 'Text Editor', icon: '💻', id: 'editor' },
-            { name: 'Containers', icon: '🐳', id: 'containers' },
-            { name: 'Control Panel', icon: '⚙️', id: 'controlpanel' },
+            { name: 'Terminal', icon: '📟', id: 'terminal', description: 'System terminal with shell access' },
+            { name: 'File Manager', icon: '📂', id: 'filemanager', description: 'Browse and manage files' },
+            { name: 'Notes', icon: '📝', id: 'notes', description: 'Markdown notes editor' },
+            { name: 'Text Editor', icon: '💻', id: 'editor', description: 'Monaco code editor' },
+            { name: 'Containers', icon: '🐳', id: 'containers', description: 'Docker container management' },
+            { name: 'Control Panel', icon: '⚙️', id: 'controlpanel', description: 'System settings and configuration' },
             ...data.apps.map(app => ({
                 name: app.name,
-                icon: '🖥️',
-                id: app.name
+                icon: app.icon || '🖥️',
+                id: app.id || app.name,
+                description: app.description || '',
+                categories: app.categories || []
             }))
         ];
     } catch (err) {
         console.error('Failed to fetch installed apps:', err);
         installedApps = [
-            { name: 'Terminal', icon: '📟', id: 'terminal' },
-            { name: 'File Manager', icon: '📂', id: 'filemanager' },
-            { name: 'Notes', icon: '📝', id: 'notes' },
-            { name: 'Text Editor', icon: '💻', id: 'editor' },
-            { name: 'Containers', icon: '🐳', id: 'containers' },
-            { name: 'Control Panel', icon: '⚙️', id: 'controlpanel' }
+            { name: 'Terminal', icon: '📟', id: 'terminal', description: 'System terminal with shell access' },
+            { name: 'File Manager', icon: '📂', id: 'filemanager', description: 'Browse and manage files' },
+            { name: 'Notes', icon: '📝', id: 'notes', description: 'Markdown notes editor' },
+            { name: 'Text Editor', icon: '💻', id: 'editor', description: 'Monaco code editor' },
+            { name: 'Containers', icon: '🐳', id: 'containers', description: 'Docker container management' },
+            { name: 'Control Panel', icon: '⚙️', id: 'controlpanel', description: 'System settings and configuration' }
         ];
     }
 }

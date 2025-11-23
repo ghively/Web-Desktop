@@ -21,16 +21,54 @@ router.get('/installed', async (req: Request, res: Response) => {
         // List installed GUI applications (those with .desktop files)
         const { stdout } = await execAsync('find /usr/share/applications -name "*.desktop" 2>/dev/null || echo ""');
 
-        const apps = stdout.split('\n')
-            .filter(line => line.trim())
-            .map(filepath => {
-                const name = filepath.split('/').pop()?.replace('.desktop', '') || 'Unknown';
-                return { name, filepath };
-            });
+        const desktopFiles = stdout.split('\n').filter(line => line.trim());
 
-        res.json({ apps });
+        const apps = await Promise.all(desktopFiles.map(async (filepath) => {
+            try {
+                const { stdout: content } = await execAsync(`cat "${filepath}"`);
+                const lines = content.split('\n');
+
+                // Parse .desktop file
+                let name = filepath.split('/').pop()?.replace('.desktop', '') || 'Unknown';
+                let displayName = name;
+                let description = '';
+                let icon = '';
+                let categories = '';
+                let exec = '';
+
+                for (const line of lines) {
+                    if (line.startsWith('Name=') && !line.startsWith('Name[')) {
+                        displayName = line.substring(5);
+                    } else if (line.startsWith('Comment=') && !line.startsWith('Comment[')) {
+                        description = line.substring(8);
+                    } else if (line.startsWith('Icon=')) {
+                        icon = line.substring(5);
+                    } else if (line.startsWith('Categories=')) {
+                        categories = line.substring(11);
+                    } else if (line.startsWith('Exec=')) {
+                        exec = line.substring(5);
+                    }
+                }
+
+                return {
+                    id: name,
+                    name: displayName,
+                    description,
+                    icon,
+                    categories: categories.split(';').filter(c => c),
+                    exec,
+                    filepath
+                };
+            } catch (err) {
+                // If we can't read the file, return basic info
+                const name = filepath.split('/').pop()?.replace('.desktop', '') || 'Unknown';
+                return { id: name, name, filepath };
+            }
+        }));
+
+        res.json({ apps: apps.filter(app => app !== null) });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Failed to list installed packages' });
     }
 });
 
@@ -59,8 +97,7 @@ router.post('/install', async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         res.status(500).json({
-            error: error.message,
-            stderr: error.stderr
+            error: 'Failed to install package'
         });
     }
 });
@@ -83,8 +120,7 @@ router.delete('/:packageName', async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         res.status(500).json({
-            error: error.message,
-            stderr: error.stderr
+            error: 'Failed to remove package'
         });
     }
 });
@@ -112,7 +148,7 @@ router.get('/search', async (req: Request, res: Response) => {
 
         res.json({ packages });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Failed to search packages' });
     }
 });
 

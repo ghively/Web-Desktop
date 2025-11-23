@@ -1,7 +1,7 @@
-import React from 'react';
 import { Rnd } from 'react-rnd';
 import { X, Minus, Square } from 'lucide-react';
-import { useWindowManager, WindowState } from '../context/WindowManager';
+import { useWindowManager } from '../context/exports';
+import { type WindowState } from '../context/types';
 import clsx from 'clsx';
 
 interface WindowProps {
@@ -30,26 +30,26 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
             style={{ zIndex: window.zIndex }}
             className={clsx(
                 "flex flex-col rounded-lg overflow-hidden border transition-shadow duration-200",
-                isActive ? "border-blue shadow-lg shadow-blue/20" : "border-surface0 shadow-md",
-                "bg-base/90 backdrop-blur-md"
+                isActive ? "border-blue-400 shadow-lg shadow-blue-400/20" : "border-gray-700 shadow-md",
+                "bg-gray-900/90 backdrop-blur-md"
             )}
             disableDragging={window.isMaximized}
-            size={window.isMaximized ? { width: '100%', height: '100%' } : undefined}
-            position={window.isMaximized ? { x: 0, y: 0 } : undefined}
+            size={window.isMaximized ? { width: '100%', height: 'calc(100% - 40px)' } : undefined}
+            position={window.isMaximized ? { x: 0, y: 40 } : undefined}
         >
             {/* Window Header */}
-            <div className="h-10 bg-mantle/50 flex items-center justify-between px-4 select-none cursor-move handle">
+            <div className="h-10 bg-gray-950/50 flex items-center justify-between px-4 select-none cursor-move handle">
                 <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-subtext0">{window.title}</span>
+                    <span className="text-sm font-medium text-gray-400">{window.title}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={() => minimizeWindow(window.id)} className="p-1 hover:bg-surface1 rounded text-subtext0 hover:text-text">
+                    <button onClick={() => minimizeWindow(window.id)} className="p-1 hover:bg-gray-800 rounded text-gray-400 hover:text-gray-100">
                         <Minus size={14} />
                     </button>
-                    <button onClick={() => maximizeWindow(window.id)} className="p-1 hover:bg-surface1 rounded text-subtext0 hover:text-text">
+                    <button onClick={() => maximizeWindow(window.id)} className="p-1 hover:bg-gray-800 rounded text-gray-400 hover:text-gray-100">
                         <Square size={12} />
                     </button>
-                    <button onClick={() => closeWindow(window.id)} className="p-1 hover:bg-red/20 rounded text-subtext0 hover:text-red">
+                    <button onClick={() => closeWindow(window.id)} className="p-1 hover:bg-red-900/20 rounded text-gray-400 hover:text-red-400">
                         <X size={14} />
                     </button>
                 </div>
