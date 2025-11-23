@@ -46,6 +46,7 @@ interface VNCSession {
     lastAccess: number;
     vncPassword?: string; // Added for VNC password
     vncPasswordFilePath?: string; // Added for temporary password file path
+    apps?: Set<ChildProcess>;
 }
 
 const sessions = new Map<string, VNCSession>();
@@ -150,6 +151,23 @@ const cleanupSession = async (sessionId: string) => {
         } catch (error) {
             console.error('Error killing Xvfb:', error);
         }
+    }
+
+    // Kill apps
+    if (session.apps) {
+        for (const app of Array.from(session.apps)) {
+            try {
+                app.kill('SIGTERM');
+                setTimeout(() => {
+                    if (!app.killed) {
+                        app.kill('SIGKILL');
+                    }
+                }, 5000);
+            } catch (error) {
+                console.error('Error killing app:', error);
+            }
+        }
+        session.apps.clear();
     }
 
     // Delete VNC password file
@@ -513,6 +531,13 @@ router.post('/launch-app', async (req: Request, res: Response) => {
             }
         });
 
+        if (!session.apps) {
+            session.apps = new Set();
+        }
+        session.apps!.add(appProcess);
+        appProcess.on('exit', () => {
+            session.apps?.delete(appProcess);
+        });
         appProcess.unref();
 
         res.json({

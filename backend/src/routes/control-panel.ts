@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import si from 'systeminformation';
 import os from 'os';
@@ -71,12 +71,13 @@ router.use(rateLimit);
 // 1. GET /api/control-panel/system - System info
 router.get('/system', async (req, res) => {
     try {
-        const [osInfo, cpuInfo, memInfo, timeInfo] = await Promise.all([
+        const [osInfo, cpuInfo, memInfo] = await Promise.all([
             withTimeout(si.osInfo(), 5000),
             withTimeout(si.cpu(), 5000),
-            withTimeout(si.mem(), 5000),
-            withTimeout(si.time(), 5000)
+            withTimeout(si.mem(), 5000)
         ]);
+
+        const timeInfo = si.time();
 
         const uptime = os.uptime();
         const days = Math.floor(uptime / 86400);
@@ -221,6 +222,22 @@ router.post('/users', async (req, res) => {
         return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
 
+    // SECURITY: Validate full name to prevent injection
+    if (fullName !== undefined && typeof fullName === 'string') {
+        if (!/^[a-zA-Z0-9\s\-_.,]+$/.test(fullName)) {
+            return res.status(400).json({
+                error: 'Invalid full name format',
+                details: 'Full name contains invalid characters'
+            });
+        }
+        if (fullName.length > 100) {
+            return res.status(400).json({
+                error: 'Full name too long',
+                details: 'Full name must be less than 100 characters'
+            });
+        }
+    }
+
     const validShells = ['/bin/bash', '/bin/sh', '/bin/zsh', '/usr/bin/fish', '/bin/false'];
     const userShell = validShells.includes(shell) ? shell : '/bin/bash';
 
@@ -233,15 +250,56 @@ router.post('/users', async (req, res) => {
             // User doesn't exist, continue
         }
 
-        // Create user with sudo
-        const gecosFlag = fullName ? `-c "${fullName.replace(/"/g, '\\"')}"` : '';
-        const createCommand = `sudo useradd -m -s ${userShell} ${gecosFlag} ${username}`;
+        // SECURITY: Use spawn with proper argument separation instead of shell command
+        await new Promise<void>((resolve, reject) => {
+            const args = ['-m', '-s', userShell];
 
-        await withTimeout(execAsync(createCommand), 10000);
+            if (fullName) {
+                args.push('-c', fullName);
+            }
 
-        // Set password
-        const passwdCommand = `echo '${username}:${password}' | sudo chpasswd`;
-        await withTimeout(execAsync(passwdCommand), 5000);
+            args.push(username);
+
+            const useraddProcess = spawn('sudo', ['useradd', ...args], {
+                stdio: 'pipe',
+                timeout: 10000
+            });
+
+            useraddProcess.on('close', (code) => {
+                if (code === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`useradd failed with exit code ${code}`));
+                }
+            });
+
+            useraddProcess.on('error', (error) => {
+                reject(new Error(`Failed to spawn useradd: ${error.message}`));
+            });
+        });
+
+        // SECURITY: Set password more securely without using echo pipe
+        await new Promise<void>((resolve, reject) => {
+            const chpasswdProcess = spawn('sudo', ['chpasswd'], {
+                stdio: ['pipe', 'pipe', 'pipe'],
+                timeout: 5000
+            });
+
+            chpasswdProcess.stdin.write(`${username}:${password}\n`);
+            chpasswdProcess.stdin.end();
+
+            chpasswdProcess.on('close', (code) => {
+                if (code === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`chpasswd failed with exit code ${code}`));
+                }
+            });
+
+            chpasswdProcess.on('error', (error) => {
+                reject(new Error(`Failed to spawn chpasswd: ${error.message}`));
+            });
+        });
 
         res.json({
             success: true,
@@ -251,7 +309,8 @@ router.post('/users', async (req, res) => {
     } catch (error: any) {
         console.error('Error creating user:', error);
         res.status(500).json({
-            error: 'Failed to create user'
+            error: 'Failed to create user',
+            details: error.message
         });
     }
 });
@@ -277,8 +336,39 @@ router.put('/users/:username', async (req, res) => {
 
         // Update full name
         if (fullName !== undefined && typeof fullName === 'string') {
-            const gecosCommand = `sudo usermod -c "${fullName.replace(/"/g, '\\"')}" ${username}`;
-            await withTimeout(execAsync(gecosCommand), 5000);
+            // SECURITY: Validate full name to prevent injection
+            if (!/^[a-zA-Z0-9\s\-_.,]+$/.test(fullName)) {
+                return res.status(400).json({
+                    error: 'Invalid full name format',
+                    details: 'Full name contains invalid characters'
+                });
+            }
+            if (fullName.length > 100) {
+                return res.status(400).json({
+                    error: 'Full name too long',
+                    details: 'Full name must be less than 100 characters'
+                });
+            }
+
+            // SECURITY: Use spawn with proper argument separation
+            await new Promise<void>((resolve, reject) => {
+                const usermodProcess = spawn('sudo', ['usermod', '-c', fullName, username], {
+                    stdio: 'pipe',
+                    timeout: 5000
+                });
+
+                usermodProcess.on('close', (code) => {
+                    if (code === 0) {
+                        resolve();
+                    } else {
+                        reject(new Error(`usermod -c failed with exit code ${code}`));
+                    }
+                });
+
+                usermodProcess.on('error', (error) => {
+                    reject(new Error(`Failed to spawn usermod: ${error.message}`));
+                });
+            });
             updates.push('full name');
         }
 
@@ -288,8 +378,26 @@ router.put('/users/:username', async (req, res) => {
             if (!validShells.includes(shell)) {
                 return res.status(400).json({ error: 'Invalid shell', validShells });
             }
-            const shellCommand = `sudo usermod -s ${shell} ${username}`;
-            await withTimeout(execAsync(shellCommand), 5000);
+
+            // SECURITY: Use spawn with proper argument separation
+            await new Promise<void>((resolve, reject) => {
+                const usermodProcess = spawn('sudo', ['usermod', '-s', shell, username], {
+                    stdio: 'pipe',
+                    timeout: 5000
+                });
+
+                usermodProcess.on('close', (code) => {
+                    if (code === 0) {
+                        resolve();
+                    } else {
+                        reject(new Error(`usermod -s failed with exit code ${code}`));
+                    }
+                });
+
+                usermodProcess.on('error', (error) => {
+                    reject(new Error(`Failed to spawn usermod: ${error.message}`));
+                });
+            });
             updates.push('shell');
         }
 
@@ -298,8 +406,29 @@ router.put('/users/:username', async (req, res) => {
             if (password.length < 8) {
                 return res.status(400).json({ error: 'Password must be at least 8 characters' });
             }
-            const passwdCommand = `echo '${username}:${password}' | sudo chpasswd`;
-            await withTimeout(execAsync(passwdCommand), 5000);
+
+            // SECURITY: Set password more securely without using echo pipe
+            await new Promise<void>((resolve, reject) => {
+                const chpasswdProcess = spawn('sudo', ['chpasswd'], {
+                    stdio: ['pipe', 'pipe', 'pipe'],
+                    timeout: 5000
+                });
+
+                chpasswdProcess.stdin.write(`${username}:${password}\n`);
+                chpasswdProcess.stdin.end();
+
+                chpasswdProcess.on('close', (code) => {
+                    if (code === 0) {
+                        resolve();
+                    } else {
+                        reject(new Error(`chpasswd failed with exit code ${code}`));
+                    }
+                });
+
+                chpasswdProcess.on('error', (error) => {
+                    reject(new Error(`Failed to spawn chpasswd: ${error.message}`));
+                });
+            });
             updates.push('password');
         }
 
@@ -315,7 +444,8 @@ router.put('/users/:username', async (req, res) => {
     } catch (error: any) {
         console.error('Error updating user:', error);
         res.status(500).json({
-            error: 'Failed to update user'
+            error: 'Failed to update user',
+            details: error.message
         });
     }
 });
@@ -347,10 +477,30 @@ router.delete('/users/:username', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Delete user
-        const removeHomeFlag = removeHome === 'true' ? '-r' : '';
-        const deleteCommand = `sudo userdel ${removeHomeFlag} ${username}`;
-        await withTimeout(execAsync(deleteCommand), 10000);
+        // SECURITY: Use spawn with proper argument separation
+        const args = [username];
+        if (removeHome === 'true') {
+            args.unshift('-r');
+        }
+
+        await new Promise<void>((resolve, reject) => {
+            const userdelProcess = spawn('sudo', ['userdel', ...args], {
+                stdio: 'pipe',
+                timeout: 10000
+            });
+
+            userdelProcess.on('close', (code) => {
+                if (code === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`userdel failed with exit code ${code}`));
+                }
+            });
+
+            userdelProcess.on('error', (error) => {
+                reject(new Error(`Failed to spawn userdel: ${error.message}`));
+            });
+        });
 
         res.json({
             success: true,
@@ -360,7 +510,8 @@ router.delete('/users/:username', async (req, res) => {
     } catch (error: any) {
         console.error('Error deleting user:', error);
         res.status(500).json({
-            error: 'Failed to delete user'
+            error: 'Failed to delete user',
+            details: error.message
         });
     }
 });
@@ -408,10 +559,25 @@ router.post('/services/:name/start', async (req, res) => {
     }
 
     try {
-        await withTimeout(
-            execAsync(`sudo systemctl start ${name}.service`),
-            15000
-        );
+        // SECURITY: Use spawn with proper argument separation
+        await new Promise<void>((resolve, reject) => {
+            const systemctlProcess = spawn('sudo', ['systemctl', 'start', `${name}.service`], {
+                stdio: 'pipe',
+                timeout: 15000
+            });
+
+            systemctlProcess.on('close', (code) => {
+                if (code === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`systemctl start failed with exit code ${code}`));
+                }
+            });
+
+            systemctlProcess.on('error', (error) => {
+                reject(new Error(`Failed to spawn systemctl: ${error.message}`));
+            });
+        });
 
         // Verify service started
         const { stdout } = await withTimeout(
@@ -429,7 +595,8 @@ router.post('/services/:name/start', async (req, res) => {
     } catch (error: any) {
         console.error('Error starting service:', error);
         res.status(500).json({
-            error: 'Failed to start service'
+            error: 'Failed to start service',
+            details: error.message
         });
     }
 });
@@ -443,10 +610,25 @@ router.post('/services/:name/stop', async (req, res) => {
     }
 
     try {
-        await withTimeout(
-            execAsync(`sudo systemctl stop ${name}.service`),
-            15000
-        );
+        // SECURITY: Use spawn with proper argument separation
+        await new Promise<void>((resolve, reject) => {
+            const systemctlProcess = spawn('sudo', ['systemctl', 'stop', `${name}.service`], {
+                stdio: 'pipe',
+                timeout: 15000
+            });
+
+            systemctlProcess.on('close', (code) => {
+                if (code === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`systemctl stop failed with exit code ${code}`));
+                }
+            });
+
+            systemctlProcess.on('error', (error) => {
+                reject(new Error(`Failed to spawn systemctl: ${error.message}`));
+            });
+        });
 
         // Verify service stopped
         const { stdout } = await withTimeout(
@@ -464,7 +646,8 @@ router.post('/services/:name/stop', async (req, res) => {
     } catch (error: any) {
         console.error('Error stopping service:', error);
         res.status(500).json({
-            error: 'Failed to stop service'
+            error: 'Failed to stop service',
+            details: error.message
         });
     }
 });
@@ -514,15 +697,47 @@ router.put('/hostname', async (req, res) => {
         });
     }
 
-    try {
-        // Set hostname using hostnamectl
-        let command = `sudo hostnamectl set-hostname ${hostname}`;
+    // SECURITY: Validate pretty hostname to prevent injection
+    if (pretty !== undefined && typeof pretty === 'string') {
+        if (!/^[a-zA-Z0-9\s\-_.,]+$/.test(pretty)) {
+            return res.status(400).json({
+                error: 'Invalid pretty hostname format',
+                details: 'Pretty hostname contains invalid characters'
+            });
+        }
+        if (pretty.length > 100) {
+            return res.status(400).json({
+                error: 'Pretty hostname too long',
+                details: 'Pretty hostname must be less than 100 characters'
+            });
+        }
+    }
 
-        if (pretty && typeof pretty === 'string') {
-            command += ` --pretty "${pretty.replace(/"/g, '\\"')}"`;
+    try {
+        // SECURITY: Use spawn with proper argument separation
+        const args = [hostname];
+        if (pretty) {
+            args.push('--pretty', pretty);
         }
 
-        await withTimeout(execAsync(command), 5000);
+        await new Promise<void>((resolve, reject) => {
+            const hostnamectlProcess = spawn('sudo', ['hostnamectl', 'set-hostname', ...args], {
+                stdio: 'pipe',
+                timeout: 5000
+            });
+
+            hostnamectlProcess.on('close', (code) => {
+                if (code === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`hostnamectl failed with exit code ${code}`));
+                }
+            });
+
+            hostnamectlProcess.on('error', (error) => {
+                reject(new Error(`Failed to spawn hostnamectl: ${error.message}`));
+            });
+        });
 
         // Verify
         const newHostname = os.hostname();
@@ -536,7 +751,8 @@ router.put('/hostname', async (req, res) => {
     } catch (error: any) {
         console.error('Error setting hostname:', error);
         res.status(500).json({
-            error: 'Failed to set hostname'
+            error: 'Failed to set hostname',
+            details: error.message
         });
     }
 });

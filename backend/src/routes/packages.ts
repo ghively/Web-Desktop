@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 
 const router = Router();
@@ -25,7 +25,36 @@ router.get('/installed', async (req: Request, res: Response) => {
 
         const apps = await Promise.all(desktopFiles.map(async (filepath) => {
             try {
-                const { stdout: content } = await execAsync(`cat "${filepath}"`);
+                // SECURITY: Use spawn with proper argument separation instead of shell
+                const { stdout: content } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+                    const catProcess = spawn('cat', [filepath], {
+                        stdio: ['pipe', 'pipe', 'pipe'],
+                        timeout: 5000
+                    });
+
+                    let stdout = '';
+                    let stderr = '';
+
+                    catProcess.stdout?.on('data', (data) => {
+                        stdout += data.toString();
+                    });
+
+                    catProcess.stderr?.on('data', (data) => {
+                        stderr += data.toString();
+                    });
+
+                    catProcess.on('close', (code) => {
+                        if (code === 0) {
+                            resolve({ stdout, stderr });
+                        } else {
+                            reject(new Error(`cat failed with exit code ${code}: ${stderr}`));
+                        }
+                    });
+
+                    catProcess.on('error', (error) => {
+                        reject(new Error(`Failed to spawn cat: ${error.message}`));
+                    });
+                });
                 const lines = content.split('\n');
 
                 // Parse .desktop file
@@ -66,7 +95,65 @@ router.get('/installed', async (req: Request, res: Response) => {
             }
         }));
 
-        res.json({ apps: apps.filter(app => app !== null) });
+        // Filter out system utilities and developer tools
+        const filteredApps = apps
+            .filter(app => app !== null)
+            .filter((app: any) => {
+                // Skip apps without names or with no-show categories
+                if (!app.name || typeof app.name !== 'string') return false;
+
+                const name = app.name.toLowerCase();
+                const description = (app.description || '').toLowerCase();
+                const categories = app.categories || [];
+                const exec = (app.exec || '').toLowerCase();
+
+                // Skip console-only applications
+                if (categories.includes('ConsoleOnly')) return false;
+
+                // Skip apps without executable commands or with dummy commands
+                if (!app.exec || app.exec === '/bin/false' || app.exec.trim() === '') return false;
+
+                // Enhanced keyword filtering for stricter filtering
+                const excludeKeywords = [
+                    'python', 'terminal', 'console', 'debug', 'development', 'session agent',
+                    'handler for', 'snap', 'prompt', 'install', 'command line', 'advanced command',
+                    'idle', 'texinfo', 'vim', 'byobu', 'htop', 'zutty'
+                ];
+
+                // Check both name and description for exclusion keywords
+                const hasExcludeKeyword = excludeKeywords.some(keyword =>
+                    name.includes(keyword) || description.includes(keyword)
+                );
+                if (hasExcludeKeyword) return false;
+
+                // Skip system categories entirely
+                const excludeCategories = [
+                    'System', 'Development', 'GTK', 'GNOME', 'Utility'
+                ];
+                if (categories.some((cat: string) => excludeCategories.includes(cat))) {
+                    return false; // No exceptions for system categories
+                }
+
+                // Skip apps with certain patterns in exec command
+                if (exec.includes('python') || exec.includes('env TERM=')) return false;
+
+                // Only include apps that are clearly user-facing GUI applications
+                const includeKeywords = [
+                    'browser', 'editor', 'viewer', 'player', 'office', 'document', 'image',
+                    'video', 'audio', 'game', 'calculator', 'settings', 'file', 'manager'
+                ];
+
+                const hasIncludeKeyword = includeKeywords.some(keyword =>
+                    name.includes(keyword) || description.includes(keyword) || categories.some((cat: string) => cat.toLowerCase().includes(keyword))
+                );
+
+                // If no include keywords found, also exclude it
+                if (!hasIncludeKeyword) return false;
+
+                return true;
+            });
+
+        res.json({ apps: filteredApps });
     } catch (error: any) {
         res.status(500).json({ error: 'Failed to list installed packages' });
     }
@@ -80,24 +167,63 @@ router.post('/install', async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'Package name is required' });
     }
 
-    // Validate package name (alphanumeric, hyphens, dots only)
+    // SECURITY: Validate package name (alphanumeric, hyphens, dots only)
     if (!/^[a-z0-9.-]+$/.test(packageName)) {
         return res.status(400).json({ error: 'Invalid package name format' });
     }
 
+    // SECURITY: Additional restrictions on package name
+    if (packageName.length > 50) {
+        return res.status(400).json({ error: 'Package name too long' });
+    }
+
+    // SECURITY: Block dangerous package names
+    const blockedPackages = ['sudo', 'passwd', 'su', 'shadow', 'cron', 'systemd', 'init', 'kernel'];
+    if (blockedPackages.some(blocked => packageName.includes(blocked))) {
+        return res.status(400).json({
+            error: 'Installation of system packages is not allowed',
+            details: 'This package could compromise system security'
+        });
+    }
+
     try {
-        // Note: This requires the backend to run with sudo or have passwordless sudo configured
-        // In production, you'd use PolicyKit or a separate privileged service
-        const { stdout, stderr } = await execAsync(`sudo apt-get install -y ${packageName}`);
+        // SECURITY: Use spawn with proper argument separation instead of shell
+        const { stdout, stderr } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+            const aptProcess = spawn('sudo', ['apt-get', 'install', '-y', packageName], {
+                stdio: ['pipe', 'pipe', 'pipe'],
+                timeout: 120000
+            });
+
+            let stdout = '';
+            let stderr = '';
+
+            aptProcess.stdout?.on('data', (data) => {
+                stdout += data.toString();
+            });
+
+            aptProcess.stderr?.on('data', (data) => {
+                stderr += data.toString();
+            });
+
+            aptProcess.on('close', (code) => {
+                resolve({ stdout, stderr });
+            });
+
+            aptProcess.on('error', (error) => {
+                reject(new Error(`Failed to spawn apt-get: ${error.message}`));
+            });
+        });
 
         res.json({
             success: true,
             message: `Package ${packageName} installed successfully`,
-            output: stdout
+            output: stdout.substring(0, 10000) // Limit output size
         });
     } catch (error: any) {
+        console.error('Package installation error:', error);
         res.status(500).json({
-            error: 'Failed to install package'
+            error: 'Failed to install package',
+            details: error.message
         });
     }
 });
@@ -106,21 +232,67 @@ router.post('/install', async (req: Request, res: Response) => {
 router.delete('/:packageName', async (req: Request, res: Response) => {
     const { packageName } = req.params;
 
+    // SECURITY: Validate package name format
     if (!/^[a-z0-9.-]+$/.test(packageName)) {
         return res.status(400).json({ error: 'Invalid package name format' });
     }
 
+    // SECURITY: Additional restrictions on package name
+    if (packageName.length > 50) {
+        return res.status(400).json({ error: 'Package name too long' });
+    }
+
+    // SECURITY: Block removal of critical system packages
+    const criticalPackages = [
+        'sudo', 'passwd', 'su', 'shadow', 'cron', 'systemd', 'init',
+        'ubuntu-minimal', 'ubuntu-standard', 'ubuntu-desktop',
+        'gnome-shell', 'xorg', 'lightdm', 'gdm', 'network-manager'
+    ];
+    if (criticalPackages.some(critical => packageName.includes(critical))) {
+        return res.status(400).json({
+            error: 'Removal of critical system packages is not allowed',
+            details: 'This package is essential for system operation'
+        });
+    }
+
     try {
-        const { stdout } = await execAsync(`sudo apt-get remove -y ${packageName}`);
+        // SECURITY: Use spawn with proper argument separation instead of shell
+        const { stdout } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+            const aptProcess = spawn('sudo', ['apt-get', 'remove', '-y', packageName], {
+                stdio: ['pipe', 'pipe', 'pipe'],
+                timeout: 120000
+            });
+
+            let stdout = '';
+            let stderr = '';
+
+            aptProcess.stdout?.on('data', (data) => {
+                stdout += data.toString();
+            });
+
+            aptProcess.stderr?.on('data', (data) => {
+                stderr += data.toString();
+            });
+
+            aptProcess.on('close', (code) => {
+                resolve({ stdout, stderr });
+            });
+
+            aptProcess.on('error', (error) => {
+                reject(new Error(`Failed to spawn apt-get: ${error.message}`));
+            });
+        });
 
         res.json({
             success: true,
             message: `Package ${packageName} removed successfully`,
-            output: stdout
+            output: stdout.substring(0, 10000) // Limit output size
         });
     } catch (error: any) {
+        console.error('Package removal error:', error);
         res.status(500).json({
-            error: 'Failed to remove package'
+            error: 'Failed to remove package',
+            details: error.message
         });
     }
 });
@@ -133,11 +305,57 @@ router.get('/search', async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'Search query is required' });
     }
 
-    try {
-        const { stdout } = await execAsync(`apt-cache search ${query} | head -20`);
+    // SECURITY: Validate and sanitize search query
+    if (typeof query !== 'string') {
+        return res.status(400).json({ error: 'Invalid search query type' });
+    }
 
+    // SECURITY: Remove shell metacharacters and limit length
+    const sanitizedQuery = query
+        .replace(/[;&|`$(){}[\]<>'"\\]/g, '') // Remove shell metacharacters
+        .replace(/\.\./g, '') // Remove path traversal
+        .trim()
+        .substring(0, 100); // Limit length
+
+    if (!/^[a-zA-Z0-9\s\-_.]+$/.test(sanitizedQuery)) {
+        return res.status(400).json({
+            error: 'Invalid search query format',
+            details: 'Search query contains invalid characters'
+        });
+    }
+
+    try {
+        // SECURITY: Use spawn with proper argument separation
+        const { stdout } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+            const aptCacheProcess = spawn('apt-cache', ['search', sanitizedQuery], {
+                stdio: ['pipe', 'pipe', 'pipe'],
+                timeout: 30000
+            });
+
+            let stdout = '';
+            let stderr = '';
+
+            aptCacheProcess.stdout?.on('data', (data) => {
+                stdout += data.toString();
+            });
+
+            aptCacheProcess.stderr?.on('data', (data) => {
+                stderr += data.toString();
+            });
+
+            aptCacheProcess.on('close', (code) => {
+                resolve({ stdout, stderr });
+            });
+
+            aptCacheProcess.on('error', (error) => {
+                reject(new Error(`Failed to spawn apt-cache: ${error.message}`));
+            });
+        });
+
+        // Limit to 20 results and parse
         const packages = stdout.split('\n')
             .filter(line => line.trim())
+            .slice(0, 20)
             .map(line => {
                 const [name, ...descParts] = line.split(' - ');
                 return {
@@ -148,7 +366,11 @@ router.get('/search', async (req: Request, res: Response) => {
 
         res.json({ packages });
     } catch (error: any) {
-        res.status(500).json({ error: 'Failed to search packages' });
+        console.error('Package search error:', error);
+        res.status(500).json({
+            error: 'Failed to search packages',
+            details: error.message
+        });
     }
 });
 

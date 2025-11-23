@@ -5,13 +5,29 @@ import cors from 'cors';
 import path from 'path';
 import os from 'os';
 import * as nodePty from 'node-pty';
-const pty = require('node-pty') as typeof nodePty;
 import fsRoutes from './routes/fs';
 import systemRoutes from './routes/system';
 import appRoutes from './routes/apps';
 import packagesRoutes from './routes/packages';
 import notesRoutes from './routes/notes';
 import containersRoutes from './routes/containers';
+import vncRoutes from './routes/vnc';
+import controlPanelRoutes from './routes/control-panel';
+import nginxProxyRoutes from './routes/nginx-proxy';
+import sharesRoutes from './routes/shares';
+import comprehensiveSettingsRoutes from './routes/comprehensive-settings';
+import marketplaceRoutes from './routes/marketplace';
+import fileServersRoutes from './routes/file-servers';
+import systemMonitoringRoutes from './routes/system-monitoring';
+import aiIntegrationRoutes from './routes/ai-integration';
+import smartStorageRoutes from './routes/smart-storage';
+import aiModelManagerRoutes from './routes/ai-model-manager';
+import storagePoolsRoutes from './routes/storage-pools';
+import wifiManagementRoutes from './routes/wifi-management';
+import homeAssistantRoutes from './routes/home-assistant';
+import powerManagementRoutes from './routes/power-management';
+import mediaServerRoutes from './routes/media-server';
+import fileMetadataRoutes from './routes/file-metadata';
 
 const app = express();
 const server = http.createServer(app);
@@ -49,6 +65,26 @@ app.use('/api/apps', appRoutes);
 app.use('/api/packages', packagesRoutes);
 app.use('/api/notes', notesRoutes);
 app.use('/api/containers', containersRoutes);
+app.use('/api/vnc', vncRoutes);
+app.use('/api/control-panel', controlPanelRoutes);
+app.use('/api/nginx-proxy', nginxProxyRoutes);
+app.use('/api/shares', sharesRoutes);
+app.use('/api/comprehensive-settings', comprehensiveSettingsRoutes);
+app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api/file-servers', fileServersRoutes);
+app.use('/api/system-monitoring', systemMonitoringRoutes);
+app.use('/api/ai-integration', aiIntegrationRoutes);
+app.use('/api/smart-storage', smartStorageRoutes);
+app.use('/api/ai-model-manager', aiModelManagerRoutes);
+app.use('/api/storage-pools', storagePoolsRoutes);
+app.use('/api/wifi-management', wifiManagementRoutes);
+app.use('/api/home-assistant', homeAssistantRoutes);
+app.use('/api/power-management', powerManagementRoutes);
+app.use('/api/media-server', mediaServerRoutes);
+app.use('/api/file-metadata', fileMetadataRoutes);
+
+// Serve installed marketplace apps
+app.use('/apps', express.static(path.join(process.env.HOME || '', '.web-desktop', 'marketplace', 'apps')));
 
 // Enhanced WebSocket handling with security
 wss.on('connection', (ws, req) => {
@@ -69,7 +105,7 @@ wss.on('connection', (ws, req) => {
     
     let ptyProcess;
     try {
-        ptyProcess = pty.spawn(shell, [], {
+        ptyProcess = nodePty.spawn(shell, [], {
             name: 'xterm-color',
             cols: 80,
             rows: 30,
@@ -88,7 +124,7 @@ wss.on('connection', (ws, req) => {
 
     ptyProcess.onData(data => {
         try {
-            if (ws.readyState === WebSocket.OPEN) {
+            if (ws.readyState === ws.OPEN) {
                 ws.send(data);
             }
         } catch (error) {
@@ -135,7 +171,7 @@ wss.on('connection', (ws, req) => {
 
     ptyProcess.onExit(({ exitCode, signal }) => {
         console.log(`Pty process exited with code ${exitCode} and signal ${signal}`);
-        if (ws.readyState === WebSocket.OPEN) {
+        if (ws.readyState === ws.OPEN) {
             ws.send(`\r\n\x1b[33mProcess exited: ${exitCode || signal}\x1b[0m`);
         }
     });

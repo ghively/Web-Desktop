@@ -162,6 +162,100 @@ router.post('/operation', async (req, res) => {
 
             default:
                 return res.status(400).json({ error: 'Invalid operation type' });
+        }
+
+        res.json({ success: true });
+    } catch (error: any) {
+        console.error('File operation error:', error);
+
+        if (error.code === 'ENOENT') {
+            return res.status(404).json({ error: 'Path not found' });
+        }
+        if (error.code === 'EACCES') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        if (error.code === 'ENOSPC') {
+            return res.status(507).json({ error: 'Insufficient storage' });
+        }
+
+        res.status(500).json({ error: 'Operation failed' });
+    }
+});
+
+// Enhanced file type validation using magic numbers
+const validateFileType = (buffer: Buffer, filename: string): { isValid: boolean; detectedType?: string; isExecutable: boolean } => {
+    // Define dangerous file extensions
+    const dangerousExtensions = ['.exe', '.bat', '.cmd', '.com', '.pif', '.scr', '.vbs', '.js', '.jar', '.app', '.deb', '.rpm', '.dmg', '.pkg', '.msi', '.sh', '.ps1'];
+    const lowerFilename = filename.toLowerCase();
+
+    // Check for dangerous extensions
+    const isExecutable = dangerousExtensions.some(ext => lowerFilename.endsWith(ext));
+
+    // Magic number signatures for common file types
+    const magicNumbers = {
+        // Images
+        'image/png': Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
+        'image/jpeg': Buffer.from([0xFF, 0xD8, 0xFF]),
+        'image/gif': Buffer.from([0x47, 0x49, 0x46, 0x38]),
+        'image/webp': Buffer.from([0x52, 0x49, 0x46, 0x46]), // RIFF
+        'image/svg+xml': Buffer.from([]), // Text-based, handled separately
+
+        // Documents
+        'application/pdf': Buffer.from([0x25, 0x50, 0x44, 0x46]), // %PDF
+        'text/plain': Buffer.from([]), // Text-based, handled separately
+
+        // Archives
+        'application/zip': Buffer.from([0x50, 0x4B, 0x03, 0x04]),
+        'application/gzip': Buffer.from([0x1F, 0x8B]),
+
+        // Dangerous executables
+        'application/x-executable': Buffer.from([0x7F, 0x45, 0x4C, 0x46]), // ELF
+        'application/x-msdownload': Buffer.from([0x4D, 0x5A]), // PE/DOS
+    };
+
+    // If file is too small for magic number detection, allow basic text files
+    if (buffer.length < 4) {
+        return { isValid: true, isExecutable };
+    }
+
+    // Check for dangerous executable magic numbers
+    const exeSignatures = [
+        magicNumbers['application/x-executable'],
+        magicNumbers['application/x-msdownload']
+    ];
+
+    for (const signature of exeSignatures) {
+        if (signature.length > 0 && buffer.subarray(0, signature.length).equals(signature)) {
+            return { isValid: false, detectedType: 'executable', isExecutable: true };
+        }
+    }
+
+    // Check magic numbers against allowed file types
+    for (const [mimeType, signature] of Object.entries(magicNumbers)) {
+        if (signature.length > 0 && buffer.subarray(0, signature.length).equals(signature)) {
+            // Images, documents, and archives are generally safe
+            const safeTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf', 'text/plain', 'application/zip', 'application/gzip'];
+            return {
+                isValid: safeTypes.includes(mimeType),
+                detectedType: mimeType,
+                isExecutable
+            };
+        }
+    }
+
+    // For unknown binary files, be more restrictive
+    const isTextFile = buffer.every(byte => byte === 0x09 || byte === 0x0A || byte === 0x0D || (byte >= 0x20 && byte <= 0x7E));
+
+    if (!isTextFile && !isExecutable) {
+        // Unknown binary file - check size limit (much smaller for safety)
+        if (buffer.length > 1024 * 1024) { // 1MB limit for unknown binaries
+            return { isValid: false, detectedType: 'unknown_binary', isExecutable: false };
+        }
+    }
+
+    return { isValid: true, detectedType: isTextFile ? 'text' : 'unknown', isExecutable };
+};
+
 // Rate limiting middleware
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 30; // requests per minute
@@ -204,15 +298,30 @@ router.post('/upload', checkRateLimit, async (req, res) => {
         return res.status(400).json({ error: 'Missing required fields: path, content, filename' });
     }
 
+    // Validate input types
+    if (typeof targetPath !== 'string' || typeof content !== 'string' || typeof filename !== 'string') {
+        return res.status(400).json({ error: 'Invalid input types' });
+    }
+
     const validatedPath = validatePath(targetPath);
     if (!validatedPath) {
         return res.status(403).json({ error: 'Access denied: Invalid path' });
     }
 
-    // Validate filename
-    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_').substring(0, 255);
-    if (!sanitizedFilename || sanitizedFilename.startsWith('.')) {
+    // Enhanced filename validation
+    const sanitizedFilename = filename
+        .replace(/[^a-zA-Z0-9._-]/g, '_')
+        .replace(/_{2,}/g, '_') // Replace multiple underscores with single
+        .substring(0, 255);
+
+    if (!sanitizedFilename || sanitizedFilename.startsWith('.') || sanitizedFilename.length === 0) {
         return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    // Prevent double extensions that can hide file types (e.g., .jpg.exe)
+    const parts = sanitizedFilename.split('.');
+    if (parts.length > 2) {
+        return res.status(400).json({ error: 'Multiple file extensions not allowed' });
     }
 
     const fullPath = path.join(validatedPath, sanitizedFilename);
@@ -223,12 +332,43 @@ router.post('/upload', checkRateLimit, async (req, res) => {
     }
 
     try {
-        // Validate content is base64
-        const fileBuffer = Buffer.from(content, 'base64');
+        // Validate and decode base64 content
+        let fileBuffer: Buffer;
+        try {
+            fileBuffer = Buffer.from(content, 'base64');
+        } catch (error) {
+            return res.status(400).json({ error: 'Invalid base64 content' });
+        }
 
-        // Limit file size to 100MB
-        if (fileBuffer.length > 100 * 1024 * 1024) {
-            return res.status(400).json({ error: 'File too large (max 100MB)' });
+        // Additional base64 validation
+        if (fileBuffer.length === 0 && content.length > 0) {
+            return res.status(400).json({ error: 'Invalid base64 encoding' });
+        }
+
+        // Enhanced file size limits based on file type
+        const baseSizeLimit = 10 * 1024 * 1024; // 10MB base limit
+        const maxFileSize = baseSizeLimit * 10; // 100MB absolute maximum
+
+        if (fileBuffer.length > maxFileSize) {
+            return res.status(400).json({ error: `File too large (max ${maxFileSize / (1024 * 1024)}MB)` });
+        }
+
+        // Enhanced file type validation
+        const fileValidation = validateFileType(fileBuffer, sanitizedFilename);
+
+        if (!fileValidation.isValid) {
+            if (fileValidation.detectedType === 'executable') {
+                return res.status(400).json({ error: 'Executable files are not allowed' });
+            }
+            if (fileValidation.detectedType === 'unknown_binary' && fileBuffer.length > 1024 * 1024) {
+                return res.status(400).json({ error: 'Unknown binary files larger than 1MB are not allowed' });
+            }
+            return res.status(400).json({ error: 'File type not allowed' });
+        }
+
+        // Additional security check for executable file extensions
+        if (fileValidation.isExecutable) {
+            return res.status(400).json({ error: 'Files with executable extensions are not allowed' });
         }
 
         // Check if file already exists
@@ -237,9 +377,15 @@ router.post('/upload', checkRateLimit, async (req, res) => {
             return res.status(409).json({ error: 'File already exists' });
         }
 
+        // Write file with timeout
         await withTimeout(fs.writeFile(fullPath, fileBuffer), 30000);
 
-        res.json({ success: true, path: fullPath });
+        res.json({
+            success: true,
+            path: fullPath,
+            detectedType: fileValidation.detectedType,
+            size: fileBuffer.length
+        });
     } catch (error: any) {
         console.error('Upload error:', error);
 
