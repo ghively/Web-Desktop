@@ -5,6 +5,41 @@ import { promisify } from 'util';
 const router = Router();
 const execAsync = promisify(exec);
 
+// Enhanced container ID/name validation
+const validateContainerId = (id: string): { valid: boolean; sanitizedId?: string; error?: string } => {
+    if (!id || typeof id !== 'string') {
+        return { valid: false, error: 'Container ID is required' };
+    }
+
+    const trimmedId = id.trim();
+
+    if (trimmedId.length === 0) {
+        return { valid: false, error: 'Container ID cannot be empty' };
+    }
+
+    if (trimmedId.length > 128) {
+        return { valid: false, error: 'Container ID too long' };
+    }
+
+    // Allow Docker container IDs (hex) and container names (alphanumeric + limited special chars)
+    // Container IDs: 64-character hex strings (but we'll accept 12-64 chars for short IDs)
+    // Container names: letters, numbers, underscores, hyphens, dots, and forward slashes
+    const hexPattern = /^[a-f0-9]{12,64}$/i;
+    const namePattern = /^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/;
+
+    if (hexPattern.test(trimmedId)) {
+        return { valid: true, sanitizedId: trimmedId };
+    }
+
+    if (namePattern.test(trimmedId)) {
+        // For names, we need to escape special shell characters
+        const sanitizedId = trimmedId.replace(/(["'$`\\])/g, '\\$1');
+        return { valid: true, sanitizedId: sanitizedId };
+    }
+
+    return { valid: false, error: 'Invalid container ID format. Must be a valid Docker container ID (hex) or name' };
+};
+
 // Rate limiting
 const rateLimitMap = new Map<string, number[]>();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
@@ -87,16 +122,15 @@ router.post('/:id/start', async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    
-    // Validate container ID
-    if (!id || typeof id !== 'string' || !/^[a-f0-9]{12,64}$/.test(id)) {
-        return res.status(400).json({ error: 'Invalid container ID' });
+
+    // Validate container ID using enhanced validation
+    const validation = validateContainerId(id);
+    if (!validation.valid) {
+        return res.status(400).json({ error: validation.error || 'Invalid container ID' });
     }
 
     try {
-        // Sanitize command to prevent injection
-        const sanitizedId = id.replace(/[^a-f0-9]/g, '');
-        await execAsync(`docker start ${sanitizedId}`, { timeout: 30000 });
+        await execAsync(`docker start ${validation.sanitizedId}`, { timeout: 30000 });
         res.json({ success: true, message: 'Container started' });
     } catch (error: any) {
         console.error('Container start error:', error);
@@ -120,15 +154,15 @@ router.post('/:id/stop', async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    
-    // Validate container ID
-    if (!id || typeof id !== 'string' || !/^[a-f0-9]{12,64}$/.test(id)) {
-        return res.status(400).json({ error: 'Invalid container ID' });
+
+    // Validate container ID using enhanced validation
+    const validation = validateContainerId(id);
+    if (!validation.valid) {
+        return res.status(400).json({ error: validation.error || 'Invalid container ID' });
     }
 
     try {
-        const sanitizedId = id.replace(/[^a-f0-9]/g, '');
-        await execAsync(`docker stop ${sanitizedId}`, { timeout: 30000 });
+        await execAsync(`docker stop ${validation.sanitizedId}`, { timeout: 30000 });
         res.json({ success: true, message: 'Container stopped' });
     } catch (error: any) {
         console.error('Container stop error:', error);
@@ -152,15 +186,15 @@ router.post('/:id/restart', async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    
-    // Validate container ID
-    if (!id || typeof id !== 'string' || !/^[a-f0-9]{12,64}$/.test(id)) {
-        return res.status(400).json({ error: 'Invalid container ID' });
+
+    // Validate container ID using enhanced validation
+    const validation = validateContainerId(id);
+    if (!validation.valid) {
+        return res.status(400).json({ error: validation.error || 'Invalid container ID' });
     }
 
     try {
-        const sanitizedId = id.replace(/[^a-f0-9]/g, '');
-        await execAsync(`docker restart ${sanitizedId}`, { timeout: 45000 });
+        await execAsync(`docker restart ${validation.sanitizedId}`, { timeout: 45000 });
         res.json({ success: true, message: 'Container restarted' });
     } catch (error: any) {
         console.error('Container restart error:', error);
@@ -186,9 +220,10 @@ router.get('/:id/logs', async (req: Request, res: Response) => {
     const { id } = req.params;
     const linesParam = req.query.lines as string;
 
-    // Validate container ID
-    if (!id || typeof id !== 'string' || !/^[a-f0-9]{12,64}$/.test(id)) {
-        return res.status(400).json({ error: 'Invalid container ID' });
+    // Validate container ID using enhanced validation
+    const validation = validateContainerId(id);
+    if (!validation.valid) {
+        return res.status(400).json({ error: validation.error || 'Invalid container ID' });
     }
 
     // Sanitize and validate lines parameter
@@ -198,8 +233,7 @@ router.get('/:id/logs', async (req: Request, res: Response) => {
     }
 
     try {
-        const sanitizedId = id.replace(/[^a-f0-9]/g, '');
-        const { stdout } = await execAsync(`docker logs --tail ${lines} ${sanitizedId}`, {
+        const { stdout } = await execAsync(`docker logs --tail ${lines} ${validation.sanitizedId}`, {
             timeout: 15000 // 15 second timeout
         });
         res.json({ logs: stdout });

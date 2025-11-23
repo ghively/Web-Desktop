@@ -260,7 +260,10 @@ async function getConnectionStatus(): Promise<ConnectionStatus> {
       signalStrength,
       speed
     };
+  } catch (error) {
+    return { connected: false, interface: '' };
   }
+}
 
 // Connect to WiFi network
 async function connectWiFi(config: WiFiConfig): Promise<void> {

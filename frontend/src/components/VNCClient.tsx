@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Square, Trash2, RefreshCw, Monitor, Copy, Eye, EyeOff } from 'lucide-react';
+import { API_CONFIG } from '../config/api';
 
 interface VNCClientProps {
   windowId: string;
@@ -25,7 +26,7 @@ export const VNCClient: React.FC<VNCClientProps> = ({ windowId }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
-  const API_BASE = `http://${window.location.hostname}:3001/api/vnc`;
+  const API_BASE = API_CONFIG.getEndpointUrl('vnc');
 
   const loadSessions = async () => {
     setLoading(true);

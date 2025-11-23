@@ -1,25 +1,275 @@
 @import "tailwindcss";
+@import "./animations.css";
 
 @layer base {
   body {
     background-color: #1e1e2e;
     color: #cdd6f4;
     overflow: hidden;
+    /* Fallback for browsers that don't support CSS Custom Properties */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* CSS Variables for wallpaper with fallbacks */
+  :root {
+    --wallpaper: linear-gradient(135deg, #1e1e2e 0%, #181825 50%, #11111b 100%);
+    --wallpaper-display: cover;
+    /* Additional color variables for consistency */
+    --bg-primary: #1e1e2e;
+    --bg-secondary: #181825;
+    --text-primary: #cdd6f4;
+    --text-secondary: #a6adc8;
+    --border-color: #45475a;
+    --accent-color: #89b4fa;
+  }
+
+  /* Browser compatibility improvements */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  /* Ensure consistent display for modern CSS features */
+  .backdrop-blur {
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+
+  .backdrop-blur-md {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  .backdrop-blur-lg {
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+
+  /* Fallback for browsers that don't support backdrop-filter */
+  @supports not (backdrop-filter: blur(8px)) {
+    .backdrop-blur,
+    .backdrop-blur-md,
+    .backdrop-blur-lg {
+      background-color: rgba(30, 30, 46, 0.8);
+    }
+  }
+
+  /* Ensure consistent focus indicators */
+  :focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+  }
+
+  /* Improve button compatibility */
+  button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  /* Ensure proper scrolling behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Handle reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-/* Custom Scrollbar */
+/* Wallpaper Display Modes with fallbacks */
+.desktop {
+  background: var(--wallpaper);
+  background-size: var(--wallpaper-display);
+  background-position: center;
+  background-repeat: no-repeat;
+
+  /* Fallback for browsers that don't support CSS Custom Properties */
+  background-color: #1e1e2e;
+  background-image: linear-gradient(135deg, #1e1e2e 0%, #181825 50%, #11111b 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.desktop[data-wallpaper-display="cover"] {
+  background-size: cover;
+}
+
+.desktop[data-wallpaper-display="contain"] {
+  background-size: contain;
+}
+
+.desktop[data-wallpaper-display="stretch"] {
+  background-size: 100% 100%;
+}
+
+.desktop[data-wallpaper-display="tile"] {
+  background-size: auto;
+  background-repeat: repeat;
+}
+
+.desktop[data-wallpaper-display="center"] {
+  background-size: auto;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Custom Scrollbar with better compatibility */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background-color: #181825;
 }
+
 ::-webkit-scrollbar-thumb {
   background-color: #45475a;
   border-radius: 9999px;
+  -webkit-transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background-color: #585b70;
+}
+
+/* Firefox scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #45475a #181825;
+}
+
+/* Ensure proper flexbox support with prefixes */
+.flex {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.flex-col {
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.items-center {
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.justify-center {
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+}
+
+.gap-2 {
+  -webkit-box-gap: 0.5rem;
+  -moz-box-gap: 0.5rem;
+  -webkit-gap: 0.5rem;
+  -ms-gap: 0.5rem;
+  gap: 0.5rem;
+}
+
+/* Grid support with prefixes */
+.grid {
+  display: -ms-grid;
+  display: grid;
+}
+
+/* Transform utilities with prefixes */
+.transform {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.transition-all {
+  -webkit-transition: all 0.2s ease;
+  transition: all 0.2s ease;
+}
+
+/* Border radius utilities with better support */
+.rounded {
+  border-radius: 0.25rem;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.rounded-full {
+  border-radius: 9999px;
+}
+
+/* Shadow utilities with prefixes */
+.shadow-lg {
+  -webkit-box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Text overflow handling */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--accent-color);
+  color: #1e1e2e;
+}
+
+::-moz-selection {
+  background-color: var(--accent-color);
+  color: #1e1e2e;
+}
+
+/* Loading states for better UX */
+.skeleton {
+  background: linear-gradient(90deg, #45475a 25%, #585b70 50%, #45475a 75%);
+  background-size: 200% 100%;
+  -webkit-animation: loading 1.5s infinite;
+  animation: loading 1.5s infinite;
+}
+
+@-webkit-keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }

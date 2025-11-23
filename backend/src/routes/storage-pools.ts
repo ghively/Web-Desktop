@@ -189,12 +189,12 @@ async function mountSFTP(host: string, mountPoint: string, credentials: any): Pr
   }
 }
 
-async function mountNFS(export: string, mountPoint: string, options: string[] = []): Promise<void> {
+async function mountNFS(nfsExport: string, mountPoint: string, options: string[] = []): Promise<void> {
   try {
     await fs.mkdir(mountPoint, { recursive: true });
 
     const nfsOptions = options.length > 0 ? options.join(',') : 'defaults';
-    await execAsync(`mount -t nfs -o ${nfsOptions} "${export}" ${mountPoint}`);
+    await execAsync(`mount -t nfs -o ${nfsOptions} "${nfsExport}" ${mountPoint}`);
   } catch (error) {
     throw new Error(`Failed to mount NFS: ${error}`);
   }

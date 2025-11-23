@@ -385,7 +385,6 @@ router.get('/storage/volumes', async (req, res) => {
       message: error instanceof Error ? error.message : 'Unknown error'
     });
   });
-  }
 });
 
 // Get services

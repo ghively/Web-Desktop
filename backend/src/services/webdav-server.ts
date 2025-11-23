@@ -4,6 +4,125 @@ import fs from 'fs';
 import path from 'path';
 import { validatePath, ensureDirectoryExists } from '../utils/file-utils';
 
+// Enhanced type guard functions for comprehensive error handling
+interface ErrorWithMessage {
+  message: string;
+  code?: string | number;
+  errno?: number;
+  path?: string;
+  syscall?: string;
+}
+
+interface NodeError extends Error {
+  code?: string | number;
+  errno?: number;
+  path?: string;
+  syscall?: string;
+}
+
+const isErrorWithMessage = (error: unknown): error is ErrorWithMessage => {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as ErrorWithMessage).message === 'string'
+  );
+};
+
+const isNodeError = (error: unknown): error is NodeError => {
+  return (
+    isErrorWithMessage(error) &&
+    (error as NodeError).name !== undefined &&
+    (error as NodeError).stack !== undefined
+  );
+};
+
+const isFileAccessError = (error: unknown): error is NodeError & { code: 'ENOENT' | 'EACCES' | 'EPERM' | 'EEXIST' } => {
+  return (
+    isNodeError(error) &&
+    ['ENOENT', 'EACCES', 'EPERM', 'EEXIST'].includes(error.code as string)
+  );
+};
+
+const isFileSystemError = (error: unknown): error is NodeError & { code: string } => {
+  return (
+    isNodeError(error) &&
+    typeof error.code === 'string'
+  );
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (isErrorWithMessage(error)) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (error && typeof error === 'object' && typeof error.toString === 'function') {
+    try {
+      return error.toString();
+    } catch {
+      return 'Object conversion failed';
+    }
+  }
+  return 'Unknown error occurred';
+};
+
+const getErrorCode = (error: unknown): string | undefined => {
+  if (isNodeError(error)) {
+    return typeof error.code === 'string' ? error.code : String(error.code);
+  }
+  return undefined;
+};
+
+const getErrorPath = (error: unknown): string | undefined => {
+  if (isNodeError(error)) {
+    return error.path;
+  }
+  return undefined;
+};
+
+// Enhanced error response utility
+const createErrorResponse = (error: unknown, defaultMessage: string = 'Internal server error') => {
+  const message = getErrorMessage(error);
+  const code = getErrorCode(error);
+  const path = getErrorPath(error);
+
+  // Handle specific file system errors
+  if (isFileAccessError(error)) {
+    switch (error.code) {
+      case 'ENOENT':
+        return { error: 'File or directory not found', path };
+      case 'EACCES':
+        return { error: 'Permission denied', path };
+      case 'EPERM':
+        return { error: 'Operation not permitted', path };
+      case 'EEXIST':
+        return { error: 'File or directory already exists', path };
+      default:
+        return { error: message || 'File system error', code, path };
+    }
+  }
+
+  // Handle other system errors
+  if (isFileSystemError(error)) {
+    return { error: message || 'File system operation failed', code, path };
+  }
+
+  // Generic error fallback
+  return { error: message || defaultMessage };
+};
+
+export interface WebDAVUser {
+  username: string;
+  password: string;
+  home?: string;
+}
+
+export interface AuthenticatedRequest extends express.Request {
+  user?: WebDAVUser;
+}
+
 export interface WebDAVServerConfig {
   port: number;
   host: string;
@@ -11,7 +130,7 @@ export interface WebDAVServerConfig {
   auth?: {
     type: 'basic' | 'digest' | 'none';
     realm?: string;
-    users?: Array<{ username: string; password: string; home?: string }>;
+    users?: WebDAVUser[];
   };
   readOnly?: boolean;
   enableLocking?: boolean;
@@ -54,7 +173,7 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
   }
 
   // Authentication middleware
-  const authenticate = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const authenticate = (req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) => {
     if (!config.auth || config.auth.type === 'none') {
       return next();
     }
@@ -75,24 +194,25 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      (req as any).user = user;
+      req.user = user;
       log(`User ${username} authenticated successfully`);
       next();
     } catch (error) {
-      log(`Authentication error: ${error.message}`, 'error');
-      res.status(401).json({ error: 'Authentication failed' });
+      const errorResponse = createErrorResponse(error, 'Authentication failed');
+      log(`Authentication error: ${getErrorMessage(error)}`, 'error');
+      res.status(401).json(errorResponse);
     }
   };
 
   // Helper to get file path
-  const getFilePath = (reqPath: string, user?: any): string => {
+  const getFilePath = (reqPath: string, user?: WebDAVUser): string => {
     const rootPath = user?.home || config.rootPath || process.env.HOME || '/';
     const cleanPath = decodeURIComponent(reqPath).replace(/^\//, '');
     return path.resolve(rootPath, cleanPath);
   };
 
   // WebDAV method handlers
-  const handleOptions = (req: express.Request, res: express.Response) => {
+  const handleOptions = (req: AuthenticatedRequest, res: express.Response) => {
     const allowedMethods = config.allowedMethods || [
       'OPTIONS', 'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'COPY', 'MOVE',
       'MKCOL', 'PROPFIND', 'PROPPATCH', 'LOCK', 'UNLOCK'
@@ -103,9 +223,9 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
     res.status(200).end();
   };
 
-  const handlePropfind = (req: express.Request, res: express.Response) => {
+  const handlePropfind = (req: AuthenticatedRequest, res: express.Response) => {
     try {
-      const filePath = getFilePath(req.path, (req as any).user);
+      const filePath = getFilePath(req.path, req.user);
       const depth = req.headers.depth || 'infinity';
 
       log(`PROPFIND on ${filePath} (depth: ${depth})`);
@@ -118,8 +238,8 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
       const isDirectory = stats.isDirectory();
 
       // Basic PROPFIND response
-      const getProps = (path: string, stats: fs.Stats, isDir: boolean) => {
-        const name = path.basename(path);
+      const getProps = (filePath: string, stats: fs.Stats, isDir: boolean) => {
+        const name = path.basename(filePath);
         return `\
 <d:multistatus xmlns:d="DAV:">
   <d:response>
@@ -174,14 +294,15 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
       res.status(207).send(content);
 
     } catch (error) {
-      log(`PROPFIND error: ${error.message}`, 'error');
-      res.status(500).json({ error: error.message });
+      const errorResponse = createErrorResponse(error, 'PROPFIND operation failed');
+      log(`PROPFIND error: ${getErrorMessage(error)}`, 'error');
+      res.status(500).json(errorResponse);
     }
   };
 
-  const handleGet = (req: express.Request, res: express.Response) => {
+  const handleGet = (req: AuthenticatedRequest, res: express.Response) => {
     try {
-      const filePath = getFilePath(req.path, (req as any).user);
+      const filePath = getFilePath(req.path, req.user);
       log(`GET on ${filePath}`);
 
       if (!fs.existsSync(filePath)) {
@@ -206,18 +327,19 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
       }
 
     } catch (error) {
-      log(`GET error: ${error.message}`, 'error');
-      res.status(500).json({ error: error.message });
+      const errorResponse = createErrorResponse(error, 'GET operation failed');
+      log(`GET error: ${getErrorMessage(error)}`, 'error');
+      res.status(500).json(errorResponse);
     }
   };
 
-  const handlePut = (req: express.Request, res: express.Response) => {
+  const handlePut = (req: AuthenticatedRequest, res: express.Response) => {
     try {
       if (config.readOnly) {
         return res.status(403).json({ error: 'Server is read-only' });
       }
 
-      const filePath = getFilePath(req.path, (req as any).user);
+      const filePath = getFilePath(req.path, req.user);
       log(`PUT on ${filePath}`);
 
       // Ensure parent directory exists
@@ -241,23 +363,25 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
       });
 
       writeStream.on('error', (error) => {
-        log(`PUT error: ${error.message}`, 'error');
-        res.status(500).json({ error: error.message });
+        const errorResponse = createErrorResponse(error, 'PUT operation failed');
+        log(`PUT error: ${getErrorMessage(error)}`, 'error');
+        res.status(500).json(errorResponse);
       });
 
     } catch (error) {
-      log(`PUT error: ${error.message}`, 'error');
-      res.status(500).json({ error: error.message });
+      const errorResponse = createErrorResponse(error, 'PUT operation failed');
+      log(`PUT error: ${getErrorMessage(error)}`, 'error');
+      res.status(500).json(errorResponse);
     }
   };
 
-  const handleMkcol = (req: express.Request, res: express.Response) => {
+  const handleMkcol = (req: AuthenticatedRequest, res: express.Response) => {
     try {
       if (config.readOnly) {
         return res.status(403).json({ error: 'Server is read-only' });
       }
 
-      const filePath = getFilePath(req.path, (req as any).user);
+      const filePath = getFilePath(req.path, req.user);
       log(`MKCOL on ${filePath}`);
 
       if (fs.existsSync(filePath)) {
@@ -269,18 +393,19 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
       res.status(201).end();
 
     } catch (error) {
-      log(`MKCOL error: ${error.message}`, 'error');
-      res.status(500).json({ error: error.message });
+      const errorResponse = createErrorResponse(error, 'MKCOL operation failed');
+      log(`MKCOL error: ${getErrorMessage(error)}`, 'error');
+      res.status(500).json(errorResponse);
     }
   };
 
-  const handleDelete = (req: express.Request, res: express.Response) => {
+  const handleDelete = (req: AuthenticatedRequest, res: express.Response) => {
     try {
       if (config.readOnly) {
         return res.status(403).json({ error: 'Server is read-only' });
       }
 
-      const filePath = getFilePath(req.path, (req as any).user);
+      const filePath = getFilePath(req.path, req.user);
       log(`DELETE on ${filePath}`);
 
       if (!fs.existsSync(filePath)) {
@@ -298,20 +423,21 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
       res.status(204).end();
 
     } catch (error) {
-      log(`DELETE error: ${error.message}`, 'error');
-      res.status(500).json({ error: error.message });
+      const errorResponse = createErrorResponse(error, 'DELETE operation failed');
+      log(`DELETE error: ${getErrorMessage(error)}`, 'error');
+      res.status(500).json(errorResponse);
     }
   };
 
-  const handleCopy = (req: express.Request, res: express.Response) => {
+  const handleCopy = (req: AuthenticatedRequest, res: express.Response) => {
     try {
       const destHeader = req.headers.destination;
       if (!destHeader) {
         return res.status(400).json({ error: 'Destination header required' });
       }
 
-      const srcPath = getFilePath(req.path, (req as any).user);
-      const destPath = getFilePath(new URL(destHeader, `http://${req.headers.host}`).pathname, (req as any).user);
+      const srcPath = getFilePath(req.path, req.user);
+      const destPath = getFilePath(new URL(destHeader, `http://${req.headers.host}`).pathname, req.user);
 
       log(`COPY from ${srcPath} to ${destPath}`);
 
@@ -360,8 +486,9 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
       res.status(201).end();
 
     } catch (error) {
-      log(`COPY error: ${error.message}`, 'error');
-      res.status(500).json({ error: error.message });
+      const errorResponse = createErrorResponse(error, 'COPY operation failed');
+      log(`COPY error: ${getErrorMessage(error)}`, 'error');
+      res.status(500).json(errorResponse);
     }
   };
 
@@ -378,13 +505,13 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
   app.copy('*', handleCopy);
 
   // Simple MOVE implementation (copy + delete)
-  app.move('*', (req, res) => {
+  app.move('*', (req: AuthenticatedRequest, res) => {
     // Implement move as copy then delete
     handleCopy(req, res);
     if (res.statusCode < 400) {
       // If copy succeeded, delete source
       try {
-        const srcPath = getFilePath(req.path, (req as any).user);
+        const srcPath = getFilePath(req.path, req.user);
         const stats = fs.statSync(srcPath);
         if (stats.isDirectory()) {
           fs.rmSync(srcPath, { recursive: true, force: true });
@@ -392,7 +519,8 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
           fs.unlinkSync(srcPath);
         }
       } catch (error) {
-        log(`MOVE (delete) error: ${error.message}`, 'error');
+        const errorResponse = createErrorResponse(error, 'MOVE delete operation failed');
+        log(`MOVE (delete) error: ${getErrorMessage(error)}`, 'error');
       }
     }
   });
@@ -419,8 +547,9 @@ export const createWebDavServer = async (config: WebDAVServerConfig) => {
     });
 
     server.on('error', (error) => {
-      log(`Server error: ${error.message}`, 'error');
-      reject(error);
+      const errorResponse = createErrorResponse(error, 'WebDAV server error');
+      log(`Server error: ${getErrorMessage(error)}`, 'error');
+      reject(errorResponse);
     });
   });
 };

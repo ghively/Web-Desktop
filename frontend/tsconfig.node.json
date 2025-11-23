@@ -14,12 +14,22 @@
     "moduleDetection": "force",
     "noEmit": true,
 
-    /* Linting */
+    /* Enhanced Linting */
     "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "erasableSyntaxOnly": true,
     "noUncheckedSideEffectImports": true
   },
   "include": ["vite.config.ts"]

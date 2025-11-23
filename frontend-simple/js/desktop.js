@@ -164,7 +164,6 @@ function renderLauncherApps(filter = '') {
     filtered = filtered.slice(0, 50);
 
     // Use fuzzy search if filter exists and Fuse.js is available
-    let filtered = [];
     if (filter && filter.trim() && typeof Fuse !== 'undefined') {
         // Initialize or update Fuse instance
         if (!fuse || fuse._docs !== apps) {

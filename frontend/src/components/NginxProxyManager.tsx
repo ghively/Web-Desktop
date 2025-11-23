@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Globe, Plus, Trash2, RefreshCw, Lock, ArrowRight, Radio } from 'lucide-react';
+import { API_CONFIG } from '../config/api';
 
 interface NginxProxyManagerProps {
   windowId: string;
@@ -43,7 +44,7 @@ export const NginxProxyManager: React.FC<NginxProxyManagerProps> = ({ windowId }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = `http://${window.location.hostname}:3001/api/nginx-proxy`;
+  const API_BASE = API_CONFIG.getEndpointUrl('nginxProxy');
 
   const loadHosts = async () => {
     setLoading(true);

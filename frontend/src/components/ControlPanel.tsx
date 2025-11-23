@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Monitor, Users, Network, Server, Globe, Play, Square, RefreshCw, Plus, Edit3, Trash2, UserPlus, Settings } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Monitor, Users, Network, Server, Globe, Play, Square, RefreshCw, Settings } from 'lucide-react';
+import { API_CONFIG } from '../config/api';
 
 interface ControlPanelProps {
   windowId: string;
@@ -82,9 +83,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = `http://${window.location.hostname}:3001/api/control-panel`;
+  const API_BASE = API_CONFIG.getEndpointUrl('controlPanel');
 
-  const loadSystemInfo = async () => {
+  const loadSystemInfo = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -97,9 +98,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
-  const loadNetworkInfo = async () => {
+  const loadNetworkInfo = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -112,9 +113,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -127,9 +128,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
-  const loadServices = async () => {
+  const loadServices = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -142,9 +143,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
-  const loadHostname = async () => {
+  const loadHostname = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -157,7 +158,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
   const toggleService = async (serviceName: string, action: 'start' | 'stop') => {
     try {
@@ -171,20 +172,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = () => {
     }
   };
 
-  const updateHostname = async (newHostname: string, pretty?: string) => {
-    try {
-      const response = await fetch(`${API_BASE}/hostname`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hostname: newHostname, pretty }),
-      });
-      if (!response.ok) throw new Error('Failed to update hostname');
-      loadHostname();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    }
-  };
-
+  
   useEffect(() => {
     switch (activeTab) {
       case 'system':
@@ -203,7 +191,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = () => {
         loadHostname();
         break;
     }
-  }, [activeTab]);
+  }, [activeTab, loadHostname, loadNetworkInfo, loadServices, loadSystemInfo, loadUsers]);
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 B';
@@ -249,7 +237,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = () => {
         ].map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id as any)}
+            onClick={() => setActiveTab(id as typeof activeTab)}
             className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
               activeTab === id
                 ? 'border-blue-500 text-blue-400 bg-gray-800/50'

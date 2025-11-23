@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Container, Play, Square, RotateCcw, Clock, Activity } from 'lucide-react';
+import { useSettings } from '../context/useSettings';
 
 interface DockerContainer {
     id: string;
@@ -7,7 +8,7 @@ interface DockerContainer {
     image: string;
     state: string;
     status: string;
-    ports?: string | any[];
+    ports?: string | unknown[];
     created: string;
 }
 
@@ -15,27 +16,79 @@ interface ContainerManagerProps {
     windowId: string;
 }
 
+// Utility function to validate and format dates
+const validateAndFormatDate = (dateString: string): string => {
+    if (!dateString || typeof dateString !== 'string') {
+        return 'Unknown';
+    }
+
+    try {
+        const date = new Date(dateString);
+
+        // Check if date is invalid
+        if (isNaN(date.getTime())) {
+            return 'Invalid Date';
+        }
+
+        // Check for reasonable date range (1970-2100)
+        if (date.getFullYear() < 1970 || date.getFullYear() > 2100) {
+            return 'Out of Range';
+        }
+
+        // Check if date is too far in the future (more than 1 year from now)
+        const now = new Date();
+        const oneYearFromNow = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+        if (date > oneYearFromNow) {
+            return 'Future Date';
+        }
+
+        return date.toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    } catch (error) {
+        console.warn('Date parsing error:', error);
+        return 'Invalid';
+    }
+};
+
 export const ContainerManager: React.FC<ContainerManagerProps> = () => {
+    const { settings } = useSettings();
     const [containers, setContainers] = useState<DockerContainer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const loadContainers = async () => {
+        // Cancel any existing request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
         setLoading(true);
         setError(null);
-        
+
         try {
+            // Create new AbortController for this request
             const controller = new AbortController();
+            abortControllerRef.current = controller;
             const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-            const response = await fetch(`http://${window.location.hostname}:3001/api/containers`, {
+            const response = await fetch(`${settings.backend.apiUrl}/api/containers`, {
                 signal: controller.signal,
                 headers: {
                     'Content-Type': 'application/json',
                 }
             });
-            
+
             clearTimeout(timeoutId);
+
+            // Check if request was aborted
+            if (controller.signal.aborted) {
+                return;
+            }
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -43,30 +96,48 @@ export const ContainerManager: React.FC<ContainerManagerProps> = () => {
             }
 
             const data = await response.json();
-            
+
             // Validate response data
             if (!data || typeof data !== 'object') {
                 throw new Error('Invalid response from server');
             }
 
             const containers = Array.isArray(data.containers) ? data.containers : [];
-            
-            // Validate container data
-            const validContainers = containers.filter((container: any) => 
-                container && 
-                typeof container.id === 'string' && 
-                typeof container.name === 'string' &&
-                container.id.length > 0
-            );
 
-            setContainers(validContainers);
+            // Validate container data
+            const validContainers = containers.filter((container: DockerContainer) => {
+                if (!container ||
+                    typeof container.id !== 'string' ||
+                    typeof container.name !== 'string' ||
+                    container.id.length === 0) {
+                    return false;
+                }
+
+                // Validate and fix created date if needed
+                if (!container.created || typeof container.created !== 'string') {
+                    container.created = new Date().toISOString();
+                }
+
+                return true;
+            });
+
+            // Only update state if request wasn't aborted
+            if (!controller.signal.aborted) {
+                setContainers(validContainers);
+            }
         } catch (err) {
+            // Don't show error for aborted requests
+            if (err instanceof Error && err.name === 'AbortError') {
+                return;
+            }
+
             const errorMessage = err instanceof Error ? err.message : 'Unknown error';
             console.error('Failed to load containers:', err);
             setError(errorMessage);
             setContainers([]);
         } finally {
             setLoading(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -77,11 +148,17 @@ export const ContainerManager: React.FC<ContainerManagerProps> = () => {
             return;
         }
 
+        // Cancel any existing action
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
         try {
             const controller = new AbortController();
+            abortControllerRef.current = controller;
             const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for container operations
 
-            const response = await fetch(`http://${window.location.hostname}:3001/api/containers/${encodeURIComponent(id.trim())}/${action}`, {
+            const response = await fetch(`${settings.backend.apiUrl}/api/containers/${encodeURIComponent(id.trim())}/${action}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -91,21 +168,38 @@ export const ContainerManager: React.FC<ContainerManagerProps> = () => {
 
             clearTimeout(timeoutId);
 
+            // Check if request was aborted
+            if (controller.signal.aborted) {
+                return;
+            }
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 const errorMessage = errorData.error || `Failed to ${action} container`;
                 throw new Error(errorMessage);
             }
 
-            // Refresh list after successful action
-            await loadContainers();
+            // Refresh list after successful action only if not aborted
+            if (!controller.signal.aborted) {
+                await loadContainers();
+            }
         } catch (err) {
+            // Don't show error for aborted requests
+            if (err instanceof Error && err.name === 'AbortError') {
+                return;
+            }
+
             const errorMessage = err instanceof Error ? err.message : `Failed to ${action} container`;
             console.error(`Container ${action} error:`, err);
             setError(errorMessage);
-            
+
             // Clear error after 5 seconds
-            setTimeout(() => setError(null), 5000);
+            if (errorTimeoutRef.current) {
+                clearTimeout(errorTimeoutRef.current);
+            }
+            errorTimeoutRef.current = setTimeout(() => setError(null), 5000);
+        } finally {
+            abortControllerRef.current = null;
         }
     };
 
@@ -127,7 +221,7 @@ export const ContainerManager: React.FC<ContainerManagerProps> = () => {
         return 'bg-gray-800/50 border-gray-700/50';
     };
 
-    const formatPorts = (ports?: string | any[]) => {
+    const formatPorts = (ports?: string | unknown[] | { PublicPort?: number; PrivatePort: number; Type: string }[]) => {
         if (!ports) return null;
         
         // Handle case where ports comes as a string from backend
@@ -137,7 +231,7 @@ export const ContainerManager: React.FC<ContainerManagerProps> = () => {
         
         // Handle case where ports is an array
         if (Array.isArray(ports) && ports.length > 0) {
-            return ports.map(port => {
+            return (ports as { PublicPort?: number; PrivatePort: number; Type: string }[]).map((port) => {
                 if (port.PublicPort) {
                     return `${port.PublicPort}->${port.PrivatePort}/${port.Type}`;
                 }
@@ -159,7 +253,18 @@ export const ContainerManager: React.FC<ContainerManagerProps> = () => {
         loadContainers();
         // Auto-refresh every 5 seconds
         const interval = setInterval(loadContainers, 5000);
-        return () => clearInterval(interval);
+
+        return () => {
+            clearInterval(interval);
+            // Clear any pending error timeout
+            if (errorTimeoutRef.current) {
+                clearTimeout(errorTimeoutRef.current);
+            }
+            // Cancel any pending requests
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
     }, []);
 
     return (
@@ -235,7 +340,7 @@ export const ContainerManager: React.FC<ContainerManagerProps> = () => {
                                             </span>
                                             <div className="flex items-center gap-1 text-gray-500 text-xs">
                                                 <Clock size={12} />
-                                                {new Date(container.created).toLocaleDateString()}
+                                                {validateAndFormatDate(container.created)}
                                             </div>
                                         </div>
                                     </div>

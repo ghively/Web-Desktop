@@ -117,12 +117,6 @@ class FileManager {
             return;
         }
 
-        fileList.innerHTML = files.map(file => `
-            <div class="file-item"
-                 style="padding: 0.75rem; margin: 0.25rem; background: var(--surface0); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 0.75rem; transition: background 0.2s;"
-                 onclick="fileManager.handleClick('${file.path}', ${file.isDirectory}, event)"
-                 oncontextmenu="fileManager.handleContextMenu('${file.path}', '${file.name}', event); return false;"
-                 onmouseover="this.style.background='var(--surface1)'" 
         // Sort: directories first, then files
         const directories = files.filter(f => f.isDirectory);
         const regularFiles = files.filter(f => !f.isDirectory);
@@ -206,6 +200,8 @@ class FileManager {
             }
         };
         setTimeout(() => document.addEventListener('click', closeMenu), 0);
+    }
+
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -345,6 +341,8 @@ class FileManager {
         } catch (e) {
             alert(e.message);
         }
+    }
+
     // Drag and Drop
     handleDragOver(event) {
         event.preventDefault();

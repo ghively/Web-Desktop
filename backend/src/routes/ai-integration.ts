@@ -385,7 +385,7 @@ async function performSearch(query: SearchQuery): Promise<any> {
     console.error('Directory search error:', error);
     return { query: query.query, results: [], total: 0 };
   }
-});
+}
 
 // Workflow Automation
 router.get('/workflows', (req, res) => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Share2, Trash2, RefreshCw, HardDrive, Users } from 'lucide-react';
+import { API_CONFIG } from '../config/api';
 
 interface ShareManagerProps {
   windowId: string;
@@ -34,7 +35,7 @@ export const ShareManager: React.FC<ShareManagerProps> = ({ windowId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = `http://${window.location.hostname}:3001/api/shares`;
+  const API_BASE = API_CONFIG.getEndpointUrl('shares');
 
   const loadNfsShares = async () => {
     setLoading(true);

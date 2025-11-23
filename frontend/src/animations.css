@@ -1,0 +1,350 @@
+/* Enhanced UI Animations and Transitions with Cross-Browser Support */
+
+/* Smooth animations for progress bars */
+@keyframes shimmer {
+    0% {
+        -webkit-transform: translateX(-100%);
+        transform: translateX(-100%);
+    }
+    100% {
+        -webkit-transform: translateX(100%);
+        transform: translateX(100%);
+    }
+}
+
+@-webkit-keyframes shimmer {
+    0% {
+        -webkit-transform: translateX(-100%);
+    }
+    100% {
+        -webkit-transform: translateX(100%);
+    }
+}
+
+@keyframes pulse-subtle {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+@-webkit-keyframes pulse-subtle {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+@keyframes slide-up {
+    from {
+        -webkit-transform: translateY(10px);
+        transform: translateY(10px);
+        opacity: 0;
+    }
+    to {
+        -webkit-transform: translateY(0);
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes slide-up {
+    from {
+        -webkit-transform: translateY(10px);
+        opacity: 0;
+    }
+    to {
+        -webkit-transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scale-in {
+    from {
+        -webkit-transform: scale(0.95);
+        transform: scale(0.95);
+        opacity: 0;
+    }
+    to {
+        -webkit-transform: scale(1);
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes scale-in {
+    from {
+        -webkit-transform: scale(0.95);
+        opacity: 0;
+    }
+    to {
+        -webkit-transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Enhanced scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(24, 24, 37, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(69, 71, 90, 0.8);
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(88, 91, 112, 0.9);
+}
+
+::-webkit-scrollbar-corner {
+    background: rgba(24, 24, 37, 0.5);
+}
+
+/* Button enhancements */
+.btn-enhanced {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s, height 0.5s;
+}
+
+.btn-enhanced:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Card hover effects */
+.card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+}
+
+/* Modal animations */
+.modal-overlay {
+    animation: fade-in 0.2s ease-out;
+}
+
+.modal-content {
+    animation: scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Loading states */
+.loading-skeleton {
+    background: linear-gradient(90deg,
+        rgba(69, 71, 90, 0.3) 0%,
+        rgba(69, 71, 90, 0.6) 50%,
+        rgba(69, 71, 90, 0.3) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+}
+
+/* Progress bar enhancements */
+.progress-enhanced {
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-enhanced::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    animation: shimmer 2s infinite;
+}
+
+/* Focus indicators */
+.focus-enhanced:focus {
+    outline: 2px solid rgba(59, 130, 246, 0.5);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Smooth text transitions */
+.text-transition {
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Notification animations */
+@keyframes slide-in-right {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-out-right {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.notification-enter {
+    animation: slide-in-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notification-exit {
+    animation: slide-out-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Window transition enhancements */
+.window-transition {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover glow effects */
+.glow-hover {
+    transition: box-shadow 0.3s ease;
+}
+
+.glow-hover:hover {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+/* Interactive feedback */
+.interactive-element {
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.interactive-element:active {
+    transform: scale(0.98);
+}
+
+.interactive-element:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Smooth fade transitions */
+.fade-transition {
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Tooltip animations */
+.tooltip-enter {
+    animation: fade-in 0.2s ease-out;
+}
+
+/* Dropdown animations */
+.dropdown-enter {
+    animation: slide-up 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced input fields */
+.input-enhanced {
+    transition: all 0.2s ease;
+    background: rgba(31, 41, 55, 0.8);
+    border: 1px solid rgba(75, 85, 99, 0.6);
+}
+
+.input-enhanced:focus {
+    background: rgba(31, 41, 55, 0.95);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.input-enhanced:hover {
+    border-color: rgba(75, 85, 99, 0.8);
+}
+
+/* Toggle switch enhancements */
+.toggle-switch {
+    transition: background-color 0.3s ease;
+}
+
+.toggle-switch-handle {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tab transitions */
+.tab-transition {
+    transition: all 0.2s ease;
+}
+
+/* Responsive animations */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .btn-enhanced,
+    .card-hover,
+    .input-enhanced {
+        border-width: 2px;
+    }
+
+    .focus-enhanced:focus {
+        outline-width: 3px;
+        outline-color: ButtonText;
+    }
+}

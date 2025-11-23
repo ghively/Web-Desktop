@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
-import si from 'systeminformation';
-import os from 'os';
-import fs from 'fs/promises';
+import * as si from 'systeminformation';
+import * as os from 'os';
+import * as fs from 'fs/promises';
+import * as dns from 'dns';
 
 const execAsync = promisify(exec);
 const router = Router();
@@ -128,28 +129,83 @@ router.get('/network', async (req, res) => {
             withTimeout(si.networkConnections(), 5000).catch(() => [])
         ]);
 
-        // Get DNS servers
+        // Get DNS servers using cross-platform approach
         let dnsServers: string[] = [];
         try {
-            const { stdout } = await withTimeout(
-                execAsync('cat /etc/resolv.conf | grep nameserver | awk \'{print $2}\''),
-                3000
+            // Use Node.js dns.getServers() for cross-platform DNS server detection
+            dnsServers = dns.getServers().filter(server =>
+                server && (server.includes('.') || server.includes(':'))
             );
-            dnsServers = stdout.trim().split('\n').filter(Boolean);
         } catch (error) {
             console.error('Error fetching DNS servers:', error);
+            // Fallback to platform-specific commands
+            if (os.platform() === 'linux') {
+                try {
+                    const { stdout } = await withTimeout(
+                        execAsync('cat /etc/resolv.conf | grep nameserver | awk \'{print $2}\''),
+                        3000
+                    );
+                    dnsServers = stdout.trim().split('\n').filter(Boolean);
+                } catch (fallbackError) {
+                    console.error('Fallback DNS fetch failed:', fallbackError);
+                }
+            } else if (os.platform() === 'win32') {
+                try {
+                    const { stdout } = await withTimeout(
+                        execAsync('nslookup localhost 2>nul | findstr Server: | findstr /v "#"'),
+                        3000
+                    );
+                    const lines = stdout.split('\n');
+                    const serverLine = lines.find(line => line.includes('Server:'));
+                    if (serverLine) {
+                        const server = serverLine.split(':')[1]?.trim();
+                        if (server) dnsServers = [server];
+                    }
+                } catch (fallbackError) {
+                    console.error('Fallback DNS fetch failed:', fallbackError);
+                }
+            }
         }
 
-        // Get default gateway
+        // Get default gateway using cross-platform approach
         let defaultGateway = '';
         try {
-            const { stdout } = await withTimeout(
-                execAsync('ip route | grep default | awk \'{print $3}\' | head -1'),
-                3000
+            // Try to find an interface with a default route (systeminformation doesn't expose gateway directly)
+            // We'll rely on the platform-specific fallback commands for gateway information
+            const activeInterface = networkInterfaces.find(iface =>
+                iface.ip4 && !iface.internal && iface.operstate === 'up'
             );
-            defaultGateway = stdout.trim();
+            if (activeInterface) {
+                console.log(`Found active interface: ${activeInterface.iface} (${activeInterface.ip4})`);
+            }
         } catch (error) {
-            console.error('Error fetching default gateway:', error);
+            console.error('Error analyzing network interfaces:', error);
+        }
+
+        // Fallback to platform-specific commands if systeminformation didn't provide gateway
+        if (!defaultGateway) {
+            try {
+                if (os.platform() === 'linux') {
+                    const { stdout } = await withTimeout(
+                        execAsync('ip route | grep default | awk \'{print $3}\' | head -1'),
+                        3000
+                    );
+                    defaultGateway = stdout.trim();
+                } else if (os.platform() === 'win32') {
+                    const { stdout } = await withTimeout(
+                        execAsync('ipconfig | findstr "Default Gateway"'),
+                        3000
+                    );
+                    const lines = stdout.split('\n');
+                    const gatewayLine = lines.find(line => line.includes('Default Gateway'));
+                    if (gatewayLine) {
+                        const match = gatewayLine.match(/(\d+\.\d+\.\d+\.\d+)/);
+                        if (match) defaultGateway = match[1];
+                    }
+                }
+            } catch (fallbackError) {
+                console.error('Fallback gateway fetch failed:', fallbackError);
+            }
         }
 
         res.json({
@@ -178,22 +234,107 @@ router.get('/network', async (req, res) => {
 // 3. GET /api/control-panel/users - List system users
 router.get('/users', async (req, res) => {
     try {
-        const { stdout } = await withTimeout(
-            execAsync('getent passwd | awk -F: \'$3 >= 1000 && $3 < 65534 {print $1":"$3":"$4":"$5":"$6":"$7}\''),
-            5000
-        );
+        let users: any[] = [];
 
-        const users = stdout.trim().split('\n').filter(Boolean).map(line => {
-            const [username, uid, gid, gecos, home, shell] = line.split(':');
-            return {
-                username,
-                uid: parseInt(uid),
-                gid: parseInt(gid),
-                fullName: gecos || '',
-                home,
-                shell
-            };
-        });
+        if (os.platform() === 'win32') {
+            // Windows user management approach
+            try {
+                // Get user accounts using wmic
+                const { stdout } = await withTimeout(
+                    execAsync('wmic useraccount get name,fullname,sid /format:csv'),
+                    5000
+                );
+
+                const lines = stdout.trim().split('\n').filter(line => line && !line.includes('Node,'));
+
+                for (const line of lines) {
+                    const parts = line.split(',');
+                    if (parts.length >= 4) {
+                        const username = parts[1];
+                        const fullName = parts[2];
+                        const sid = parts[3];
+
+                        // Skip system accounts and disabled accounts
+                        if (username &&
+                            !['Administrator', 'Guest', 'DefaultAccount'].includes(username) &&
+                            !username.endsWith('$') &&
+                            !sid.startsWith('S-1-5-18') && // Local System
+                            !sid.startsWith('S-1-5-19') && // Local Service
+                            !sid.startsWith('S-1-5-20')) { // Network Service
+
+                            try {
+                                // Get user profile directory
+                                const { stdout: profileOut } = await withTimeout(
+                                    execAsync(`echo %USERPROFILE%`, { timeout: 2000 })
+                                    .catch(() => ({ stdout: '' })), 3000
+                                );
+
+                                users.push({
+                                    username,
+                                    uid: sid, // Use SID as UID on Windows
+                                    gid: sid, // Use SID as GID on Windows
+                                    fullName: fullName || '',
+                                    home: profileOut.trim() || `C:\\Users\\${username}`,
+                                    shell: 'cmd.exe'
+                                });
+                            } catch (profileError) {
+                                users.push({
+                                    username,
+                                    uid: sid,
+                                    gid: sid,
+                                    fullName: fullName || '',
+                                    home: `C:\\Users\\${username}`,
+                                    shell: 'cmd.exe'
+                                });
+                            }
+                        }
+                    }
+                }
+            } catch (windowsError) {
+                console.error('Windows user fetch failed:', windowsError);
+                // Fallback to basic user list
+                users.push({
+                    username: os.userInfo().username,
+                    uid: os.userInfo().uid,
+                    gid: os.userInfo().gid,
+                    fullName: '',
+                    home: os.userInfo().homedir,
+                    shell: 'cmd.exe'
+                });
+            }
+        } else {
+            // Linux/Unix user management approach
+            try {
+                const { stdout } = await withTimeout(
+                    execAsync('getent passwd | awk -F: \'$3 >= 1000 && $3 < 65534 {print $1":"$3":"$4":"$5":"$6":"$7}\''),
+                    5000
+                );
+
+                users = stdout.trim().split('\n').filter(Boolean).map(line => {
+                    const [username, uid, gid, gecos, home, shell] = line.split(':');
+                    return {
+                        username,
+                        uid: parseInt(uid),
+                        gid: parseInt(gid),
+                        fullName: gecos || '',
+                        home,
+                        shell
+                    };
+                });
+            } catch (linuxError) {
+                console.error('Linux user fetch failed:', linuxError);
+                // Fallback to current user
+                const userInfo = os.userInfo();
+                users.push({
+                    username: userInfo.username,
+                    uid: userInfo.uid,
+                    gid: userInfo.gid,
+                    fullName: '',
+                    home: userInfo.homedir,
+                    shell: '/bin/bash'
+                });
+            }
+        }
 
         res.json({ users });
     } catch (error: any) {
@@ -211,10 +352,18 @@ router.post('/users', async (req, res) => {
         return res.status(400).json({ error: 'Username is required' });
     }
 
-    if (!isValidUsername(username)) {
+    // Adjust username validation for Windows (case insensitive, allows more characters)
+    const isWindows = os.platform() === 'win32';
+    const usernameRegex = isWindows
+        ? /^[a-zA-Z0-9._-]{1,20}$/
+        : /^[a-z_][a-z0-9_-]{0,31}$/;
+
+    if (!usernameRegex.test(username)) {
         return res.status(400).json({
             error: 'Invalid username format',
-            details: 'Username must start with lowercase letter or underscore, contain only lowercase letters, digits, underscores, and hyphens, and be max 32 characters'
+            details: isWindows
+                ? 'Username must be 1-20 characters, contain only letters, numbers, dots, hyphens, and underscores'
+                : 'Username must start with lowercase letter or underscore, contain only lowercase letters, digits, underscores, and hyphens, and be max 32 characters'
         });
     }
 
@@ -238,174 +387,78 @@ router.post('/users', async (req, res) => {
         }
     }
 
-    const validShells = ['/bin/bash', '/bin/sh', '/bin/zsh', '/usr/bin/fish', '/bin/false'];
-    const userShell = validShells.includes(shell) ? shell : '/bin/bash';
-
     try {
-        // Check if user already exists
-        try {
-            await withTimeout(execAsync(`id ${username}`), 3000);
-            return res.status(409).json({ error: 'User already exists' });
-        } catch {
-            // User doesn't exist, continue
-        }
-
-        // SECURITY: Use spawn with proper argument separation instead of shell command
-        await new Promise<void>((resolve, reject) => {
-            const args = ['-m', '-s', userShell];
-
-            if (fullName) {
-                args.push('-c', fullName);
-            }
-
-            args.push(username);
-
-            const useraddProcess = spawn('sudo', ['useradd', ...args], {
-                stdio: 'pipe',
-                timeout: 10000
-            });
-
-            useraddProcess.on('close', (code) => {
-                if (code === 0) {
-                    resolve();
-                } else {
-                    reject(new Error(`useradd failed with exit code ${code}`));
+        if (isWindows) {
+            // Windows user creation
+            try {
+                // Check if user already exists using net user
+                try {
+                    await withTimeout(execAsync(`net user "${username}"`, { timeout: 3000 }), 4000);
+                    return res.status(409).json({ error: 'User already exists' });
+                } catch {
+                    // User doesn't exist, continue
                 }
-            });
 
-            useraddProcess.on('error', (error) => {
-                reject(new Error(`Failed to spawn useradd: ${error.message}`));
-            });
-        });
-
-        // SECURITY: Set password more securely without using echo pipe
-        await new Promise<void>((resolve, reject) => {
-            const chpasswdProcess = spawn('sudo', ['chpasswd'], {
-                stdio: ['pipe', 'pipe', 'pipe'],
-                timeout: 5000
-            });
-
-            chpasswdProcess.stdin.write(`${username}:${password}\n`);
-            chpasswdProcess.stdin.end();
-
-            chpasswdProcess.on('close', (code) => {
-                if (code === 0) {
-                    resolve();
+                // Create user using net user command
+                const createCmd = `net user "${username}" "${password}" /add`;
+                if (fullName) {
+                    await withTimeout(execAsync(`${createCmd} /fullname:"${fullName}"`, { timeout: 10000 }), 12000);
                 } else {
-                    reject(new Error(`chpasswd failed with exit code ${code}`));
+                    await withTimeout(execAsync(createCmd, { timeout: 10000 }), 12000);
                 }
-            });
 
-            chpasswdProcess.on('error', (error) => {
-                reject(new Error(`Failed to spawn chpasswd: ${error.message}`));
-            });
-        });
-
-        res.json({
-            success: true,
-            message: 'User created successfully',
-            user: { username, shell: userShell, fullName: fullName || '' }
-        });
-    } catch (error: any) {
-        console.error('Error creating user:', error);
-        res.status(500).json({
-            error: 'Failed to create user',
-            details: error.message
-        });
-    }
-});
-
-// 5. PUT /api/control-panel/users/:username - Modify user
-router.put('/users/:username', async (req, res) => {
-    const { username } = req.params;
-    const { fullName, shell, password } = req.body;
-
-    if (!isValidUsername(username)) {
-        return res.status(400).json({ error: 'Invalid username format' });
-    }
-
-    try {
-        // Check if user exists
-        try {
-            await withTimeout(execAsync(`id ${username}`), 3000);
-        } catch {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        const updates: string[] = [];
-
-        // Update full name
-        if (fullName !== undefined && typeof fullName === 'string') {
-            // SECURITY: Validate full name to prevent injection
-            if (!/^[a-zA-Z0-9\s\-_.,]+$/.test(fullName)) {
-                return res.status(400).json({
-                    error: 'Invalid full name format',
-                    details: 'Full name contains invalid characters'
+                res.json({
+                    success: true,
+                    message: 'User created successfully on Windows',
+                    user: { username, shell: 'cmd.exe', fullName: fullName || '' }
+                });
+            } catch (windowsError: any) {
+                console.error('Windows user creation failed:', windowsError);
+                return res.status(500).json({
+                    error: 'Failed to create Windows user',
+                    details: windowsError.message
                 });
             }
-            if (fullName.length > 100) {
-                return res.status(400).json({
-                    error: 'Full name too long',
-                    details: 'Full name must be less than 100 characters'
-                });
-            }
-
-            // SECURITY: Use spawn with proper argument separation
-            await new Promise<void>((resolve, reject) => {
-                const usermodProcess = spawn('sudo', ['usermod', '-c', fullName, username], {
-                    stdio: 'pipe',
-                    timeout: 5000
-                });
-
-                usermodProcess.on('close', (code) => {
-                    if (code === 0) {
-                        resolve();
-                    } else {
-                        reject(new Error(`usermod -c failed with exit code ${code}`));
-                    }
-                });
-
-                usermodProcess.on('error', (error) => {
-                    reject(new Error(`Failed to spawn usermod: ${error.message}`));
-                });
-            });
-            updates.push('full name');
-        }
-
-        // Update shell
-        if (shell !== undefined) {
+        } else {
+            // Linux/Unix user creation
             const validShells = ['/bin/bash', '/bin/sh', '/bin/zsh', '/usr/bin/fish', '/bin/false'];
-            if (!validShells.includes(shell)) {
-                return res.status(400).json({ error: 'Invalid shell', validShells });
+            const userShell = validShells.includes(shell) ? shell : '/bin/bash';
+
+            // Check if user already exists
+            try {
+                await withTimeout(execAsync(`id ${username}`, { timeout: 3000 }), 4000);
+                return res.status(409).json({ error: 'User already exists' });
+            } catch {
+                // User doesn't exist, continue
             }
 
-            // SECURITY: Use spawn with proper argument separation
+            // SECURITY: Use spawn with proper argument separation instead of shell command
             await new Promise<void>((resolve, reject) => {
-                const usermodProcess = spawn('sudo', ['usermod', '-s', shell, username], {
+                const args = ['-m', '-s', userShell];
+
+                if (fullName) {
+                    args.push('-c', fullName);
+                }
+
+                args.push(username);
+
+                const useraddProcess = spawn('sudo', ['useradd', ...args], {
                     stdio: 'pipe',
-                    timeout: 5000
+                    timeout: 10000
                 });
 
-                usermodProcess.on('close', (code) => {
+                useraddProcess.on('close', (code) => {
                     if (code === 0) {
                         resolve();
                     } else {
-                        reject(new Error(`usermod -s failed with exit code ${code}`));
+                        reject(new Error(`useradd failed with exit code ${code}`));
                     }
                 });
 
-                usermodProcess.on('error', (error) => {
-                    reject(new Error(`Failed to spawn usermod: ${error.message}`));
+                useraddProcess.on('error', (error) => {
+                    reject(new Error(`Failed to spawn useradd: ${error.message}`));
                 });
             });
-            updates.push('shell');
-        }
-
-        // Update password
-        if (password !== undefined && typeof password === 'string') {
-            if (password.length < 8) {
-                return res.status(400).json({ error: 'Password must be at least 8 characters' });
-            }
 
             // SECURITY: Set password more securely without using echo pipe
             await new Promise<void>((resolve, reject) => {
@@ -429,18 +482,225 @@ router.put('/users/:username', async (req, res) => {
                     reject(new Error(`Failed to spawn chpasswd: ${error.message}`));
                 });
             });
-            updates.push('password');
-        }
 
-        if (updates.length === 0) {
-            return res.status(400).json({ error: 'No valid updates provided' });
+            res.json({
+                success: true,
+                message: 'User created successfully on Linux',
+                user: { username, shell: userShell, fullName: fullName || '' }
+            });
         }
-
-        res.json({
-            success: true,
-            message: `User updated successfully: ${updates.join(', ')}`,
-            updated: updates
+    } catch (error: any) {
+        console.error('Error creating user:', error);
+        res.status(500).json({
+            error: 'Failed to create user',
+            details: error.message
         });
+    }
+});
+
+// 5. PUT /api/control-panel/users/:username - Modify user
+router.put('/users/:username', async (req, res) => {
+    const { username } = req.params;
+    const { fullName, shell, password } = req.body;
+
+    const isWindows = os.platform() === 'win32';
+    const usernameRegex = isWindows
+        ? /^[a-zA-Z0-9._-]{1,20}$/
+        : /^[a-z_][a-z0-9_-]{0,31}$/;
+
+    if (!usernameRegex.test(username)) {
+        return res.status(400).json({ error: 'Invalid username format' });
+    }
+
+    try {
+        if (isWindows) {
+            // Windows user modification
+            try {
+                // Check if user exists
+                try {
+                    await withTimeout(execAsync(`net user "${username}"`, { timeout: 3000 }), 4000);
+                } catch {
+                    return res.status(404).json({ error: 'User not found' });
+                }
+
+                const updates: string[] = [];
+
+                // Update full name
+                if (fullName !== undefined && typeof fullName === 'string') {
+                    if (!/^[a-zA-Z0-9\s\-_.,]+$/.test(fullName)) {
+                        return res.status(400).json({
+                            error: 'Invalid full name format',
+                            details: 'Full name contains invalid characters'
+                        });
+                    }
+                    if (fullName.length > 100) {
+                        return res.status(400).json({
+                            error: 'Full name too long',
+                            details: 'Full name must be less than 100 characters'
+                        });
+                    }
+
+                    await withTimeout(
+                        execAsync(`net user "${username}" /fullname:"${fullName}"`),
+                        5000
+                    );
+                    updates.push('full name');
+                }
+
+                // Update password
+                if (password !== undefined && typeof password === 'string') {
+                    if (password.length < 8) {
+                        return res.status(400).json({ error: 'Password must be at least 8 characters' });
+                    }
+
+                    await withTimeout(
+                        execAsync(`net user "${username}" "${password}"`),
+                        5000
+                    );
+                    updates.push('password');
+                }
+
+                // Note: Shell concept doesn't apply to Windows users
+
+                if (updates.length === 0) {
+                    return res.status(400).json({ error: 'No valid updates provided' });
+                }
+
+                res.json({
+                    success: true,
+                    message: `Windows user updated successfully: ${updates.join(', ')}`,
+                    updated: updates
+                });
+            } catch (windowsError: any) {
+                console.error('Windows user update failed:', windowsError);
+                res.status(500).json({
+                    error: 'Failed to update Windows user',
+                    details: windowsError.message
+                });
+            }
+        } else {
+            // Linux/Unix user modification
+            try {
+                // Check if user exists
+                try {
+                    await withTimeout(execAsync(`id ${username}`, { timeout: 3000 }), 4000);
+                } catch {
+                    return res.status(404).json({ error: 'User not found' });
+                }
+
+                const updates: string[] = [];
+
+                // Update full name
+                if (fullName !== undefined && typeof fullName === 'string') {
+                    if (!/^[a-zA-Z0-9\s\-_.,]+$/.test(fullName)) {
+                        return res.status(400).json({
+                            error: 'Invalid full name format',
+                            details: 'Full name contains invalid characters'
+                        });
+                    }
+                    if (fullName.length > 100) {
+                        return res.status(400).json({
+                            error: 'Full name too long',
+                            details: 'Full name must be less than 100 characters'
+                        });
+                    }
+
+                    await new Promise<void>((resolve, reject) => {
+                        const usermodProcess = spawn('sudo', ['usermod', '-c', fullName, username], {
+                            stdio: 'pipe',
+                            timeout: 5000
+                        });
+
+                        usermodProcess.on('close', (code) => {
+                            if (code === 0) {
+                                resolve();
+                            } else {
+                                reject(new Error(`usermod -c failed with exit code ${code}`));
+                            }
+                        });
+
+                        usermodProcess.on('error', (error) => {
+                            reject(new Error(`Failed to spawn usermod: ${error.message}`));
+                        });
+                    });
+                    updates.push('full name');
+                }
+
+                // Update shell
+                if (shell !== undefined) {
+                    const validShells = ['/bin/bash', '/bin/sh', '/bin/zsh', '/usr/bin/fish', '/bin/false'];
+                    if (!validShells.includes(shell)) {
+                        return res.status(400).json({ error: 'Invalid shell', validShells });
+                    }
+
+                    await new Promise<void>((resolve, reject) => {
+                        const usermodProcess = spawn('sudo', ['usermod', '-s', shell, username], {
+                            stdio: 'pipe',
+                            timeout: 5000
+                        });
+
+                        usermodProcess.on('close', (code) => {
+                            if (code === 0) {
+                                resolve();
+                            } else {
+                                reject(new Error(`usermod -s failed with exit code ${code}`));
+                            }
+                        });
+
+                        usermodProcess.on('error', (error) => {
+                            reject(new Error(`Failed to spawn usermod: ${error.message}`));
+                        });
+                    });
+                    updates.push('shell');
+                }
+
+                // Update password
+                if (password !== undefined && typeof password === 'string') {
+                    if (password.length < 8) {
+                        return res.status(400).json({ error: 'Password must be at least 8 characters' });
+                    }
+
+                    await new Promise<void>((resolve, reject) => {
+                        const chpasswdProcess = spawn('sudo', ['chpasswd'], {
+                            stdio: ['pipe', 'pipe', 'pipe'],
+                            timeout: 5000
+                        });
+
+                        chpasswdProcess.stdin.write(`${username}:${password}\n`);
+                        chpasswdProcess.stdin.end();
+
+                        chpasswdProcess.on('close', (code) => {
+                            if (code === 0) {
+                                resolve();
+                            } else {
+                                reject(new Error(`chpasswd failed with exit code ${code}`));
+                            }
+                        });
+
+                        chpasswdProcess.on('error', (error) => {
+                            reject(new Error(`Failed to spawn chpasswd: ${error.message}`));
+                        });
+                    });
+                    updates.push('password');
+                }
+
+                if (updates.length === 0) {
+                    return res.status(400).json({ error: 'No valid updates provided' });
+                }
+
+                res.json({
+                    success: true,
+                    message: `Linux user updated successfully: ${updates.join(', ')}`,
+                    updated: updates
+                });
+            } catch (linuxError: any) {
+                console.error('Linux user update failed:', linuxError);
+                res.status(500).json({
+                    error: 'Failed to update Linux user',
+                    details: linuxError.message
+                });
+            }
+        }
     } catch (error: any) {
         console.error('Error updating user:', error);
         res.status(500).json({
@@ -455,58 +715,114 @@ router.delete('/users/:username', async (req, res) => {
     const { username } = req.params;
     const { removeHome } = req.query;
 
-    if (!isValidUsername(username)) {
+    const isWindows = os.platform() === 'win32';
+    const usernameRegex = isWindows
+        ? /^[a-zA-Z0-9._-]{1,20}$/
+        : /^[a-z_][a-z0-9_-]{0,31}$/;
+
+    if (!usernameRegex.test(username)) {
         return res.status(400).json({ error: 'Invalid username format' });
     }
 
-    // Prevent deletion of system users and current user
-    const currentUser = process.env.USER || os.userInfo().username;
-    if (username === currentUser) {
+    // Prevent deletion of current user
+    const currentUser = process.env.USER || process.env.USERNAME || os.userInfo().username;
+    if (username.toLowerCase() === currentUser.toLowerCase()) {
         return res.status(403).json({ error: 'Cannot delete current user' });
     }
 
-    if (['root', 'daemon', 'bin', 'sys', 'sync', 'games', 'man', 'lp', 'mail', 'news', 'uucp', 'proxy', 'www-data', 'backup', 'list', 'irc', 'gnats', 'nobody'].includes(username)) {
-        return res.status(403).json({ error: 'Cannot delete system user' });
-    }
-
     try {
-        // Check if user exists
-        try {
-            await withTimeout(execAsync(`id ${username}`), 3000);
-        } catch {
-            return res.status(404).json({ error: 'User not found' });
-        }
+        if (isWindows) {
+            // Windows user deletion
+            const protectedUsers = ['Administrator', 'Guest', 'DefaultAccount'];
+            if (protectedUsers.includes(username)) {
+                return res.status(403).json({ error: 'Cannot delete protected Windows user' });
+            }
 
-        // SECURITY: Use spawn with proper argument separation
-        const args = [username];
-        if (removeHome === 'true') {
-            args.unshift('-r');
-        }
-
-        await new Promise<void>((resolve, reject) => {
-            const userdelProcess = spawn('sudo', ['userdel', ...args], {
-                stdio: 'pipe',
-                timeout: 10000
-            });
-
-            userdelProcess.on('close', (code) => {
-                if (code === 0) {
-                    resolve();
-                } else {
-                    reject(new Error(`userdel failed with exit code ${code}`));
+            try {
+                // Check if user exists
+                try {
+                    await withTimeout(execAsync(`net user "${username}"`, { timeout: 3000 }), 4000);
+                } catch {
+                    return res.status(404).json({ error: 'User not found' });
                 }
-            });
 
-            userdelProcess.on('error', (error) => {
-                reject(new Error(`Failed to spawn userdel: ${error.message}`));
-            });
-        });
+                // Delete user using net user
+                await withTimeout(execAsync(`net user "${username}" /delete`, { timeout: 10000 }), 12000);
 
-        res.json({
-            success: true,
-            message: 'User deleted successfully',
-            removedHome: removeHome === 'true'
-        });
+                // Note: removeHome concept on Windows is more complex and involves profile directories
+                // We'll provide information about what would need to be done
+                let profileMessage = '';
+                if (removeHome === 'true') {
+                    profileMessage = 'Note: User deleted. Manual deletion of profile directory (C:\\Users\\' + username + ') may be required.';
+                }
+
+                res.json({
+                    success: true,
+                    message: `Windows user deleted successfully. ${profileMessage}`,
+                    removedHome: removeHome === 'true',
+                    platform: 'Windows'
+                });
+            } catch (windowsError: any) {
+                console.error('Windows user deletion failed:', windowsError);
+                res.status(500).json({
+                    error: 'Failed to delete Windows user',
+                    details: windowsError.message
+                });
+            }
+        } else {
+            // Linux/Unix user deletion
+            const protectedUsers = ['root', 'daemon', 'bin', 'sys', 'sync', 'games', 'man', 'lp', 'mail', 'news', 'uucp', 'proxy', 'www-data', 'backup', 'list', 'irc', 'gnats', 'nobody'];
+            if (protectedUsers.includes(username)) {
+                return res.status(403).json({ error: 'Cannot delete system user' });
+            }
+
+            try {
+                // Check if user exists
+                try {
+                    await withTimeout(execAsync(`id ${username}`, { timeout: 3000 }), 4000);
+                } catch {
+                    return res.status(404).json({ error: 'User not found' });
+                }
+
+                // SECURITY: Use spawn with proper argument separation
+                const args = [username];
+                if (removeHome === 'true') {
+                    args.unshift('-r');
+                }
+
+                await new Promise<void>((resolve, reject) => {
+                    const userdelProcess = spawn('sudo', ['userdel', ...args], {
+                        stdio: 'pipe',
+                        timeout: 10000
+                    });
+
+                    userdelProcess.on('close', (code) => {
+                        if (code === 0) {
+                            resolve();
+                        } else {
+                            reject(new Error(`userdel failed with exit code ${code}`));
+                        }
+                    });
+
+                    userdelProcess.on('error', (error) => {
+                        reject(new Error(`Failed to spawn userdel: ${error.message}`));
+                    });
+                });
+
+                res.json({
+                    success: true,
+                    message: 'Linux user deleted successfully',
+                    removedHome: removeHome === 'true',
+                    platform: 'Linux'
+                });
+            } catch (linuxError: any) {
+                console.error('Linux user deletion failed:', linuxError);
+                res.status(500).json({
+                    error: 'Failed to delete Linux user',
+                    details: linuxError.message
+                });
+            }
+        }
     } catch (error: any) {
         console.error('Error deleting user:', error);
         res.status(500).json({
@@ -760,11 +1076,11 @@ router.put('/hostname', async (req, res) => {
 // Cleanup rate limit map periodically
 setInterval(() => {
     const now = Date.now();
-    for (const [ip, record] of rateLimitMap.entries()) {
+    rateLimitMap.forEach((record, ip) => {
         if (now > record.resetTime) {
             rateLimitMap.delete(ip);
         }
-    }
+    });
 }, 60000); // Clean up every minute
 
 export default router;

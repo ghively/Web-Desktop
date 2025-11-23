@@ -2,9 +2,50 @@ import { Router } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { platform } from 'os';
 
 const router = Router();
 const HOME_DIR = os.homedir();
+
+// Cross-platform path helpers
+const getPlatformSpecificPaths = (): { tempDirs: string[]; allowedSystemPaths: string[] } => {
+    const isWindows = platform() === 'win32';
+    const tempDir = os.tmpdir();
+
+    if (isWindows) {
+        return {
+            tempDirs: [
+                tempDir,
+                path.join(process.env.TEMP || 'C:\\Windows\\Temp'),
+                path.join(process.env.TMP || 'C:\\Windows\\Temp')
+            ].filter(p => p), // Filter out undefined values
+            allowedSystemPaths: [
+                'C:\\Temp',
+                'C:\\Tmp',
+                'C:\\Windows\\Temp',
+                'D:\\Temp',
+                'D:\\Tmp'
+            ]
+        };
+    } else {
+        return {
+            tempDirs: [
+                tempDir,
+                '/tmp',
+                '/var/tmp'
+            ],
+            allowedSystemPaths: [
+                tempDir,
+                '/tmp',
+                '/var/tmp',
+                '/mnt',
+                '/media'
+            ]
+        };
+    }
+};
+
+const PLATFORM_PATHS = getPlatformSpecificPaths();
 
 // Timeout wrapper for async operations
 const withTimeout = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
@@ -22,31 +63,81 @@ const validatePath = (inputPath: string): string | null => {
         return null;
     }
 
+    // CRITICAL SECURITY: Path traversal validation BEFORE path resolution
     // Remove null bytes and control characters
     const sanitized = inputPath.replace(/[\x00-\x1F\x7F]/g, '');
-    
-    // Resolve path and ensure it's within allowed bounds
-    const resolvedPath = path.resolve(sanitized);
-    const homeResolved = path.resolve(HOME_DIR);
-    
-    // Only allow access within home directory and system directories
-    const allowedPaths = [
-        homeResolved,
-        '/tmp',
-        '/var/tmp',
-        '/mnt'
+
+    // Comprehensive path traversal validation BEFORE resolution
+    // Check for all possible traversal patterns
+    const traversalPatterns = [
+        '../',
+        '..\\',
+        '..',
+        '%2e%2e%2f', // URL encoded ../
+        '%2e%2e%5c', // URL encoded ..\
+        '%2e%2e/',   // Partially encoded ../
+        '%2e%2e\\',  // Partially encoded ..\
+        '..%2f',     // Partially encoded ../
+        '..%5c',     // Partially encoded ..\
+        '%2e%2e%2e%2f', // Double encoded ../
+        '%2e%2e%2e%5c', // Double encoded ..\
+        '....//',    // Obfuscated traversal
+        '....\\\\',  // Obfuscated traversal
     ];
-    
-    const isAllowed = allowedPaths.some(allowed => 
-        resolvedPath.startsWith(allowed) || resolvedPath === allowed
+
+    // Check for any traversal patterns
+    const hasTraversal = traversalPatterns.some(pattern =>
+        sanitized.toLowerCase().includes(pattern)
     );
-    
-    if (!isAllowed) {
+
+    if (hasTraversal) {
         return null;
     }
 
-    // Prevent path traversal
-    if (sanitized.includes('../') || sanitized.includes('..\\')) {
+    // Additional validation: No directory components that are just dots
+    const pathComponents = sanitized.split(/[\/\\]/);
+    if (pathComponents.some(component => component === '.' || component === '..')) {
+        return null;
+    }
+
+    // Prevent absolute paths that could escape allowed directories
+    if (sanitized.startsWith('/') || /^[A-Za-z]:/.test(sanitized)) {
+        // Only allow absolute paths if they're explicitly in allowed directories
+        const allowedAbsolutePrefixes = PLATFORM_PATHS.allowedSystemPaths;
+        const isAllowedAbsolute = allowedAbsolutePrefixes.some(prefix =>
+            sanitized.startsWith(prefix)
+        );
+
+        if (!isAllowedAbsolute) {
+            return null;
+        }
+    }
+
+    // Now it's safe to resolve the path
+    const resolvedPath = path.resolve(sanitized);
+    const homeResolved = path.resolve(HOME_DIR);
+
+    // Only allow access within home directory and system directories
+    const allowedPaths = [
+        homeResolved,
+        ...PLATFORM_PATHS.allowedSystemPaths
+    ];
+
+    // Final security check: ensure resolved path is within allowed bounds
+    const isAllowed = allowedPaths.some(allowed => {
+        // Normalize both paths for comparison
+        const normalizedAllowed = path.normalize(allowed);
+        const normalizedResolved = path.normalize(resolvedPath);
+
+        // Check if the resolved path starts with the allowed path
+        // and ensure proper path segment boundaries
+        return normalizedResolved === normalizedAllowed ||
+               (normalizedResolved.startsWith(normalizedAllowed) &&
+                (normalizedAllowed === '/' || normalizedResolved[normalizedAllowed.length] === '/' ||
+                 normalizedAllowed.length === normalizedResolved.length));
+    });
+
+    if (!isAllowed) {
         return null;
     }
 
@@ -133,31 +224,66 @@ router.post('/operation', async (req, res) => {
         return res.status(400).json({ error: 'Missing type or path' });
     }
 
+    // SECURITY: Validate all path inputs
+    const validatedTargetPath = validatePath(targetPath);
+    if (!validatedTargetPath) {
+        return res.status(403).json({ error: 'Access denied: Invalid target path' });
+    }
+
+    // Validate destination path if provided
+    let validatedDestPath = null;
+    if (dest) {
+        validatedDestPath = validatePath(dest);
+        if (!validatedDestPath) {
+            return res.status(403).json({ error: 'Access denied: Invalid destination path' });
+        }
+    }
+
+    // Validate name parameter to prevent path injection
+    let sanitizedName = null;
+    if (name) {
+        // Remove any path separators and control characters from name
+        sanitizedName = name.replace(/[\/\\]/g, '').replace(/[\x00-\x1F\x7F]/g, '').substring(0, 255);
+        if (!sanitizedName || sanitizedName === '.' || sanitizedName === '..') {
+            return res.status(400).json({ error: 'Invalid name parameter' });
+        }
+    }
+
     try {
         switch (type) {
             case 'create_folder':
-                if (!name) return res.status(400).json({ error: 'Missing folder name' });
-                await fs.mkdir(path.join(targetPath, name), { recursive: true });
+                if (!sanitizedName) return res.status(400).json({ error: 'Missing folder name' });
+                const newFolderPath = path.join(validatedTargetPath, sanitizedName);
+                // Double-check the new path is still within bounds
+                if (!newFolderPath.startsWith(validatedTargetPath)) {
+                    return res.status(403).json({ error: 'Access denied: Path traversal detected' });
+                }
+                await fs.mkdir(newFolderPath, { recursive: true });
                 break;
 
             case 'delete':
-                await fs.rm(targetPath, { recursive: true, force: true });
+                await fs.rm(validatedTargetPath, { recursive: true, force: true });
                 break;
 
             case 'rename':
-                if (!name) return res.status(400).json({ error: 'Missing new name' });
-                const newPath = path.join(path.dirname(targetPath), name);
-                await fs.rename(targetPath, newPath);
+                if (!sanitizedName) return res.status(400).json({ error: 'Missing new name' });
+                const dir = path.dirname(validatedTargetPath);
+                const newPath = path.join(dir, sanitizedName);
+                // Ensure new path is in same directory
+                if (path.dirname(newPath) !== dir) {
+                    return res.status(403).json({ error: 'Access denied: Cannot move to different directory' });
+                }
+                await fs.rename(validatedTargetPath, newPath);
                 break;
 
             case 'copy':
-                if (!dest) return res.status(400).json({ error: 'Missing destination' });
-                await fs.cp(targetPath, dest, { recursive: true });
+                if (!validatedDestPath) return res.status(400).json({ error: 'Missing destination' });
+                await fs.cp(validatedTargetPath, validatedDestPath, { recursive: true });
                 break;
 
             case 'move':
-                if (!dest) return res.status(400).json({ error: 'Missing destination' });
-                await fs.rename(targetPath, dest);
+                if (!validatedDestPath) return res.status(400).json({ error: 'Missing destination' });
+                await fs.rename(validatedTargetPath, validatedDestPath);
                 break;
 
             default:
@@ -256,39 +382,85 @@ const validateFileType = (buffer: Buffer, filename: string): { isValid: boolean;
     return { isValid: true, detectedType: isTextFile ? 'text' : 'unknown', isExecutable };
 };
 
-// Rate limiting middleware
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+// Rate limiting middleware with atomic operations
+const rateLimitMap = new Map<string, { count: number; resetTime: number; lastAccess: number }>();
 const RATE_LIMIT = 30; // requests per minute
 const RATE_WINDOW = 60000; // 1 minute
+const MAX_CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
+// Atomic rate limit check
 const checkRateLimit = (req: any, res: any, next: any) => {
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const now = Date.now();
 
+    // Atomic get-or-create operation
     let clientData = rateLimitMap.get(ip);
 
     if (!clientData || now > clientData.resetTime) {
-        clientData = { count: 0, resetTime: now + RATE_WINDOW };
+        // Create new client data atomically
+        clientData = {
+            count: 0,
+            resetTime: now + RATE_WINDOW,
+            lastAccess: now
+        };
         rateLimitMap.set(ip, clientData);
     }
 
+    // Atomic increment and check
     if (clientData.count >= RATE_LIMIT) {
-        return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+        return res.status(429).json({
+            error: 'Too many requests. Please try again later.',
+            retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
+        });
     }
 
+    // Increment counter and update last access atomically
     clientData.count++;
+    clientData.lastAccess = now;
+
     next();
 };
 
-// Cleanup old rate limit entries
-setInterval(() => {
+// Periodic cleanup of old rate limit entries to prevent memory leaks
+let lastCleanupTime = Date.now();
+const cleanupRateLimitMap = () => {
     const now = Date.now();
+
+    // Only run cleanup if enough time has passed
+    if (now - lastCleanupTime < MAX_CLEANUP_INTERVAL) {
+        return;
+    }
+
+    const entriesToDelete: string[] = [];
+
+    // Find expired entries
     for (const [ip, data] of rateLimitMap.entries()) {
-        if (now > data.resetTime) {
-            rateLimitMap.delete(ip);
+        // Remove entries that are expired and haven't been accessed recently
+        if (now > data.resetTime && (now - data.lastAccess) > RATE_WINDOW) {
+            entriesToDelete.push(ip);
         }
     }
-}, RATE_WINDOW);
+
+    // Remove expired entries in batch to avoid race conditions
+    for (const ip of entriesToDelete) {
+        rateLimitMap.delete(ip);
+    }
+
+    lastCleanupTime = now;
+
+    if (entriesToDelete.length > 0) {
+        console.log(`Rate limit cleanup: removed ${entriesToDelete.length} expired entries`);
+    }
+};
+
+// Run cleanup periodically
+setInterval(cleanupRateLimitMap, MAX_CLEANUP_INTERVAL);
+
+// Also run cleanup when server is shutting down (optional cleanup)
+process.on('SIGTERM', () => {
+    cleanupRateLimitMap();
+    rateLimitMap.clear();
+});
 
 // POST /api/fs/upload - Upload file
 router.post('/upload', checkRateLimit, async (req, res) => {
