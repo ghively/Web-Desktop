@@ -126,6 +126,42 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.post('/operation', async (req, res) => {
+    const { type, path: targetPath, dest, name } = req.body;
+
+    if (!type || !targetPath) {
+        return res.status(400).json({ error: 'Missing type or path' });
+    }
+
+    try {
+        switch (type) {
+            case 'create_folder':
+                if (!name) return res.status(400).json({ error: 'Missing folder name' });
+                await fs.mkdir(path.join(targetPath, name), { recursive: true });
+                break;
+
+            case 'delete':
+                await fs.rm(targetPath, { recursive: true, force: true });
+                break;
+
+            case 'rename':
+                if (!name) return res.status(400).json({ error: 'Missing new name' });
+                const newPath = path.join(path.dirname(targetPath), name);
+                await fs.rename(targetPath, newPath);
+                break;
+
+            case 'copy':
+                if (!dest) return res.status(400).json({ error: 'Missing destination' });
+                await fs.cp(targetPath, dest, { recursive: true });
+                break;
+
+            case 'move':
+                if (!dest) return res.status(400).json({ error: 'Missing destination' });
+                await fs.rename(targetPath, dest);
+                break;
+
+            default:
+                return res.status(400).json({ error: 'Invalid operation type' });
 // Rate limiting middleware
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 30; // requests per minute
@@ -259,6 +295,7 @@ router.post('/copy', checkRateLimit, async (req, res) => {
 
         res.json({ success: true });
     } catch (error: any) {
+        res.status(500).json({ error: error.message });
         console.error('Copy error:', error);
 
         if (error.code === 'ENOENT') {

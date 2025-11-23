@@ -12,6 +12,12 @@
 
     <!-- Markdown parser -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js"></script>
+    <!-- Fuse.js -->
+    <script src="/lib/fuse.min.js"></script>
+    <!-- xterm.js -->
+    <link rel="stylesheet" href="/lib/xterm.css" />
+    <script src="/lib/xterm.js"></script>
+    <script src="/lib/xterm-addon-fit.js"></script>
     <!-- Monaco Editor -->
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
     <!-- xterm.js -->
@@ -94,7 +100,7 @@
                     <span class="icon">🔍</span>
                     <input type="text" id="launcher-search" placeholder="Search apps...">
                 </div>
-                <div class="launcher-apps" id=" launcher-apps-list"></div>
+                <div class="launcher-apps" id="launcher-apps-list"></div>
                 <div class="launcher-footer">
                     <span>Tab: switch view</span>
                     <div class="keybinds">

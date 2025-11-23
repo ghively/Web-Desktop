@@ -6,6 +6,11 @@ This document outlines the planned features, improvements, and bug fixes for the
 
 ## 1. Current Status & Critical Tasks
 
+### 1.1 Critical Bug: Interactive Terminal
+
+*   **Status:** Fixed. The `xterm.js` interactive terminal is now fully functional. The blank display issue was resolved by ensuring `xterm.js` loads before `monaco-editor` (AMD loader conflict) and fixing a backend `node-pty` import issue.
+*   **Priority:** High. (Completed)
+*   **To-Do Item:** [x] Fix the interactive terminal: The xterm.js terminal is not initializing or connecting correctly, resulting in a blank display.
 ### 1.1 ✅ FIXED: Interactive Terminal
 
 *   **Status:** ✅ **COMPLETED** (2025-11-23)
@@ -69,6 +74,10 @@ Below are detailed proposals for features and improvements, including research f
     *   **Frontend:** Create UI components to link cloud accounts, configure sync folders, and display sync status.
 *   **Open Source Projects:** Many Node.js libraries exist for interacting with various cloud storage APIs.
 
+#### 3.1.3 General File Manager Improvements
+*   **Description:** Enhance the existing file manager with features such as drag-and-drop, more robust file operations (copy, move, rename, delete), file previews, and improved navigation.
+*   **Recommended Approach:** Iterative improvements to the `fileManager.js` and associated frontend components.
+*   **Status:** In Progress / Partially Implemented. Added `create_folder`, `delete`, `rename`, `copy`, `move` operations with context menu and clipboard support.
 #### 3.1.3 ✅ IMPLEMENTED: General File Manager Improvements
 *   **Status:** ✅ **COMPLETED** (2025-11-23)
 *   **Features Implemented (Both React & Legacy Frontends):**
@@ -109,6 +118,15 @@ Below are detailed proposals for features and improvements, including research f
 *   **Recommended Approach:** Extend the existing backend for system-level API calls (similar to `systemRoutes`) and build dedicated frontend UI components.
 *   **Borrowing Code/Concepts:** Can draw inspiration from existing Linux control panels (e.g., GNOME Settings, KDE System Settings) or web-based server management tools (e.g., Webmin, Cockpit).
 
+#### 3.2.3 App Launcher (Raycast/Rofi-like experience)
+*   **Description:** Enhance the application launcher with a fast, fuzzy-searching interface, dynamic listing of installed and running applications, and quick access actions.
+*   **Recommended Approach:**
+    *   **Frontend:** Integrate a JavaScript fuzzy search library.
+        *   **Recommended Libraries:** `Fuse.js` or `Fuzzysort` (due to their balance of features, performance, and customizability).
+        *   **Implementation:** Modify `desktop.js` and related launcher rendering logic to use the chosen library for filtering the `installedApps` list based on user input.
+    *   **Backend:** Ensure the `/api/packages/installed` endpoint provides comprehensive application data efficiently.
+*   **Borrowing Code/Concepts:** Inspiration from Raycast, Rofi, or Alfred for UI/UX patterns.
+*   **Status:** Implemented. `Fuse.js` integrated into `desktop.js` for fuzzy searching apps.
 #### 3.2.3 ✅ IMPLEMENTED: App Launcher (Raycast/Rofi-like experience)
 *   **Status:** ✅ **COMPLETED** (2025-11-23)
 *   **Features Implemented (Both React & Legacy Frontends):**
