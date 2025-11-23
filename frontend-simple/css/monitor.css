@@ -1,0 +1,104 @@
+/* System Monitor Widget */
+.system-monitor {
+    position: relative;
+    cursor: pointer;
+}
+
+.monitor-popup {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    width: 400px;
+    background: var(--base);
+    border: 1px solid var(--surface0);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: none;
+}
+
+.monitor-popup.visible {
+    display: block;
+}
+
+.monitor-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--surface0);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.monitor-header h3 {
+    margin: 0;
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.monitor-stats {
+    padding: 1rem;
+}
+
+.stat-row {
+    margin-bottom: 1rem;
+}
+
+.stat-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--subtext0);
+}
+
+.stat-value {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.stat-bar {
+    height: 8px;
+    background: var(--surface0);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.stat-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+    border-radius: 4px;
+}
+
+.stat-fill.cpu {
+    background: linear-gradient(90deg, var(--blue), var(--green));
+}
+
+.stat-fill.ram {
+    background: linear-gradient(90deg, var(--yellow), var(--red));
+}
+
+.stat-fill.disk {
+    background: linear-gradient(90deg, var(--green), var(--blue));
+}
+
+.mini-graph {
+    height: 40px;
+    margin-top: 0.5rem;
+    position: relative;
+}
+
+.mini-graph canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.monitor-footer {
+    padding: 0.75rem 1rem;
+    background: var(--mantle);
+    border-top: 1px solid var(--surface0);
+    font-size: 0.75rem;
+    color: var(--overlay0);
+    display: flex;
+    justify-content: space-between;
+}

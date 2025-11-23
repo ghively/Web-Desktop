@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omarchy Web Desktop</title>
+    <link rel="stylesheet" href="/css/desktop.css">
+    <link rel="stylesheet" href="/css/window.css">
+    <link rel="stylesheet" href="/css/notes.css">
+    <link rel="stylesheet" href="/css/monitor.css">
+
+    <!-- Markdown parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js"></script>
+    <!-- Monaco Editor -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+</head>
+
+<body>
+    <div id="desktop">
+        <div id="topbar">
+            <div class="topbar-left">
+                <span class="logo">Omarchy Web</span>
+                <div class="separator"></div>
+                <button class="app-button" data-app="terminal">
+                    <span class="icon">📟</span>
+                    <span>Terminal</span>
+                </button>
+                <button class="app-button" data-app="filemanager">
+                    <span class="icon">📂</span>
+                    <span>Files</span>
+                </button>
+                <button class="app-button" data-app="notes">
+                    <span class="icon">📝</span>
+                    <span>Notes</span>
+                </button>
+                <button class="app-button" data-app="editor">
+                    <span class="icon">💻</span>
+                    <span>Editor</span>
+                </button>
+            </div>
+            <div class="topbar-right">
+                <span id="system-info">CPU: 0%</span>
+                <span id="clock">--:--:--</span>
+            </div>
+        </div>
+
+        <div id="desktop-area"></div>
+
+        <div class="floating-buttons">
+            <button id="launcher-button" class="floating-button">
+                <span class="icon">🚀</span>
+                <span>Apps</span>
+            </button>
+            <button id="settings-button" class="floating-button">
+                <span class="icon">⚙️</span>
+                <span>Settings</span>
+            </button>
+            <button id="mode-toggle" class="floating-button">
+                <span id="mode-text">TILING</span>
+            </button>
+        </div>
+
+        <div id="settings-panel" class="hidden">
+            <div class="settings-content">
+                <div class="settings-header">
+                    <h2>Settings</h2>
+                    <button id="close-settings" class="window-button close"></button>
+                </div>
+                <div class="settings-body">
+                    <div class="setting-group">
+                        <h3>Appearance</h3>
+                        <div class="setting-item">
+                            <span class="setting-label">Window Opacity</span>
+                            <div class="setting-control">
+                                <input type="range" id="opacity-slider" min="0.5" max="1" step="0.05" value="0.95">
+                                <span id="opacity-value">95%</span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Wallpaper URL</span>
+                            <div class="setting-control">
+                                <input type="text" id="wallpaper-url" placeholder="https://example.com/image.jpg">
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Use Gradient Background</span>
+                            <div class="setting-control">
+                                <input type="checkbox" id="use-gradient">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="app-launcher" class="hidden">
+            <div class="launcher-content">
+                <div class="launcher-tabs">
+                    <button class="launcher-tab active" data-tab="installed">Installed</button>
+                    <button class="launcher-tab" data-tab="available">Available to Install</button>
+                </div>
+                <div class="launcher-header">
+                    <span class="icon">🔍</span>
+                    <input type="text" id="launcher-search" placeholder="Search apps...">
+                </div>
+                <div class="launcher-apps" id=" launcher-apps-list"></div>
+                <div class="launcher-footer">
+                    <span>Tab: switch view</span>
+                    <div class="keybinds">
+                        <span><span class="key">↵</span> open</span>
+                        <span><span class="key">Esc</span> close</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/windowManager.js"></script>
+    <script src="/js/notes.js"></script>
+    <script src="/js/systemMonitor.js"></script>
+    <script src="/js/fileManager.js"></script>
+    <script src="/js/containerManager.js"></script>
+    <script src="/js/desktop.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,172 @@
+/* Window Container */
+.window {
+    position: absolute;
+    background: rgba(30, 30, 46, var(--window-opacity));
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--surface0);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s;
+}
+
+.window.focused {
+    border-color: var(--blue);
+    box-shadow: 0 10px 30px rgba(137, 180, 250, 0.2);
+}
+
+/* Window Header */
+.window-header {
+    height: 40px;
+    background: rgba(24, 24, 37, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    cursor: move;
+    user-select: none;
+}
+
+.window-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--subtext0);
+}
+
+.window.focused .window-title {
+    color: var(--text);
+}
+
+.window-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.window-button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.window-button:hover {
+    opacity: 0.8;
+}
+
+.window-button.minimize {
+    background: var(--yellow);
+}
+
+.window-button.maximize {
+    background: var(--green);
+}
+
+.window-button.close {
+    background: var(--red);
+}
+
+/* Window Content */
+.window-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    padding: 1rem;
+    color: var(--text);
+}
+
+/* Resize Handles */
+.resize-handle {
+    position: absolute;
+    z-index: 10;
+}
+
+.resize-handle.n {
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    cursor: ns-resize;
+}
+
+.resize-handle.s {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    cursor: ns-resize;
+}
+
+.resize-handle.e {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 4px;
+    cursor: ew-resize;
+}
+
+.resize-handle.w {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    cursor: ew-resize;
+}
+
+.resize-handle.ne {
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    cursor: nesw-resize;
+}
+
+.resize-handle.nw {
+    top: 0;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    cursor: nwse-resize;
+}
+
+.resize-handle.se {
+    bottom: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    cursor: nwse-resize;
+}
+
+.resize-handle.sw {
+    bottom: 0;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    cursor: nesw-resize;
+}
+
+/* Tiling Mode */
+.window.tiled {
+    border-radius: 0 !important;
+}
+
+.window.tiled .window-header {
+    cursor: default;
+}
+
+/* Minimized (hidden) */
+.window.minimized {
+    display: none;
+}
+
+/* Maximized */
+.window.maximized {
+    top: 40px !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: calc(100% - 40px) !important;
+    border-radius: 0 !important;
+}
