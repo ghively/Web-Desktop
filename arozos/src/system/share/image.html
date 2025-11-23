@@ -1,0 +1,11 @@
+<img src="{{preview_url}}" style="width: 100%"/>
+<textarea id="embeddedCode" class="u-full-width" style="height: 100px;">
+    
+</textarea>
+<script>
+     var port = window.location.port;
+     if (port != ""){
+          port = ":" + port;
+     }
+     $("#embeddedCode").text(`<img src="${location.protocol}//${window.location.hostname}${port}{{preview_url}}{{filename}}" style="width: 30em"/>`);
+</script>

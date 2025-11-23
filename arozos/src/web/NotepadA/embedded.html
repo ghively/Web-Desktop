@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+		body{
+			background-color: white;
+		}
+	</style>
+</head>
+<body>
+Initializing Environment...<br>
+<script src="../script/jquery.min.js"></script>
+<script src="../script/ao_module.js"></script>
+<script>
+//Try its best to hide this window
+ao_module_setWindowTitle("NotepadA Initializing...");
+
+var inputFiles = ao_module_loadInputFiles();
+if (inputFiles != null){
+	console.log(inputFiles);
+	let targetOpeningInstances = ao_module_getInstanceByPath("NotepadA/index.html")
+	if (targetOpeningInstances == null){
+		//Open the file in new NotepadA windows
+		let encodedFileObject = encodeURIComponent(JSON.stringify(inputFiles));
+		var url = "NotepadA/index.html#" + encodedFileObject;
+		var title = "NotepadA";
+		ao_module_newfw({
+			url: url,
+			width: 1080,
+			height: 580,
+			title: title,
+			appicon: "NotepadA/img/small_icon.png",
+		});
+
+		setTimeout(function(){
+			ao_module_close();
+		}, 300);
+	}else{
+		//Make the running NotepadA instance to open those files
+		inputFiles.forEach(function(file){
+			console.log($(targetOpeningInstances).find("iframe")[0].contentWindow.newEditor(file.filepath));
+		});
+		
+		setTimeout(function(){
+			ao_module_close();
+		}, 300);
+	}
+
+
+	
+}
+
+/*
+var instances = ao_module_getProcessID("NotepadA");
+var filepath = "<?php echo $filepath;?>";
+var filename = "<?php echo $filename;?>";
+remove(instances,ao_module_windowID);
+if (instances.includes("newWindow")){
+	remove(instances,"newWindow");
+}
+if (instances.length == 0){
+	//Open a new window for the file
+	console.log("[NotepadA] Opening " + filepath + " in a new floatWindow");
+	window.location.href = "index.php?filename=" + filename + "&filepath=" + filepath;
+}else if (instances.length > 0){
+	//Open the new page in the first instances in list
+	var targetWindow = instances[0];
+	console.log("[NotepadA] Opening " + filepath + " in floatWindow " + targetWindow);
+	parent.crossFrameFunctionCall(targetWindow,"newEditor('" + filepath + "');");
+	ao_module_close();
+}
+
+function remove(array, element) {
+    const index = array.indexOf(element);
+    array.splice(index, 1);
+}
+*/
+</script>
+</body>
+</html>

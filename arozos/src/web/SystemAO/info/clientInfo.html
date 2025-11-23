@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../script/semantic/semantic.min.css">
+    <script type='text/javascript' src="../../script/semantic/semantic.min.js"></script>
+    <script src="../../../script/jquery.min.js"></script>
+    <script src="/SystemAO/info/js/ua-parser.min.js"></script>
+    <script type="text/javascript" src="../../script/applocale.js"></script>
+    <title locale="clientinfo/client-information-title">Client Information</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+</head>
+
+<body style="background-color:#f9f9f9;">
+    <div class="ui container">
+        <div class="ui basic segment">
+            <div class="ui header">
+                <span locale="clientinfo/client-device-information">Client Device Information</span>
+                <div class="sub header" locale="clientinfo/client-device-information-subheader">These are the information that your browser is telling the ArozOS.</div>
+            </div>
+        </div>
+     
+        <table class="ui celled striped table">
+            <thead>
+                <tr>
+                    <th colspan="3">
+                        <span locale="clientinfo/browser-information">Browser Information</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="collapsing">
+                        <i class="sticky note icon"></i> <span locale="clientinfo/cookie-enabled">Cookie Enabled</span>
+                    </td>
+                    <td id="cke"></td>
+                </tr>
+                <tr>
+                    <td class="collapsing">
+                        <i class="hashtag icon"></i> <span locale="clientinfo/operation-system">Operation System</span>
+                    </td>
+                    <td id="os"></td>
+                </tr>
+                <tr>
+                    <td class="collapsing">
+                        <i class="hashtag icon"></i> <span locale="clientinfo/application-name">Application Name</span>
+                    </td>
+                    <td id="appname"></td>
+                </tr>
+                <tr>
+                    <td class="collapsing">
+                        <i class="browser icon"></i> <span locale="clientinfo/browser-engine">Browser Engine</span>
+                    </td>
+                    <td id="be"></td>
+                </tr>
+                <tr>
+                    <td class="collapsing">
+                        <i class="user circle icon"></i> <span locale="clientinfo/user-agent">User Agent</span>
+                    </td>
+                    <td id="ua"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <br><br><br><br>
+    </div>
+    <script>
+        var infoLocale = NewAppLocale();
+        infoLocale.init("../locale/system_settings/clientinfo.json", function(){
+            infoLocale.translate();
+        });
+
+        $("#cke").html(navigator.cookieEnabled);
+        $("#os").html($.ua.os.name);
+        $("#appname").html($.ua.browser.name);
+        $("#be").html($.ua.engine.name);
+        $("#ua").html(navigator.userAgent);
+    </script>
+</body>
+
+</html>

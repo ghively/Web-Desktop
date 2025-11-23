@@ -1,0 +1,50 @@
+<div class="ui message maconly instr" style="display:none; margin-top: 0;">
+    <h4><i class="apple icon"></i> Login Method for MacOS</h4>
+    <p>If you are using MacOS, you can select "Connect to Network Server", enter the endpoint of the arozos WebDAV service (<span class="protocol"></span>//<span class="hostname"></span>:<span class="port"></span>/webdav/{vroot_name}) and login with your arozos username and password.</p>
+</div>
+<div class="ui blue message windowonly nontls instr" style="display:none; margin-top: 0;">
+    <h4><i class="windows icon"></i> Login Method for Windows (Non SSL / TLS Mode)</h4>
+    <p>-- Deprecated since Windows 10 --<br>
+    To use WebDAV on Windows, you will need a certificate installed or with a reverse proxy with TLS/SSL support</p>
+    <ol class="ui list">
+        <li>Use a reverse proxy server like <a href="https://zoraxy.arozos.com" target="_blank">Zoraxy <i class="ui external icon"></i></a> to proxy WebDAV traffic with TLS enabled</li>
+        <li>Click "Map Network Drive" in File Explorer > This PC toolbar</li>
+        <li>Enter <span class="protocol"></span>//<span class="hostname"></span>:<span class="port"></span>/webdav/{vroot_name} as the target</li>
+        <li>Login with your ArozOS username and password</li>
+    </ol>
+</div>
+<div class="ui teal message windowonly tls instr" style="display:none">
+    <h4><i class="windows icon"></i> Login Method for Windows (With SSL / TLS MODE)</h4>
+    <p>If you are using Windows File Explorer as your WebDAV Client, go to "This PC" and add a network drive with the following endpoint: <span class="protocol"></span>//<span class="hostname"></span>:<span class="port"></span>/webdav/{vroot_name}</p>
+</div>
+<a onclick="showAllInstr(this);" style="cursor: pointer;">Show instruction for other platforms</a>
+<script>
+    var isMac = navigator.platform.indexOf('Mac') > -1;
+    var isWindows = navigator.platform.indexOf('Win') > -1;
+    
+    //Update tutorial information
+    $(".hostname").text(window.location.hostname);
+    $(".port").text(window.location.port);
+    if (window.location.port == ""){
+        $(".port").text("80");
+    }
+    $(".protocol").text(location.protocol);
+    if (isMac){
+        $(".maconly").show();
+    }else if (isWindows){
+        $(".windowonly").show();
+    }
+
+    //Check if running in HTTPS mode. If yes, hide this functions
+    if (location.protocol == 'https:'){
+        $("#nontlsWindowsSettings").hide();
+        $(".nontls").hide();
+    }else{
+        $(".tls").hide();
+    }
+
+    function showAllInstr(object){
+        $(".instr").show();
+        $(object).hide();
+    }
+</script>

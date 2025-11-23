@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- 
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta charset="UTF-8">
+    <link rel="stylesheet" href="../../script/semantic/semantic.min.css">
+    <script src="../../script/jquery.min.js"></script>
+	<script src="../../script/semantic/semantic.min.js"></script>
+    -->
+    <style>
+        .hidden{
+            display:none;
+        }
+
+        .disabled{
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <small>No configuration needed</small>
+    <!-- NON TLS Windows Only Mode-->
+    <!--
+    <div id="nontlsWindowsSettings">
+        <h4><b>Non-TLS Windows Client Connection Settings</b><br>
+        <small>Connect with TLS to bypass manual client access check</h4>
+        <table class="ui very basic celled table">
+            <thead>
+            <tr>
+                <th>Client IP</th>
+                <th>Last Request</th>
+                <th>Connection UUID</th>
+                <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="accessPendingClientList">
+            <tr><td>
+                    <h4 class="ui header">
+                        <div class="content">
+                            192.168.0.1
+                        </div>
+                    </h4>
+                </td>
+                <td>
+                    1 Jan 1970 08:00:00
+                </td>
+                <td>
+                    5bfba525-00ba-4d00-b8cc-7938fd8a0175
+                </td>
+                <td>
+                    <button class="ui tiny primary button">Allow Access</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="ui divider"></div>
+        <h4>Access Allowed Clients</h4>
+        <table class="ui very basic celled table">
+            <thead>
+            <tr>
+                <th>Client IP</th>
+                <th>Last Request</th>
+                <th>Connection UUID</th>
+                <th>Owner</th>
+                <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="permittedClientList">
+
+            </tbody>
+        </table>
+        <div class="ui divider"></div>
+        <button class="ui black button" onclick="refreshList();"><i class="refresh icon"></i> Refresh List</button>
+        <button class="ui button" onclick="clearPendings();"><i class="remove icon"></i> Clear All Pending Request</button>
+    </div>
+    <br><br>
+    <script>
+    var isMac = navigator.platform.toUpperCase().indexOf('MAC')>=0;
+    var isWindows = navigator.platform.indexOf('Win') > -1;
+
+    //Initiate UI elements
+    $(".ui.checkbox").checkbox();
+
+    //Generate endpoint list
+    //generateConnectionEndpointList();
+
+    function toggleWebDAVServer(value){
+        if (value == true){
+            $("#status").addClass("green");
+            $("#status").find(".onlinestatus").text("Status: Online");
+            $.get("../../system/network/webdav/status?set=enable", function(data){
+                initServerStatus();
+            });
+        }else{
+            $("#status").removeClass("green");
+            $("#status").find(".onlinestatus").text("Status: Offline");
+            $.get("../../system/network/webdav/status?set=disable", function(data){
+                initServerStatus();
+            });
+        }
+    }
+
+    function generateConnectionEndpointList(){
+        $.get("../../system/file_system/listRoots", function(data){
+            if (data.error != undefined){
+                console.log(data.error);
+            }else{
+                $("#vrootList").html("");
+                var port = (window.location.port);
+                if (window.location.port == ""){
+                    if (location.protocol == 'https:') {
+                        port = 443;
+                    }else{
+                        port = 80;
+                    }
+                }
+                data.forEach(vroot => {
+                    if (vroot.BufferedFs){
+                        return;
+                    }
+                    $("#vrootList").append(`<div class="item">
+                    <i class="disk icon"></i>
+                    <div class="content">
+                        <div class="header">${vroot.RootName}</div>
+                        <div class="description">${location.protocol}//${window.location.hostname}:${port}/webdav/${vroot.RootPath.replace(":/","")}</div>
+                    </div>
+                </div>`);
+                });
+            }
+        });
+    }
+
+    //Check server toggle state
+    //initServerStatus();
+    function initServerStatus(){
+        $.get("../../system/network/webdav/status", function(data){
+            if (data[0] == true){
+                $("#serverToggle")[0].checked = true;
+                $("#status").addClass("green");
+                $("#status").find(".onlinestatus").text("Status: Online");
+            }else{
+                $("#serverToggle")[0].checked = false;
+                $("#status").removeClass("green");
+                $("#status").find(".onlinestatus").text("Status: Offline");
+            }
+
+            if (data[1] == false){
+                $("#serverToggle").parent().addClass("disabled");
+                $("#serverToggle").parent().parent().attr("title","Administrator Only");
+            }
+        });
+    }
+   
+
+ 
+
+    //Check if running in HTTPS mode. If yes, hide this functions
+    if (location.protocol == 'https:'){
+        $("#nontlsWindowsSettings").hide();
+        $(".nontls").hide();
+    }else{
+        $(".tls").hide();
+    }
+
+    initAccessPendingList();
+    initAccessPermittedList();
+    function initAccessPermittedList(){
+        $.get("../../system/network/webdav/list?target=loggedin", function(data){
+            $("#permittedClientList").html("");
+            data.forEach(client => {
+                $("#permittedClientList").append(`<tr><td>
+                    <h4 class="ui header">
+                        <div class="content">
+                            ${client.ClientIP}
+                        </div>
+                    </h4>
+                </td>
+                <td>
+                    ${timeConverter(client.LastConnectionTimestamp)}
+                </td>
+                <td>
+                    ${client.UUID}
+                </td>
+                <td>
+                    ${client.Username}
+                </td>
+                <td>
+                    <button clientid="${client.UUID}" onclick="removeAllowAccess(this);" class="ui tiny red button">Remove Access</button>
+                </td>
+            </tr>`);
+
+
+            });
+
+            if (data.length == 0){
+                $("#permittedClientList").append(`<tr><td colspan="4"><i class="remove icon"></i> NO PERMITTED CLIENT</td></tr>`);
+            }
+        })
+    }
+
+    function refreshList(){
+        initAccessPendingList();
+        initAccessPermittedList();
+    }
+
+    function initAccessPendingList(){
+        $.get("../../system/network/webdav/list", function(data){
+            $("#accessPendingClientList").html("")
+            data.forEach(client => {
+                $("#accessPendingClientList").append(`<tr><td>
+                    <h4 class="ui header">
+                        <div class="content">
+                            ${client.ClientIP}
+                        </div>
+                    </h4>
+                </td>
+                <td>
+                    ${timeConverter(client.LastConnectionTimestamp)}
+                </td>
+                <td>
+                    ${client.UUID}
+                </td>
+                <td>
+                    <button clientid="${client.UUID}" onclick="setAllowAccess(this);" class="ui tiny primary button">Allow Access</button>
+                </td>
+            </tr>`);
+            })
+
+            if (data.length == 0){
+                $("#accessPendingClientList").append(`<tr><td colspan="4"><i class="remove icon"></i> NO CLIENTS PENDING</td></tr>`);
+            }
+        });
+    }
+
+    function setAllowAccess(object){
+        var clientUUID = $(object).attr("clientid");
+        $.ajax({
+            url: "../../system/network/webdav/edit",
+            data: {"opr": "set", "uuid": clientUUID},
+            success: function(data){
+                initAccessPendingList();
+                initAccessPermittedList();
+            }
+        })
+    }
+
+    function removeAllowAccess(object){
+        var clientUUID = $(object).attr("clientid");
+        $.ajax({
+            url: "../../system/network/webdav/edit",
+            data: {"opr": "remove", "uuid": clientUUID},
+            success: function(data){
+                initAccessPendingList();
+                initAccessPermittedList();
+            }
+        })
+    }
+
+    function clearPendings(){
+        $.get("../../system/network/webdav/clear", function(data){
+            //Done. Refresh list
+            initAccessPendingList();
+            initAccessPermittedList();
+        }); 
+    }
+
+    function timeConverter(UNIX_timestamp){
+        var a = new Date(UNIX_timestamp * 1000);
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var year = a.getFullYear();
+        var month = months[a.getMonth()];
+        var date = a.getDate();
+        var hour = a.getHours();
+        var min = a.getMinutes();
+        var sec = a.getSeconds();
+        var time = date + ' ' + month + ' ' + year + ' ' + (hour + "").padStart(2,"0") + ':' + (min + "").padStart(2,"0") + ':' + (sec + "").padStart(2,"0") ;
+        return time;
+    }
+    </script>
+     -->
+</body>
+</html>

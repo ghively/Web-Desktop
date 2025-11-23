@@ -1,0 +1,257 @@
+h1, h2, h3, p, span, div { font-family: "Microsoft JhengHei","SimHei", "Apple LiGothic Medium", "STHeiti"}
+
+/* General purpose theme settings */
+body.whiteTheme {
+    --body_text: black;
+    --body_background: rgb(250, 250, 250);
+    --body_background_secondary: #fcfcfc;
+    --body_background_active: #eeeeee;
+    --divider: #f0f0f0;
+    --theme_color: #92cfe7;
+    --text_color: rgb(29, 29, 29);
+    --text_color_secondary: rgb(139, 139, 139);
+    --text_color_invert: rgb(182, 182, 182);
+    --box_shadow_color: rgba(54, 54, 54, 0.35);
+}
+
+body.darkTheme{
+    --body_text: rgb(236, 236, 236);
+    --body_background: rgb(37, 37, 37);
+    --body_background_secondary: #27292d;
+    --body_background_active: #3d3f47;
+    --divider: #465561;
+    --theme_color: #6682c4;
+    --text_color: rgb(241, 241, 241);
+    --text_color_secondary: rgb(214, 214, 214);
+    --text_color_invert: rgb(63, 63, 63);
+    --box_shadow_color: rgba(54, 54, 54, 0.15);
+}
+
+:root{
+    --default_fw_theme: rgba(26, 26, 26, 0.3);
+}
+
+/* darktheme overwrite */
+body.darkTheme .ui.basic.button:not(.blue):not(.yellow):not(.teal):not(.green){
+    color: var(--text_color) !important;
+    border: 1px solid var(--text_color_secondary);
+}
+
+body.darkTheme .ui.basic.blue.button{
+    border: 1px solid var(--theme_color) !important;
+}
+
+body.darkTheme .ui.horizontal.label{
+    color: var(--text_color_invert) !important;
+}
+
+body.darkTheme .ui.basic.button:hover{
+    background-color: var(--body_background_active) !important;
+}
+
+body.darkTheme span:not(.ui.message *):not(.ui.label *):not(.ui.dropdown *), 
+body.darkTheme div:not(.ui.message *):not(.ui.label *):not(.ui.dropdown *), 
+body.darkTheme p:not(.ui.message *):not(.ui.label *):not(.ui.dropdown *), 
+body.darkTheme i:not(.ui.message *):not(.ui.label *):not(.ui.dropdown *){
+   color: var(--text_color);
+}
+
+body.darkTheme .ui.header .sub.header{
+    color: var(--text_color_secondary) !important;
+}
+
+/* floatWindow CSS */
+.floatWindow{
+    position:fixed;
+    width:1024px;
+    height:520px;
+    left:0px;
+    top:0px;
+    border-radius: 6px;
+}
+
+.floatWindow .controls .title{
+    color:white;
+    display: inline-block;
+    position:absolute;
+    left:40.5px;
+    top:5px;
+    max-width: calc(100% - 140px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.floatWindow .controls .moduleicon{
+    height:18px;
+    width:18px;
+    margin-top:6px;
+    margin-left:12.5px;
+    display: inline-block;
+}
+
+.floatWindow .controls{
+    position:absolute;
+    top:0px;
+    left:0px;
+    width: 100%;
+    height:30px;
+    padding-bottom:2px;
+    user-select: none;
+    border-radius: 6px 6px 0px 0px;
+}
+
+.floatWindow .iframewrapper{
+    position:absolute;
+    top: 30px;
+    width:100%;
+    height: calc(100% - 30px);
+    border-left: 3px solid #37393e;
+    border-right: 3px solid #37393e;
+    border-bottom: 3px solid #37393e;
+    border-radius: 0px 0px 6px 6px;
+}
+
+.floatWindow .iframewrapper .iframecover{
+    position:absolute;
+    top:0px;
+    left:0px;
+    width:100%;
+    height:100%;
+    display:none;
+}
+
+
+.floatWindow .iframewrapper iframe{
+    height:100%;
+    width:100%;
+    overflow:hidden;
+    position:absolute;
+    top:0px;
+    left:0px;
+    border-radius: 0px 0px 6px 6px;
+}
+
+.floatWindow .fwcontrol .buttons:hover{
+    background-color: rgba(224, 224, 224,0.75);
+}
+
+.floatWindow .fwcontrol .buttons.close{
+    border-top-right-radius: 6px !important;
+}
+
+.floatWindow .fwcontrol .buttons.close:hover{
+    background-color: rgba(232,142,142,0.7);
+}
+
+
+@supports (backdrop-filter: none) {
+    .floatWindow{
+        box-shadow: rgb(61, 61, 61) 1px 1px 4px;
+    }
+    .floatWindow .controls {
+        background-color:var(--default_fw_theme);
+        backdrop-filter: blur(5px);
+    }
+
+    .floatWindow .controls .title{
+        color: white;
+    }
+
+    .floatWindow .iframewrapper{
+        border-left: 3px solid var(--default_fw_theme);;
+        border-right: 3px solid var(--default_fw_theme);;
+        border-bottom: 3px solid var(--default_fw_theme);;
+        backdrop-filter: blur(5px);
+    }
+
+    .floatWindow .fwcontrol .buttons:hover{
+        background-color: rgba(224, 224, 224,.3);
+    }
+
+    /*
+        White theme
+    */
+
+    .floatWindow.white{
+        /* Updates 27-12-2020: Added box shadow and transparent boarder under backdrop filter mode*/
+       box-shadow: rgb(61, 61, 61) 1px 1px 4px;
+   }
+
+    .floatWindow.white .controls {
+        background-color:rgba(255,255,255, 0.85);
+        backdrop-filter: blur(5px);
+        
+    }
+
+    .floatWindow.white .controls .title{
+        font-weight: 130%;
+        color: rgb(20, 20, 20);
+        padding-right: 12.5px;
+    }
+
+    .floatWindow.white .iframewrapper{
+        border-left: 3px solid rgba(255,255,255,0.6);
+        border-right: 3px solid rgba(255,255,255,0.6);;
+        border-bottom: 3px solid rgba(255,255,255,0.6);;
+        backdrop-filter: blur(5px);
+    }
+
+    .floatWindow.white .fwcontrol .buttons:hover{
+        background-color: rgba(180, 180, 180,1);
+    }
+
+    .floatWindow.white .fwcontrol .buttons.close:hover{
+        background-color: rgba(232,142,142,0.7);
+    }
+    
+    
+}
+
+.floatWindow .fwcontrol{
+    position:absolute;
+    top:0px;
+    right:0px;
+    display: inline-block;
+}
+
+.floatWindow .fwcontrol .buttons{
+    vertical-align: top;
+    padding-top:5px;
+    padding-bottom:2px;
+    padding-left:10px;
+    padding-right:10px;
+    display: inline-block;
+    height:30px !important;
+    
+    color:white;
+    cursor: pointer;
+}
+
+.floatWindow .fwcontrol .buttons img{
+    width:18px;
+    height:auto;
+}
+
+.floatWindow .iframewrapper.widthHover{
+    cursor:w-resize;
+}
+.floatWindow .iframewrapper.rightCorner{
+    cursor:se-resize;
+}
+.floatWindow .iframewrapper.leftCorner{
+    cursor:sw-resize;
+}
+.floatWindow .iframewrapper.heighHover{
+    cursor:s-resize;
+}
+
+.fwdragger.resizbleCursor{
+    cursor:s-resize;
+}
+
+
+.fwdragger {
+    --text-outline-color: rgba(36, 36, 36, 0.75);
+    text-shadow: 1px 0 0 var(--text-outline-color), 0 -1px 0 var(--text-outline-color), 0 1px 0 var(--text-outline-color), -1px 0 0 var(--text-outline-color);
+}
