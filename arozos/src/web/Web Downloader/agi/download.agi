@@ -1,6 +1,0 @@
-requirelib("http")
-
-http.download(link, filepath, filename);
-
-HTTP_HEADER = "application/json; charset=utf-8";
-sendResp('"OK"');

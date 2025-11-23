@@ -1,8 +1,0 @@
-/*
-	Unit Testing Module for AGI 
-
-*/
-
-requirelib("appdata");
-var tests = appdata.listDir("UnitTest/backend/");
-sendJSONResp(tests);

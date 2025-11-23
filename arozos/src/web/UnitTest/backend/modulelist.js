@@ -1,1 +1,0 @@
-sendJSONResp(JSON.stringify(USER_MODULES));
