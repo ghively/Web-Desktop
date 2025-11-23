@@ -8,9 +8,9 @@ This document outlines the planned features, improvements, and bug fixes for the
 
 ### 1.1 Critical Bug: Interactive Terminal
 
-*   **Status:** Pending Fix. The `xterm.js` interactive terminal is currently not initializing or connecting correctly, resulting in a blank display. This is a critical bug that needs immediate attention.
-*   **Priority:** High. To be addressed as soon as possible.
-*   **To-Do Item:** Fix the interactive terminal: The xterm.js terminal is not initializing or connecting correctly, resulting in a blank display.
+*   **Status:** Fixed. The `xterm.js` interactive terminal is now fully functional. The blank display issue was resolved by ensuring `xterm.js` loads before `monaco-editor` (AMD loader conflict) and fixing a backend `node-pty` import issue.
+*   **Priority:** High. (Completed)
+*   **To-Do Item:** [x] Fix the interactive terminal: The xterm.js terminal is not initializing or connecting correctly, resulting in a blank display.
 
 ### 1.2 Implemented Features & Improvements
 
@@ -64,6 +64,7 @@ Below are detailed proposals for features and improvements, including research f
 #### 3.1.3 General File Manager Improvements
 *   **Description:** Enhance the existing file manager with features such as drag-and-drop, more robust file operations (copy, move, rename, delete), file previews, and improved navigation.
 *   **Recommended Approach:** Iterative improvements to the `fileManager.js` and associated frontend components.
+*   **Status:** In Progress / Partially Implemented. Added `create_folder`, `delete`, `rename`, `copy`, `move` operations with context menu and clipboard support.
 
 ### 3.2 Application & System Management
 
@@ -89,6 +90,7 @@ Below are detailed proposals for features and improvements, including research f
         *   **Implementation:** Modify `desktop.js` and related launcher rendering logic to use the chosen library for filtering the `installedApps` list based on user input.
     *   **Backend:** Ensure the `/api/packages/installed` endpoint provides comprehensive application data efficiently.
 *   **Borrowing Code/Concepts:** Inspiration from Raycast, Rofi, or Alfred for UI/UX patterns.
+*   **Status:** Implemented. `Fuse.js` integrated into `desktop.js` for fuzzy searching apps.
 
 #### 3.2.4 Automated Backups
 *   **Description:** Implement a system for scheduling and managing automated backups of user data and system configurations to local storage or remote destinations.

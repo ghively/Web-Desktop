@@ -136,9 +136,24 @@ function renderLauncherApps(filter = '') {
     if (!appsContainer) return;
 
     const apps = currentTab === 'installed' ? installedApps : availableApps;
-    const filtered = apps.filter(app =>
-        app.name.toLowerCase().includes(filter.toLowerCase())
-    );
+    let filtered = apps;
+
+    if (filter) {
+        if (typeof Fuse !== 'undefined') {
+            const fuse = new Fuse(apps, {
+                keys: ['name', 'description'],
+                threshold: 0.6
+            });
+            filtered = fuse.search(filter).map(result => result.item);
+        } else {
+            filtered = apps.filter(app =>
+                app.name.toLowerCase().includes(filter.toLowerCase())
+            );
+        }
+    }
+
+    // Limit results to top 50 to prevent lag
+    filtered = filtered.slice(0, 50);
 
     appsContainer.innerHTML = filtered.map((app, i) => `
         <button class="launcher-app-item ${i === selectedIndex ? 'selected' : ''}" data-app-id="${app.id || app.name}">
@@ -214,9 +229,16 @@ function initializeLauncher() {
 
         launcherSearch.addEventListener('keydown', (e) => {
             const apps = currentTab === 'installed' ? installedApps : availableApps;
-            const filtered = apps.filter(app =>
-                app.name.toLowerCase().includes(launcherSearch.value.toLowerCase())
-            );
+            let filtered = apps;
+            if (launcherSearch.value) {
+                if (typeof Fuse !== 'undefined') {
+                    const fuse = new Fuse(apps, { keys: ['name', 'description'], threshold: 0.6 });
+                    filtered = fuse.search(launcherSearch.value).map(r => r.item);
+                } else {
+                    filtered = apps.filter(app => app.name.toLowerCase().includes(launcherSearch.value.toLowerCase()));
+                }
+            }
+            filtered = filtered.slice(0, 50);
 
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
@@ -389,37 +411,117 @@ function launchApp(appId) {
             content = '<div style="padding: 2rem; text-align: center; color: var(--text);">⚙️ Control Panel<br><small>Feature coming soon</small></div>';
             break;
         case 'terminal':
-            title = 'Terminal';
-            const terminalId = `terminal-container-${Date.now()}`;
-            content = `<div id="${terminalId}" style="height: 100%; width: 100%;"></div>`;
-            setTimeout(() => {
-                const term = new Terminal({
-                    cursorBlink: true,
-                    theme: {
-                        background: '#1e1e2e',
-                        foreground: '#cdd6f4',
-                        cursor: '#f5e0dc',
-                    }
-                });
-                const fitAddon = new FitAddon.FitAddon();
-                term.loadAddon(fitAddon);
-                term.open(document.getElementById(terminalId));
-                fitAddon.fit();
-
-                const ws = new WebSocket(`ws://${window.location.host}`);
-                ws.onopen = () => {
-                    term.onData(data => ws.send(data));
-                    ws.onmessage = (event) => term.write(event.data);
-                    ws.onclose = () => term.write('\\r\\nConnection closed.');
-                };
-            }, 100);
-            break;
+            launchTerminal();
+            return;
         default:
             title = appId;
             content = `<div>📦 ${appId}<br><small>Native app integration coming soon</small></div>`;
     }
 
     windowManager.createWindow(title, content);
+}
+
+function launchTerminal() {
+    // Create the window synchronously
+    const windowObj = windowManager.createWindow('Terminal', '');
+    const windowContent = windowObj.element.querySelector('.window-content');
+
+    // Ensure the content area has no padding so terminal fits perfectly
+    windowContent.style.padding = '0';
+    windowContent.style.backgroundColor = '#1e1e2e';
+
+    // Create container for xterm
+    const terminalContainer = document.createElement('div');
+    terminalContainer.style.width = '100%';
+    terminalContainer.style.height = '100%';
+    windowContent.appendChild(terminalContainer);
+
+    // Initialize xterm
+    const term = new Terminal({
+        cursorBlink: true,
+        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+        fontSize: 14,
+        theme: {
+            background: '#1e1e2e',
+            foreground: '#cdd6f4',
+            cursor: '#f5e0dc',
+            black: '#45475a',
+            red: '#f38ba8',
+            green: '#a6e3a1',
+            yellow: '#f9e2af',
+            blue: '#89b4fa',
+            magenta: '#f5c2e7',
+            cyan: '#94e2d5',
+            white: '#bac2de',
+            brightBlack: '#585b70',
+            brightRed: '#f38ba8',
+            brightGreen: '#a6e3a1',
+            brightYellow: '#f9e2af',
+            brightBlue: '#89b4fa',
+            brightMagenta: '#f5c2e7',
+            brightCyan: '#94e2d5',
+            brightWhite: '#a6adc8'
+        }
+    });
+
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(terminalContainer);
+
+    // Initial fit
+    // We need a slight delay or next tick to ensure the DOM is fully rendered/sized
+    requestAnimationFrame(() => {
+        fitAddon.fit();
+    });
+
+    // Connect to WebSocket
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+    ws.onopen = () => {
+        term.onData(data => ws.send(data));
+
+        // Handle resizing
+        const resizeObserver = new ResizeObserver(() => {
+            try {
+                fitAddon.fit();
+                // Optional: Send resize event to backend if supported by node-pty/protocol
+                // const dims = fitAddon.proposeDimensions();
+                // if (dims) ws.send(JSON.stringify({ type: 'resize', cols: dims.cols, rows: dims.rows }));
+            } catch (e) {
+                console.warn('Resize error:', e);
+            }
+        });
+        resizeObserver.observe(terminalContainer);
+
+        // Clean up on window close
+        const closeBtn = windowObj.element.querySelector('.close');
+        const originalClose = closeBtn.onclick; // This might be handled via event listener in WindowManager, so be careful
+
+        // Better way: Monitor if the element is removed from DOM
+        const observer = new MutationObserver((mutations) => {
+            if (!document.body.contains(windowObj.element)) {
+                ws.close();
+                term.dispose();
+                resizeObserver.disconnect();
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    };
+
+    ws.onmessage = (event) => {
+        term.write(event.data);
+    };
+
+    ws.onclose = () => {
+        term.write('\r\n\x1b[31mConnection closed.\x1b[0m');
+    };
+
+    ws.onerror = (err) => {
+        console.error('WebSocket error:', err);
+        term.write('\r\n\x1b[31mConnection error.\x1b[0m');
+    }
 }
 
 const style = document.createElement('style');
