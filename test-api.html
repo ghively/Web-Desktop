@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Backend API Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testAPIs() {
+            const results = document.getElementById('results');
+            
+            try {
+                // Test containers
+                const containersResponse = await fetch('http://localhost:3001/api/containers');
+                const containers = await containersResponse.json();
+                results.innerHTML += '<h2>✅ Containers API works</h2>';
+                results.innerHTML += '<pre>' + JSON.stringify(containers, null, 2) + '</pre>';
+                
+                // Test file system
+                const fsResponse = await fetch('http://localhost:3001/api/fs?path=/home');
+                const fs = await fsResponse.json();
+                results.innerHTML += '<h2>✅ File System API works</h2>';
+                results.innerHTML += '<pre>' + JSON.stringify(fs, null, 2) + '</pre>';
+                
+                // Test WebSocket
+                const ws = new WebSocket('ws://localhost:3001');
+                ws.onopen = () => {
+                    results.innerHTML += '<h2>✅ WebSocket works</h2>';
+                    ws.close();
+                };
+                ws.onerror = (error) => {
+                    results.innerHTML += '<h2>❌ WebSocket error: ' + error + '</h2>';
+                };
+                
+            } catch (error) {
+                results.innerHTML += '<h2>❌ Error: ' + error.message + '</h2>';
+            }
+        }
+        
+        testAPIs();
+    </script>
+</body>
+</html>

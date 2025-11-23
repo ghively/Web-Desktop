@@ -1,10 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   body {
-    @apply bg-base text-text overflow-hidden;
+    background-color: #1e1e2e;
+    color: #cdd6f4;
+    overflow: hidden;
   }
 }
 
@@ -14,11 +14,12 @@
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-mantle;
+  background-color: #181825;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-surface1 rounded-full;
+  background-color: #45475a;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-surface2;
+  background-color: #585b70;
 }

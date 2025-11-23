@@ -1,0 +1,27 @@
+feat: Implement interactive terminal and enhance web desktop features
+
+This commit introduces significant improvements and new features to the web desktop,
+focusing on enhanced user interaction and preparatory steps for future roadmap items.
+
+Key changes include:
+- **Interactive Terminal:** Implemented a fully functional interactive terminal
+  using `xterm.js` on the frontend and `node-pty` on the backend, communicating
+  via WebSockets. This provides a native-like terminal experience.
+- **Dynamic Running Apps (Legacy Frontend):** The top bar in the legacy frontend
+  (`frontend-simple`) now dynamically displays running applications, allowing
+  for quick window switching.
+- **Application Launcher Improvements (Legacy Frontend):** The app launcher
+  in `frontend-simple` has been updated for better reliability in displaying
+  installed applications.
+- **Nginx Proxy Manager & Home Assistant Research:** Conducted initial research into
+  integrating Nginx Proxy Manager and Home Assistant, with example code and
+  configuration instructions provided.
+- **Feature Roadmap:** Created a detailed `ROADMAP.md` document outlining future
+  development plans and research findings.
+- **Backend Stability:** Addressed `ts-node` path issues and removed duplicate
+  imports in the backend server.
+- **Frontend Build Fixes:** Corrected PostCSS configuration in the frontend
+  (`frontend`) to address build errors.
+- **Saved Simple Terminal:** The previous simple command-line terminal
+  implementation has been saved to `frontend-simple/js/simple-terminal.js` as
+  per user request for potential future AI chatbot integration.
