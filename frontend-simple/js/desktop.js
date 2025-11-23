@@ -58,6 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const haBtn = document.getElementById('home-assistant-button');
     if (haBtn) haBtn.addEventListener('click', openHomeAssistant);
 
+    // Optional: power management quick launcher if added to UI later
+    const powerBtn = document.getElementById('power-management-button');
+    if (powerBtn) powerBtn.addEventListener('click', openPowerManagement);
+
     initializeSettings();
     initializeLauncher();
 
@@ -267,12 +271,181 @@ function openStoragePools() {
     win.element.querySelector('#pools-refresh').addEventListener('click', load);
 }
 
+function openAIModels() {
+    const content = `
+        <div class="app-grid">
+            <div class="app-card">
+                <h3>Model Status</h3>
+                <div id="aimodel-status" class="list">Loading...</div>
+                <div class="controls">
+                    <button id="aimodel-refresh" class="secondary">Refresh</button>
+                    <button id="aimodel-test-ollama" class="secondary">Test Ollama</button>
+                    <button id="aimodel-test-openrouter" class="secondary">Test OpenRouter</button>
+                </div>
+            </div>
+            <div class="app-card">
+                <h3>Task Routing</h3>
+                <div id="aimodel-tasks" class="list">Loading...</div>
+                <div class="controls">
+                    <input id="aimodel-task-type" class="input" placeholder="task type (e.g. summarize)" />
+                    <select id="aimodel-task-provider" class="input">
+                        <option value="ollama">Ollama</option>
+                        <option value="openrouter">OpenRouter</option>
+                    </select>
+                    <input id="aimodel-task-model" class="input" placeholder="preferred model id" />
+                    <button id="aimodel-save-task" class="secondary">Save Route</button>
+                </div>
+            </div>
+        </div>
+    `;
+    const win = windowManager.createWindow('AI Model Manager', content);
+    const statusEl = win.element.querySelector('#aimodel-status');
+    const tasksEl = win.element.querySelector('#aimodel-tasks');
+    const taskTypeInput = win.element.querySelector('#aimodel-task-type');
+    const taskProviderSelect = win.element.querySelector('#aimodel-task-provider');
+    const taskModelInput = win.element.querySelector('#aimodel-task-model');
+
+    const loadStatus = async () => {
+        statusEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/ai-model-manager/status');
+            const data = await res.json();
+            statusEl.innerHTML = `
+                <div class="list-item">Ollama: ${data.ollama?.connected ? 'Connected' : 'Offline'}</div>
+                <div class="list-item">OpenRouter: ${data.openrouter?.connected ? 'Connected' : 'Offline'}</div>
+                <div class="list-item">Models: ${(data.ollama?.models?.length || 0) + (data.openrouter?.models?.length || 0)}</div>
+            `;
+        } catch {
+            statusEl.textContent = 'Failed to load';
+        }
+    };
+
+    const loadTasks = async () => {
+        tasksEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/ai-model-manager/config');
+            const data = await res.json();
+            const assignments = data.taskAssignments || {};
+            tasksEl.innerHTML = Object.entries(assignments).map(([task, cfg]) =>
+                `<div class="list-item">${task}: ${cfg.provider} → ${cfg.preferredModel || 'default'}</div>`
+            ).join('') || 'No tasks';
+        } catch {
+            tasksEl.textContent = 'Failed to load';
+        }
+    };
+
+    loadStatus();
+    loadTasks();
+    win.element.querySelector('#aimodel-refresh').addEventListener('click', () => {
+        loadStatus();
+        loadTasks();
+    });
+    const saveTask = async () => {
+        const taskType = (taskTypeInput.value || '').trim();
+        const provider = taskProviderSelect.value;
+        const model = (taskModelInput.value || '').trim();
+        if (!taskType || !model) {
+            alert('Task type and model are required');
+            return;
+        }
+        try {
+            await fetch('/api/ai-model-manager/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    taskType,
+                    provider,
+                    preferredModel: model,
+                    fallbackProvider: provider,
+                    fallbackModel: model
+                })
+            });
+            loadTasks();
+        } catch {
+            alert('Failed to save task route');
+        }
+    };
+    win.element.querySelector('#aimodel-save-task').addEventListener('click', saveTask);
+    win.element.querySelector('#aimodel-test-ollama').addEventListener('click', async () => {
+        try { await fetch('/api/ai-model-manager/test/ollama', { method: 'POST' }); alert('Ollama test sent'); } catch { alert('Ollama test failed'); }
+    });
+    win.element.querySelector('#aimodel-test-openrouter').addEventListener('click', async () => {
+        try { await fetch('/api/ai-model-manager/test/openrouter', { method: 'POST' }); alert('OpenRouter test sent'); } catch { alert('OpenRouter test failed'); }
+    });
+}
+
+function openPowerManagement() {
+    const content = `
+        <div class="app-grid">
+            <div class="app-card">
+                <h3>System Power</h3>
+                <div id="power-status" class="list">Loading...</div>
+                <div class="controls">
+                    <button id="power-refresh" class="secondary">Refresh</button>
+                    <button id="power-monitor-toggle" class="secondary">Toggle Monitoring</button>
+                </div>
+            </div>
+            <div class="app-card">
+                <h3>Controls</h3>
+                <div class="controls">
+                    <button id="power-suspend" class="secondary">Suspend</button>
+                    <button id="power-reboot" class="secondary">Reboot</button>
+                    <button id="power-shutdown" class="secondary danger">Shutdown</button>
+                </div>
+            </div>
+        </div>
+    `;
+    const win = windowManager.createWindow('Power Management', content);
+    const statusEl = win.element.querySelector('#power-status');
+    let monitoringEnabled = false;
+
+    const load = async () => {
+        statusEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/power-management/status');
+            const data = await res.json();
+            statusEl.innerHTML = `
+                <div class="list-item">Battery: ${data.battery?.level ?? '--'}%</div>
+                <div class="list-item">AC: ${data.ac?.connected ? 'Connected' : 'Not connected'}</div>
+                <div class="list-item">Uptime: ${Math.floor((data.uptime || 0)/3600)}h</div>
+                <div class="list-item">Monitoring: ${data.monitoring?.enabled ? 'On' : 'Off'}</div>
+            `;
+            monitoringEnabled = !!data.monitoring?.enabled;
+        } catch {
+            statusEl.textContent = 'Failed to load';
+        }
+    };
+
+    const sendAction = async (action) => {
+        try {
+            await fetch(`/api/power-management/${action}`, { method: 'POST' });
+            alert(`${action} requested`);
+        } catch {
+            alert(`${action} failed`);
+        }
+    };
+
+    load();
+    win.element.querySelector('#power-refresh').addEventListener('click', load);
+    win.element.querySelector('#power-suspend').addEventListener('click', () => sendAction('suspend'));
+    win.element.querySelector('#power-reboot').addEventListener('click', () => sendAction('reboot'));
+    win.element.querySelector('#power-shutdown').addEventListener('click', () => sendAction('shutdown'));
+    win.element.querySelector('#power-monitor-toggle').addEventListener('click', async () => {
+        const action = monitoringEnabled ? 'stop' : 'start';
+        await fetch(`/api/power-management/monitoring/${action}`, { method: 'POST' }).catch(() => {});
+        load();
+    });
+}
+
 function openProxyManager() {
     const content = `
         <div class="app-card">
             <h3>Nginx Proxy</h3>
             <div id="proxy-status" class="list">Loading...</div>
-            <button id="proxy-refresh" class="secondary">Refresh</button>
+            <div class="controls">
+                <button id="proxy-refresh" class="secondary">Refresh</button>
+                <button id="proxy-reload" class="secondary">Reload</button>
+            </div>
         </div>
     `;
     const win = windowManager.createWindow('Nginx Proxy', content);
@@ -289,30 +462,122 @@ function openProxyManager() {
     };
     load();
     win.element.querySelector('#proxy-refresh').addEventListener('click', load);
+    win.element.querySelector('#proxy-reload').addEventListener('click', async () => {
+        try { await fetch('/api/nginx-proxy/reload', { method: 'POST' }); alert('Reload requested'); } catch { alert('Reload failed'); }
+    });
 }
 
 function openSharesManager() {
     const content = `
         <div class="app-card">
             <h3>Shares</h3>
-            <div id="shares-list" class="list">Loading...</div>
-            <button id="shares-refresh" class="secondary">Refresh</button>
+            <div class="tabs">
+                <button class="tab-button active" data-tab="nfs">NFS</button>
+                <button class="tab-button" data-tab="smb">SMB</button>
+                <button class="tab-button" data-tab="smbusers">SMB Users</button>
+            </div>
+            <div id="shares-content">
+                <div id="shares-nfs" class="list">Loading...</div>
+                <div id="shares-smb" class="list hidden">Loading...</div>
+                <div id="shares-smbusers" class="list hidden">Loading...</div>
+            </div>
+            <div class="controls" id="shares-form">
+                <input id="share-name" class="input" placeholder="Name" />
+                <input id="share-path" class="input" placeholder="Path" />
+                <select id="share-type" class="input">
+                    <option value="nfs">NFS</option>
+                    <option value="smb">SMB</option>
+                </select>
+                <button id="shares-create" class="primary">Create</button>
+                <button id="shares-refresh" class="secondary">Refresh</button>
+            </div>
         </div>
     `;
     const win = windowManager.createWindow('Shares Manager', content);
-    const list = win.element.querySelector('#shares-list');
-    const load = async () => {
-        list.textContent = 'Loading...';
+    const nfsEl = win.element.querySelector('#shares-nfs');
+    const smbEl = win.element.querySelector('#shares-smb');
+    const smbUsersEl = win.element.querySelector('#shares-smbusers');
+    const tabs = win.element.querySelectorAll('.tab-button');
+    const nameInput = win.element.querySelector('#share-name');
+    const pathInput = win.element.querySelector('#share-path');
+    const typeSelect = win.element.querySelector('#share-type');
+    const loadNfs = async () => {
+        nfsEl.textContent = 'Loading...';
         try {
-            const res = await fetch('/api/shares');
+            const res = await fetch('/api/shares/nfs');
             const data = await res.json();
-            list.innerHTML = data.map(s => `<div class="list-item">${s.name || s.id} • ${s.type || ''}</div>`).join('') || 'No shares';
+            nfsEl.innerHTML = (data.shares || []).map(s => `<div class="list-item">${s.name || s.id} • ${s.path || ''} <button data-id="${s.id}" class="danger small share-delete" data-type="nfs">Delete</button></div>`).join('') || 'No NFS shares';
         } catch {
-            list.textContent = 'Failed to load shares';
+            nfsEl.textContent = 'Failed to load NFS shares';
         }
     };
-    load();
-    win.element.querySelector('#shares-refresh').addEventListener('click', load);
+    const loadSmb = async () => {
+        smbEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/shares/smb');
+            const data = await res.json();
+            smbEl.innerHTML = (data.shares || []).map(s => `<div class="list-item">${s.name || s.id} • ${s.path || ''} <button data-id="${s.id}" class="danger small share-delete" data-type="smb">Delete</button></div>`).join('') || 'No SMB shares';
+        } catch {
+            smbEl.textContent = 'Failed to load SMB shares';
+        }
+    };
+    const loadSmbUsers = async () => {
+        smbUsersEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/shares/smb/users');
+            const data = await res.json();
+            smbUsersEl.innerHTML = (data.users || []).map(u => `<div class="list-item">${u.username}</div>`).join('') || 'No SMB users';
+        } catch {
+            smbUsersEl.textContent = 'Failed to load SMB users';
+        }
+    };
+    const refreshAll = () => { loadNfs(); loadSmb(); loadSmbUsers(); };
+    refreshAll();
+
+    tabs.forEach(tab => tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const selected = tab.dataset.tab;
+        nfsEl.classList.add('hidden');
+        smbEl.classList.add('hidden');
+        smbUsersEl.classList.add('hidden');
+        win.element.querySelector('#shares-form').classList.add('hidden');
+        if (selected === 'nfs') { nfsEl.classList.remove('hidden'); win.element.querySelector('#shares-form').classList.remove('hidden'); }
+        if (selected === 'smb') { smbEl.classList.remove('hidden'); win.element.querySelector('#shares-form').classList.remove('hidden'); }
+        if (selected === 'smbusers') { smbUsersEl.classList.remove('hidden'); }
+    }));
+
+    win.element.querySelector('#shares-refresh').addEventListener('click', refreshAll);
+    win.element.querySelector('#shares-create').addEventListener('click', async () => {
+        const name = nameInput.value.trim();
+        const path = pathInput.value.trim();
+        const type = typeSelect.value;
+        if (!name || !path) {
+            alert('Name and path required');
+            return;
+        }
+        const endpoint = type === 'nfs' ? '/api/shares/nfs' : '/api/shares/smb';
+        await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, path, type })
+        }).catch(() => {});
+        nameInput.value = '';
+        pathInput.value = '';
+        refreshAll();
+    });
+
+    win.element.querySelector('#shares-content').addEventListener('click', async (e) => {
+        const target = e.target;
+        if (target.classList.contains('share-delete')) {
+            const id = target.dataset.id;
+            const type = target.dataset.type;
+            if (!confirm('Delete share?')) return;
+            const endpoint = type === 'nfs' ? `/api/shares/nfs/${id}` : `/api/shares/smb/${id}`;
+            await fetch(endpoint, { method: 'DELETE' }).catch(() => {});
+            refreshAll();
+        }
+    });
 }
 
 function openWiFiManager() {
@@ -326,18 +591,35 @@ function openWiFiManager() {
                 <h3>Networks</h3>
                 <div id="wifi-networks" class="list">Loading...</div>
                 <button id="wifi-scan" class="primary">Scan</button>
+                <div class="controls">
+                    <input id="wifi-ssid" class="input" placeholder="SSID" />
+                    <input id="wifi-pass" class="input" placeholder="Password" />
+                    <button id="wifi-connect" class="secondary">Connect</button>
+                </div>
             </div>
         </div>
     `;
     const win = windowManager.createWindow('WiFi Management', content);
     const ifaces = win.element.querySelector('#wifi-interfaces');
     const nets = win.element.querySelector('#wifi-networks');
+    const ssidInput = win.element.querySelector('#wifi-ssid');
+    const passInput = win.element.querySelector('#wifi-pass');
     const loadInterfaces = async () => {
         ifaces.textContent = 'Loading...';
         try {
             const res = await fetch('/api/wifi-management/interfaces');
             const data = await res.json();
-            ifaces.innerHTML = data.map(i => `<div class="list-item">${i.name} • ${i.state}</div>`).join('') || 'No interfaces';
+            ifaces.innerHTML = data.map(i => `<div class="list-item">${i.name} • ${i.state} <button class="danger small wifi-disconnect" data-iface="${i.name}">Disconnect</button></div>`).join('') || 'No interfaces';
+            ifaces.querySelectorAll('.wifi-disconnect').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    await fetch('/api/wifi-management/disconnect', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ interface: btn.dataset.iface })
+                    }).catch(() => {});
+                    loadInterfaces();
+                });
+            });
         } catch {
             ifaces.textContent = 'Failed to load interfaces';
         }
@@ -355,6 +637,21 @@ function openWiFiManager() {
     loadInterfaces();
     scanNetworks();
     win.element.querySelector('#wifi-scan').addEventListener('click', scanNetworks);
+    win.element.querySelector('#wifi-connect').addEventListener('click', async () => {
+        const ssid = ssidInput.value.trim();
+        const password = passInput.value;
+        if (!ssid) {
+            alert('SSID required');
+            return;
+        }
+        await fetch('/api/wifi-management/connect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ssid, password })
+        }).catch(() => {});
+        scanNetworks();
+        loadInterfaces();
+    });
 }
 
 function openMediaServer() {
@@ -363,17 +660,25 @@ function openMediaServer() {
             <div class="app-card">
                 <h3>Libraries</h3>
                 <div id="media-libraries" class="list">Loading...</div>
-                <button id="media-refresh" class="secondary">Refresh</button>
+                <div class="controls">
+                    <button id="media-refresh" class="secondary">Refresh</button>
+                    <button id="media-scan" class="secondary">Scan</button>
+                </div>
             </div>
             <div class="app-card">
                 <h3>Transcoding</h3>
                 <div id="media-transcodes" class="list">Loading...</div>
+                <div class="controls">
+                    <input id="media-item-id" class="input" placeholder="Item ID to transcode" />
+                    <button id="media-start-transcode" class="primary">Start</button>
+                </div>
             </div>
         </div>
     `;
     const win = windowManager.createWindow('Media Server', content);
     const libs = win.element.querySelector('#media-libraries');
     const trans = win.element.querySelector('#media-transcodes');
+    const itemInput = win.element.querySelector('#media-item-id');
     const load = async () => {
         libs.textContent = 'Loading...';
         try {
@@ -397,6 +702,21 @@ function openMediaServer() {
     load();
     loadTranscodes();
     win.element.querySelector('#media-refresh').addEventListener('click', load);
+    win.element.querySelector('#media-scan').addEventListener('click', async () => {
+        await fetch('/api/media-server/scan', { method: 'POST' }).catch(() => {});
+        load();
+    });
+    win.element.querySelector('#media-start-transcode').addEventListener('click', async () => {
+        const id = itemInput.value.trim();
+        if (!id) { alert('Item ID required'); return; }
+        await fetch('/api/media-server/transcoding', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itemId: id })
+        }).catch(() => {});
+        itemInput.value = '';
+        loadTranscodes();
+    });
 }
 
 function openHomeAssistant() {
@@ -404,11 +724,16 @@ function openHomeAssistant() {
         <div class="app-card">
             <h3>Home Assistant</h3>
             <div id="ha-status" class="list">Loading...</div>
-            <button id="ha-refresh" class="secondary">Refresh</button>
+            <div class="controls">
+                <button id="ha-refresh" class="secondary">Refresh</button>
+            </div>
+            <h4>Entities</h4>
+            <div id="ha-entities" class="list">Loading...</div>
         </div>
     `;
     const win = windowManager.createWindow('Home Assistant', content);
     const statusEl = win.element.querySelector('#ha-status');
+    const entitiesEl = win.element.querySelector('#ha-entities');
     const load = async () => {
         statusEl.textContent = 'Loading...';
         try {
@@ -419,8 +744,19 @@ function openHomeAssistant() {
             statusEl.textContent = 'Failed to load';
         }
     };
+    const loadEntities = async () => {
+        entitiesEl.textContent = 'Loading...';
+        try {
+            const res = await fetch('/api/home-assistant/entities');
+            const data = await res.json();
+            entitiesEl.innerHTML = data.map(e => `<div class="list-item">${e.entity_id || e.id} • ${e.state || ''}</div>`).join('') || 'No entities';
+        } catch {
+            entitiesEl.textContent = 'Failed to load entities';
+        }
+    };
     load();
-    win.element.querySelector('#ha-refresh').addEventListener('click', load);
+    loadEntities();
+    win.element.querySelector('#ha-refresh').addEventListener('click', () => { load(); loadEntities(); });
 }
 
 function isAppRunning(appName) {
@@ -664,6 +1000,7 @@ async function fetchInstalledApps() {
             { name: 'WiFi', icon: '📶', id: 'wifi', description: 'WiFi interfaces and networks' },
             { name: 'Media Server', icon: '🎬', id: 'media', description: 'Libraries and transcoding' },
             { name: 'Home Assistant', icon: '🏠', id: 'home-assistant', description: 'Smart home status' },
+            { name: 'Power', icon: '🔋', id: 'power', description: 'Power controls and status' },
             ...data.apps.map(app => ({
                 name: app.name,
                 icon: app.icon || '🖥️',
@@ -689,7 +1026,8 @@ async function fetchInstalledApps() {
             { name: 'Shares', icon: '📁', id: 'shares', description: 'NFS/SMB shares' },
             { name: 'WiFi', icon: '📶', id: 'wifi', description: 'WiFi interfaces and networks' },
             { name: 'Media Server', icon: '🎬', id: 'media', description: 'Libraries and transcoding' },
-            { name: 'Home Assistant', icon: '🏠', id: 'home-assistant', description: 'Smart home status' }
+            { name: 'Home Assistant', icon: '🏠', id: 'home-assistant', description: 'Smart home status' },
+            { name: 'Power', icon: '🔋', id: 'power', description: 'Power controls and status' }
         ];
     }
 }
@@ -799,7 +1137,7 @@ function launchApp(appId) {
             openAIIntegration();
             return;
         case 'ai-models':
-            openAIIntegration();
+            openAIModels();
             return;
         case 'storage-pools':
             openStoragePools();
@@ -818,6 +1156,9 @@ function launchApp(appId) {
             return;
         case 'home-assistant':
             openHomeAssistant();
+            return;
+        case 'power':
+            openPowerManagement();
             return;
         default:
             title = appId;
