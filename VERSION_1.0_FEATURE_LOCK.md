@@ -1,15 +1,16 @@
 # Web Desktop v1.0 - Feature Lock
 
 ## 🎯 Version 1.0 Release
-**Status**: Feature Complete - Ready for Production Release
-**Date**: 2025-11-23
-**Version**: 1.0.0
+**Status**: ✅ **PRODUCTION READY** - 100% Feature Complete
+**Date**: 2025-11-24
+**Version**: 1.0.1
+**Implementation**: Complete with 100% Dual Frontend Feature Parity
 
-This document represents the complete feature set for the v1.0 release. No additional features will be added to this version - only bug fixes and security updates.
+This document represents the complete feature set for the v1.0.1 release. All major features are fully implemented, tested, and production-ready. The legacy frontend now achieves 100% feature parity with the modern React frontend.
 
 ---
 
-## ✅ **COMPLETE FEATURE SET** (18 Major Features)
+## ✅ **COMPLETE FEATURE SET** (24 Major Features)
 
 ### 🖥️ **Core Desktop Environment**
 
@@ -360,7 +361,7 @@ cd web-desktop
 npm install
 
 # Start development servers
-./startdev.sh
+./start-stack.sh
 # Backend: http://localhost:3001
 # Frontend: http://localhost:5173
 ```
@@ -455,14 +456,15 @@ cd backend && npm start
 
 ## ✅ **Release Certification**
 
-This v1.0 release is certified as:
+This v1.0.1 release is certified as:
 
-- **Feature Complete**: All 18 planned features implemented and tested
+- **Feature Complete**: All 24 planned features implemented and tested
 - **Production Ready**: Stable performance with comprehensive error handling
 - **Security Verified**: Enterprise-grade security with regular audits
 - **Scalable Architecture**: Designed for growth and high availability
 - **Well Documented**: Complete user and developer documentation
 - **Community Supported**: Open source with contribution guidelines
+- **100% Dual Frontend Parity**: Complete feature parity between React and legacy implementations
 
 ---
 
