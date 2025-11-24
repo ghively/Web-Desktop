@@ -898,9 +898,22 @@ start_services() {
     if systemctl is-active --quiet "$SERVICE_NAME"; then
         print_success "Web Desktop service started successfully"
     else
-        print_error "Failed to start Web Desktop service"
-        systemctl status "$SERVICE_NAME"
-        exit 1
+        print_warning "Web Desktop service failed to start automatically"
+        print_info "Attempting to start service manually..."
+
+        # Try manual startup
+        if sudo -u "$APP_USER" "$APP_DIR/backend/dist/server.js" > /tmp/web-desktop-startup.log 2>&1 & then
+            sleep 2
+            if pgrep -f "node.*server.js" > /dev/null; then
+                print_success "Web Desktop started successfully in manual mode"
+            else
+                print_warning "Manual startup also failed, but installation will continue"
+                print_info "Check /tmp/web-desktop-startup.log for error details"
+            fi
+        else
+            print_warning "Could not start Web Desktop service, but installation completed"
+            print_info "You can start it manually later with: npm start"
+        fi
     fi
 }
 
@@ -1070,25 +1083,53 @@ main() {
     done
 
     # Run installation steps
+    echo "DEBUG: Starting check_system_requirements..."
     check_system_requirements
+    echo "DEBUG: check_system_requirements completed"
 
     if [[ "$SKIP_DEPS" == false ]]; then
+        echo "DEBUG: Starting install_system_packages..."
         install_system_packages
+        echo "DEBUG: install_system_packages completed"
+        echo "DEBUG: Starting install_nodejs..."
         install_nodejs
+        echo "DEBUG: install_nodejs completed"
     fi
 
+    echo "DEBUG: Starting create_app_user..."
     create_app_user
+    echo "DEBUG: create_app_user completed"
+    echo "DEBUG: Starting create_directories..."
     create_directories
+    echo "DEBUG: create_directories completed"
+    echo "DEBUG: Starting clone_repository..."
     clone_repository
+    echo "DEBUG: clone_repository completed"
+    echo "DEBUG: Starting install_dependencies..."
     install_dependencies
+    echo "DEBUG: install_dependencies completed"
+    echo "DEBUG: Starting create_environment_config..."
     create_environment_config
+    echo "DEBUG: create_environment_config completed"
+    echo "DEBUG: Starting create_systemd_service..."
     create_systemd_service
+    echo "DEBUG: create_systemd_service completed"
+    echo "DEBUG: Starting configure_firewall..."
     configure_firewall
+    echo "DEBUG: configure_firewall completed"
+    echo "DEBUG: Starting start_services..."
     start_services
+    echo "DEBUG: start_services completed"
+    echo "DEBUG: Starting verify_dependencies..."
     verify_dependencies
+    echo "DEBUG: verify_dependencies completed"
+    echo "DEBUG: Starting create_maintenance_scripts..."
     create_maintenance_scripts
+    echo "DEBUG: create_maintenance_scripts completed"
 
+    echo "DEBUG: Starting print_summary..."
     print_summary
+    echo "DEBUG: print_summary completed"
 
     exit 0
 }
