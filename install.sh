@@ -470,7 +470,14 @@ install_dependencies() {
 create_environment_config() {
     print_step "Creating Environment Configuration"
 
-    # Create .env file for backend
+    # Verify tools are accessible and create paths
+    FFMPEG_PATH=$(which ffmpeg 2>/dev/null || echo "ffmpeg")
+    HANDBRAKE_PATH=$(which HandBrakeCLI 2>/dev/null || echo "HandBrakeCLI")
+    DOCKER_PATH=$(which docker 2>/dev/null || echo "docker")
+    X11VNC_PATH=$(which x11vnc 2>/dev/null || echo "x11vnc")
+    SENSORS_PATH=$(which sensors 2>/dev/null || echo "sensors")
+
+    # Create .env file for backend with verified tool paths
     cat > "$APP_DIR/backend/.env" << EOF
 # Web Desktop Production Configuration
 NODE_ENV=production
@@ -497,21 +504,67 @@ LOG_FILE=/var/log/web-desktop/app.log
 # Database
 DATABASE_PATH=/var/lib/web-desktop/database.sqlite
 
+# External Tools Configuration
+FFMPEG_PATH=$FFMPEG_PATH
+HANDBRAKE_PATH=$HANDBRAKE_PATH
+DOCKER_PATH=$DOCKER_PATH
+X11VNC_PATH=$X11VNC_PATH
+SENSORS_PATH=$SENSORS_PATH
+
+# Media Server Configuration
+TRANSCODING_ENGINE=ffmpeg
+TRANSCODING_OUTPUT_PATH=/var/lib/web-desktop/transcoding
+TRANSCODING_TEMP_DIR=/tmp/web-desktop/transcoding
+
+# Storage Configuration
+STORAGE_MOUNT_PREFIX=/media/webdesktop
+STORAGE_CONFIG_PATH=/etc/web-desktop/storage
+
+# Remote Desktop Configuration
+RDP_ENABLED=true
+VNC_ENABLED=true
+RDP_PORT=3389
+VNC_PORT=5900
+
+# System Monitoring
+MONITORING_ENABLED=true
+MONITORING_INTERVAL=5000
+MONITORING_HISTORY_SIZE=1000
+
 # External Services (Optional)
 # OLLAMA_URL=http://localhost:11434
 # HOME_ASSISTANT_URL=http://localhost:8123
 # HOME_ASSISTANT_TOKEN=your_token_here
+# OPENROUTER_API_KEY=your_openrouter_api_key
 EOF
 
-    # Create data directory
+    # Create data and transcoding directories
     mkdir -p "/var/lib/web-desktop"
-    chown -R "$APP_USER:$APP_USER" "/var/lib/web-desktop"
+    mkdir -p "/var/lib/web-desktop/transcoding"
+    mkdir -p "/tmp/web-desktop/transcoding"
+    mkdir -p "/etc/web-desktop/storage"
+    mkdir -p "/media/webdesktop"
 
     # Set proper permissions
+    chown -R "$APP_USER:$APP_USER" "/var/lib/web-desktop"
+    chmod 755 "/var/lib/web-desktop"
+    chmod 755 "/var/lib/web-desktop/transcoding"
+
+    chown -R "$APP_USER:$APP_USER" "/tmp/web-desktop"
+    chmod 755 "/tmp/web-desktop"
+    chmod 755 "/tmp/web-desktop/transcoding"
+
+    chown -R "$APP_USER:$APP_USER" "/etc/web-desktop"
+    chmod 755 "/etc/web-desktop/storage"
+
+    chown -R "$APP_USER:$APP_USER" "/media/webdesktop"
+    chmod 755 "/media/webdesktop"
+
+    # Secure environment file
     chmod 600 "$APP_DIR/backend/.env"
     chown "$APP_USER:$APP_USER" "$APP_DIR/backend/.env"
 
-    print_success "Environment configuration created"
+    print_success "Environment configuration created with verified tool paths"
 }
 
 # Create systemd service
@@ -646,6 +699,130 @@ configure_firewall() {
     else
         print_warning "No firewall manager found. Please configure manually."
     fi
+}
+
+# Verify and test dependencies
+verify_dependencies() {
+    print_step "Verifying Dependencies"
+
+    local failed_deps=()
+
+    # Test core tools
+    print_info "Testing core dependencies..."
+
+    if ! command -v ffmpeg >/dev/null 2>&1; then
+        failed_deps+=("ffmpeg")
+    else
+        print_success "✓ FFmpeg: $(ffmpeg -version | head -1)"
+    fi
+
+    if ! command -v HandBrakeCLI >/dev/null 2>&1; then
+        failed_deps+=("HandBrakeCLI")
+    else
+        print_success "✓ HandBrakeCLI: $(HandBrakeCLI --version | head -1)"
+    fi
+
+    if ! command -v docker >/dev/null 2>&1; then
+        failed_deps+=("docker")
+    else
+        print_success "✓ Docker: $(docker --version)"
+    fi
+
+    # Test storage drivers
+    print_info "Testing storage drivers..."
+    local storage_deps=("davfs2" "sshfs" "curlftpfs")
+
+    for dep in "${storage_deps[@]}"; do
+        if command -v "$dep" >/dev/null 2>&1; then
+            print_success "✓ $dep driver available"
+        else
+            print_warning "⚠ $dep driver not found"
+        fi
+    done
+
+    # Test system tools
+    print_info "Testing system monitoring tools..."
+
+    if command -v sensors >/dev/null 2>&1; then
+        if sensors >/dev/null 2>&1; then
+            print_success "✓ Hardware sensors working"
+        else
+            print_warning "⚠ Hardware sensors configured but no data available"
+        fi
+    else
+        failed_deps+=("lm-sensors")
+    fi
+
+    if command -v upower >/dev/null 2>&1; then
+        print_success "✓ Power management available"
+    else
+        failed_deps+=("upower")
+    fi
+
+    # Test network services
+    print_info "Testing network services..."
+
+    if systemctl is-active --quiet nginx 2>/dev/null; then
+        print_success "✓ Nginx service running"
+    else
+        print_warning "⚠ Nginx service not running"
+    fi
+
+    if systemctl is-active --quiet docker 2>/dev/null; then
+        print_success "✓ Docker service running"
+    else
+        print_warning "⚠ Docker service not running"
+    fi
+
+    if systemctl is-active --quiet bluetooth 2>/dev/null; then
+        print_success "✓ Bluetooth service running"
+    else
+        print_warning "⚠ Bluetooth service not running"
+    fi
+
+    # Test file systems
+    print_info "Testing file system tools..."
+
+    if grep -q fuse /proc/filesystems 2>/dev/null; then
+        print_success "✓ FUSE file system support available"
+    else
+        failed_deps+=("FUSE")
+    fi
+
+    # Report failed dependencies
+    if [ ${#failed_deps[@]} -gt 0 ]; then
+        print_error "Missing critical dependencies: ${failed_deps[*]}"
+        print_error "Some features may not work properly"
+        print_info "You can install them manually and restart the service"
+    else
+        print_success "All critical dependencies verified and working"
+    fi
+
+    # Create tool availability report
+    cat > "$APP_DIR/backend/dependencies.json" << EOF
+{
+  "timestamp": "$(date -Iseconds)",
+  "tools": {
+    "ffmpeg": $(command -v ffmpeg >/dev/null 2>&1 && echo "true" || echo "false"),
+    "HandBrakeCLI": $(command -v HandBrakeCLI >/dev/null 2>&1 && echo "true" || echo "false"),
+    "docker": $(command -v docker >/dev/null 2>&1 && echo "true" || echo "false"),
+    "sensors": $(command -v sensors >/dev/null 2>&1 && echo "true" || echo "false"),
+    "upower": $(command -v upower >/dev/null 2>&1 && echo "true" || echo "false"),
+    "davfs2": $(command -v davfs2 >/dev/null 2>&1 && echo "true" || echo "false"),
+    "sshfs": $(command -v sshfs >/dev/null 2>&1 && echo "true" || echo "false"),
+    "curlftpfs": $(command -v curlftpfs >/dev/null 2>&1 && echo "true" || echo "false")
+  },
+  "services": {
+    "nginx": $(systemctl is-active --quiet nginx 2>/dev/null && echo "true" || echo "false"),
+    "docker": $(systemctl is-active --quiet docker 2>/dev/null && echo "true" || echo "false"),
+    "bluetooth": $(systemctl is-active --quiet bluetooth 2>/dev/null && echo "true" || echo "false"),
+    "cups": $(systemctl is-active --quiet cups 2>/dev/null && echo "true" || echo "false")
+  }
+}
+EOF
+
+    chown "$APP_USER:$APP_USER" "$APP_DIR/backend/dependencies.json"
+    print_success "Dependency report created at $APP_DIR/backend/dependencies.json"
 }
 
 # Start and enable services
@@ -853,6 +1030,7 @@ main() {
     create_systemd_service
     configure_firewall
     start_services
+    verify_dependencies
     create_maintenance_scripts
 
     print_summary
