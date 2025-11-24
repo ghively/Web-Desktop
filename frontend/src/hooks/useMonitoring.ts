@@ -1,6 +1,6 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { monitoringService } from '../services/monitoring/MonitoringService';
-import { PerformanceMetric, ErrorEvent } from '../services/monitoring/MonitoringConfig';
+import { PerformanceMetric } from '../services/monitoring/MonitoringConfig';
 
 export interface UseMonitoringOptions {
   trackPerformance?: boolean;
@@ -18,7 +18,7 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
   } = options;
 
   const renderStartTime = useRef<number | undefined>(undefined);
-  const mountTime = useRef<number>(Date.now());
+  const [mountTime] = useState<number>(() => Date.now());
 
   // Track component render performance
   useEffect(() => {
@@ -47,7 +47,7 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
 
   // Track component mount/unmount
   useEffect(() => {
-    const mountDuration = Date.now() - mountTime.current;
+    const mountDuration = Date.now() - mountTime;
 
     monitoringService.recordMetric({
       timestamp: Date.now(),
@@ -66,16 +66,16 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
         timestamp: Date.now(),
         type: 'render',
         name: `${component}-unmount`,
-        value: Date.now() - mountTime.current,
+        value: Date.now() - mountTime,
         unit: 'ms',
         metadata: {
           component,
           action: 'unmount',
-          lifecycle: Date.now() - mountTime.current,
+          lifecycle: Date.now() - mountTime,
         },
       });
     };
-  }, []);
+  }, [component, mountTime]);
 
   // Track interactions within component
   const trackInteraction = useCallback((type: string, target: string, metadata?: Record<string, unknown>) => {
@@ -205,17 +205,15 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
   }, [component]);
 
   // Debounced interaction tracking
-  const debouncedTrackInteraction = useMemo(() => {
-    let lastCall = 0;
-    const debounceMs = 100; // Debounce interactions within 100ms
+  const lastInteractionCall = useRef<number>(0);
 
-    return (type: string, target: string, metadata?: Record<string, unknown>) => {
-      const now = Date.now();
-      if (now - lastCall > debounceMs) {
-        trackInteraction(type, target, metadata);
-        lastCall = now;
-      }
-    };
+  const debouncedTrackInteraction = useCallback((type: string, target: string, metadata?: Record<string, unknown>) => {
+    const now = Date.now();
+    const debounceMs = 100; // Debounce interactions within 100ms
+    if (now - lastInteractionCall.current > debounceMs) {
+      trackInteraction(type, target, metadata);
+      lastInteractionCall.current = now;
+    }
   }, [trackInteraction]);
 
   return {
@@ -232,7 +230,7 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
 
     // Component info
     component,
-    mountTime: mountTime.current,
+    mountTime,
   };
 }
 

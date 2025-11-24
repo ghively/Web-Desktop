@@ -78,6 +78,17 @@ export const TerminalComponent: React.FC<TerminalProps> = ({ windowId }) => {
         }
     }, []);
 
+    // Focus handler for terminal
+    const handleClick = useCallback(() => {
+        if (termRef.current && !isDisposedRef.current) {
+            try {
+                termRef.current.focus();
+            } catch (error) {
+                console.error('Failed to focus terminal:', error);
+            }
+        }
+    }, []);
+
     // Cleanup all resources
     const cleanup = useCallback(() => {
         console.log('Terminal cleanup called');
@@ -128,18 +139,7 @@ export const TerminalComponent: React.FC<TerminalProps> = ({ windowId }) => {
         }
 
         fitAddonRef.current = null;
-    }, [stopHeartbeat]);
-
-    // Focus handler for terminal
-    const handleClick = useCallback(() => {
-        if (termRef.current && !isDisposedRef.current) {
-            try {
-                termRef.current.focus();
-            } catch (error) {
-                console.error('Failed to focus terminal:', error);
-            }
-        }
-    }, []);
+    }, [stopHeartbeat, handleClick]);
 
     // Connect to WebSocket with improved error handling and retry logic
     const connectWebSocket = useCallback(() => {

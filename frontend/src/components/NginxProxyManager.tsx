@@ -2,9 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Globe, Trash2, RefreshCw, Lock, ArrowRight, Radio } from 'lucide-react';
 import { API_CONFIG } from '../config/api';
 
-interface NginxProxyManagerProps {
-  // No props currently needed
-}
+type NginxProxyManagerProps = Record<string, never>;
 
 interface ProxyHost {
   id: number;

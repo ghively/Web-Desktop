@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { monitoringService } from '../services/monitoring/MonitoringService';
 import {
   MonitoringConfig,
@@ -75,12 +75,14 @@ export function MonitoringProvider({ children, config: initialConfig, autoInitia
   useEffect(() => {
     if (autoInitialize && !isInitialized) {
       monitoringService.initialize();
-      setIsInitialized(true);
 
       // Update service config if provided
       if (initialConfig) {
         Object.assign(monitoringService['config'], initialConfig);
       }
+
+      // Use setTimeout to avoid synchronous setState in effect
+      setTimeout(() => setIsInitialized(true), 0);
     }
 
     return () => {
@@ -106,8 +108,8 @@ export function MonitoringProvider({ children, config: initialConfig, autoInitia
       refreshData();
     }, 5000); // Refresh every 5 seconds
 
-    // Initial refresh
-    refreshData();
+    // Initial refresh - defer to avoid synchronous setState
+    setTimeout(() => refreshData(), 0);
 
     return () => clearInterval(refreshInterval);
   }, [isInitialized, refreshData]);
@@ -298,10 +300,5 @@ export function MonitoringProvider({ children, config: initialConfig, autoInitia
   );
 }
 
-export function useMonitoringContext(): MonitoringContextType {
-  const context = useContext(MonitoringContext);
-  if (!context) {
-    throw new Error('useMonitoringContext must be used within a MonitoringProvider');
-  }
-  return context;
-}
+// Export context for external access
+export { MonitoringContext };

@@ -1,3 +1,4 @@
+/* global Buffer */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { VFSManager, VFSNode, VFSMount, FileOperation, FileWatchEvent, VFSAdapter, FileWatcher } from '../types/vfs';
 import { WebDesktopVFSManager } from '../lib/vfs/VFSManager';
@@ -92,7 +93,7 @@ export const useVFS = (options: UseVFSOptions = {}): UseVFSReturn => {
     } finally {
       setLoading(false);
     }
-  }, []); // Remove vfs dependency to prevent infinite loop
+  }, [vfs]); // Include vfs dependency
 
   // Initialize and load initial directory
   useEffect(() => {
@@ -114,7 +115,7 @@ export const useVFS = (options: UseVFSOptions = {}): UseVFSReturn => {
 
       mountMemoryFS();
     }
-  }, [options.autoMount]); // Remove vfs, currentPath, and loadDirectory to prevent infinite loop
+  }, [options.autoMount, vfs, currentPath, loadDirectory]); // Include all dependencies
 
   // Watch for changes if specified
   useEffect(() => {
@@ -141,14 +142,14 @@ export const useVFS = (options: UseVFSOptions = {}): UseVFSReturn => {
         }
       };
     }
-  }, [options.watchPath]); // Remove vfs, currentPath, and loadDirectory to prevent infinite loop
+  }, [options.watchPath, vfs, currentPath, loadDirectory]); // Include all dependencies
 
   // Load directory when currentPath changes (but only if it actually changes)
   useEffect(() => {
     if (currentPath && currentPath !== '/') {
       loadDirectory(currentPath);
     }
-  }, [currentPath]); // Only depend on currentPath
+  }, [currentPath, loadDirectory]); // Include loadDirectory dependency
 
   // File operations
   const readFile = useCallback(async (path: string): Promise<Buffer> => {
@@ -277,7 +278,7 @@ export const useVFS = (options: UseVFSOptions = {}): UseVFSReturn => {
     setCurrentPath(normalized);
     // Load directory in a setTimeout to break the infinite loop cycle
     setTimeout(() => loadDirectory(normalized), 0);
-  }, []); // Remove dependencies to prevent infinite loop
+  }, [vfs, loadDirectory]); // Include dependencies
 
   return {
     getAdapter: (name: string) => (vfs as VFSManager & { getAdapter?: (name: string) => VFSAdapter | null }).getAdapter ? (vfs as VFSManager & { getAdapter?: (name: string) => VFSAdapter | null }).getAdapter(name) : null,

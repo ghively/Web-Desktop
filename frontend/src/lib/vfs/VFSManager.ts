@@ -1,3 +1,4 @@
+/* global Buffer */
 import { VFSManager, VFSAdapter, VFSMount, VFSNode, FileOperation, VFSTransaction, FileWatcher, FileWatchEvent, VFSError, VFSErrorCodes, VFSAdapterCapabilities, FilePermissions } from '../../types/vfs';
 
 // Use global Buffer from globals.d.ts
@@ -254,7 +255,7 @@ export class WebDesktopVFSManager extends SimpleEmitter implements VFSManager {
       const mount = this.findMountForPath(path);
       const relativePath = this.resolvePath(path);
       return await mount.adapter.exists(relativePath);
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -586,8 +587,10 @@ export class WebDesktopVFSManager extends SimpleEmitter implements VFSManager {
         try {
           const subResults = await this.searchInMount(mount, path + '/' + node.name, query);
           results.push(...subResults);
-        } catch (error) {
+        } catch (_error) {
           // Skip directories we can't access
+           
+          void _error;
         }
       }
     }
@@ -618,18 +621,22 @@ export class WebDesktopVFSManager extends SimpleEmitter implements VFSManager {
         default:
           return false;
       }
-    } catch (error) {
+    } catch (_error) {
+       
+      void _error;
       return false;
     }
   }
 
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   async setPermissions(path: string, permissions: Partial<FilePermissions>): Promise<void> {
-    const mount = this.findMountForPath(path);
-    const relativePath = this.resolvePath(path);
+    const _mount = this.findMountForPath(path);
+    const _relativePath = this.resolvePath(path);
 
     // Implementation would depend on adapter capabilities
     console.log(`Setting permissions for ${path}:`, permissions);
   }
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
   // Caching
   clearCache(path?: string): void {
@@ -729,49 +736,51 @@ class LocalFSAdapter implements VFSAdapter {
   mountPath = '/';
   priority = 1;
 
-  async read(path: string): Promise<Buffer> {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  async read(_path: string): Promise<Buffer> {
     throw new Error('LocalFSAdapter not implemented in browser environment');
   }
 
-  async write(path: string, data: Buffer | Uint8Array): Promise<void> {
+  async write(_path: string, _data: Buffer | Uint8Array): Promise<void> {
     throw new Error('LocalFSAdapter not implemented in browser environment');
   }
 
-  async exists(path: string): Promise<boolean> {
+  async exists(_path: string): Promise<boolean> {
     return false; // Placeholder
   }
 
-  async stat(path: string): Promise<VFSNode> {
+  async stat(_path: string): Promise<VFSNode> {
     throw new Error('LocalFSAdapter not implemented in browser environment');
   }
 
-  async readdir(path: string): Promise<VFSNode[]> {
+  async readdir(_path: string): Promise<VFSNode[]> {
     throw new Error('LocalFSAdapter not implemented in browser environment');
   }
 
-  async mkdir(path: string): Promise<void> {
+  async mkdir(_path: string): Promise<void> {
     throw new Error('LocalFSAdapter not implemented in browser environment');
   }
 
-  async rmdir(path: string): Promise<void> {
+  async rmdir(_path: string): Promise<void> {
     throw new Error('LocalFSAdapter not implemented in browser environment');
   }
 
-  async unlink(path: string): Promise<void> {
+  async unlink(_path: string): Promise<void> {
     throw new Error('LocalFSAdapter not implemented in browser environment');
   }
 
-  async rename(oldPath: string, newPath: string): Promise<void> {
+  async rename(_oldPath: string, _newPath: string): Promise<void> {
     throw new Error('LocalFSAdapter not implemented in browser environment');
   }
 
-  async copy(src: string, dest: string): Promise<void> {
+  async copy(_src: string, _dest: string): Promise<void> {
     throw new Error('LocalFSAdapter not implemented in browser environment');
   }
 
-  async watch(path: string, callback: (event: FileWatchEvent) => void): Promise<FileWatcher> {
+  async watch(_path: string, _callback: (event: FileWatchEvent) => void): Promise<FileWatcher> {
     throw new Error('LocalFSAdapter not implemented in browser environment');
   }
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
   getCapabilities(): VFSAdapterCapabilities {
     return {
@@ -944,8 +953,10 @@ class MemoryFSAdapter implements VFSAdapter {
     this.files.set(dest, { data: file.data, node: newNode });
   }
 
-  async watch(path: string, callback: (event: FileWatchEvent) => void): Promise<FileWatcher> {
+  async watch(path: string, _callback: (event: FileWatchEvent) => void): Promise<FileWatcher> {
     // Memory filesystem doesn't support watching
+     
+    void _callback;
     return {
       close: () => {},
       path,
@@ -1093,8 +1104,10 @@ class IndexedDBAdapter implements VFSAdapter {
     });
   }
 
-  async readdir(path: string): Promise<VFSNode[]> {
+  async readdir(_path: string): Promise<VFSNode[]> {
     // Implementation would need to scan all keys and filter
+     
+    void _path;
     return [];
   }
 
@@ -1154,7 +1167,9 @@ class IndexedDBAdapter implements VFSAdapter {
 
   async rename(oldPath: string, newPath: string): Promise<void> {
     const data = await this.read(oldPath);
-    const node = await this.stat(oldPath);
+    const _node = await this.stat(oldPath);
+     
+    void _node;
     await this.write(newPath, data);
     await this.unlink(oldPath);
   }
@@ -1164,7 +1179,9 @@ class IndexedDBAdapter implements VFSAdapter {
     await this.write(dest, data);
   }
 
-  async watch(path: string, callback: (event: FileWatchEvent) => void): Promise<FileWatcher> {
+  async watch(path: string, _callback: (event: FileWatchEvent) => void): Promise<FileWatcher> {
+     
+    void _callback;
     return {
       close: () => {},
       path,

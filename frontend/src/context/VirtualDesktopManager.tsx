@@ -82,7 +82,7 @@ export const VirtualDesktopManagerProvider: React.FC<{ children: ReactNode }> = 
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [desktops, settings.desktopSwitching.keyboardShortcuts]);
+    }, [desktops, settings.desktopSwitching.keyboardShortcuts, switchDesktop]);
 
     // Persist settings to localStorage
     useEffect(() => {
@@ -242,7 +242,6 @@ export const VirtualDesktopManagerProvider: React.FC<{ children: ReactNode }> = 
         const desktop = desktops.find(d => d.id === desktopId);
         if (!desktop || !desktop.layout.snapEnabled) return [];
 
-        const gap = desktop.layout.gaps.size;
         const threshold = desktop.layout.snapThreshold;
         const zones: SnapZone[] = [];
 
@@ -386,6 +385,7 @@ export const VirtualDesktopManagerProvider: React.FC<{ children: ReactNode }> = 
 
 export { VirtualDesktopManagerContext };
 
+/* eslint-disable react-refresh/only-export-components */
 export const useVirtualDesktopManager = (): VirtualDesktopManagerContextType => {
     const ctx = useContext(VirtualDesktopManagerContext);
     if (!ctx) {

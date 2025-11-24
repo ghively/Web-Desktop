@@ -8,11 +8,16 @@ import {
   defaultMonitoringConfig
 } from './MonitoringConfig';
 
+ 
 declare global {
-  namespace NodeJS {
-    interface Timeout { }
-  }
+  var NodeJS: {
+    Timeout: {
+      ref(): this;
+      unref(): this;
+    };
+  };
 }
+ 
 
 export class MonitoringService {
   private config: MonitoringConfig;
@@ -24,6 +29,7 @@ export class MonitoringService {
   private alerts: MonitoringAlert[] = [];
   private isInitialized = false;
   private observers: PerformanceObserver[] = [];
+  // eslint-disable-next-line no-undef
   private timers: NodeJS.Timeout[] = [];
 
   constructor(config?: Partial<MonitoringConfig>) {
@@ -126,9 +132,11 @@ export class MonitoringService {
 
       longTaskObserver.observe({ entryTypes: ['longtask'] });
       this.observers.push(longTaskObserver);
-    } catch (e) {
+    } catch (_e) {
       // Long task API not supported
       console.warn('Long task monitoring not supported');
+       
+      void _e;
     }
   }
 

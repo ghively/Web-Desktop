@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Play, Square, RefreshCw, Monitor, Copy } from 'lucide-react';
 import { API_CONFIG } from '../config/api';
 
@@ -30,7 +30,7 @@ export const VNCClient: React.FC<VNCClientProps> = ({ windowId: _windowId }) => 
 
   const API_BASE = API_CONFIG.getEndpointUrl('vnc');
 
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -43,7 +43,7 @@ export const VNCClient: React.FC<VNCClientProps> = ({ windowId: _windowId }) => 
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
   const createSession = async () => {
     const [width, height] = newSessionResolution.split('x').map(Number);

@@ -2,43 +2,47 @@ import '@testing-library/jest-dom';
 import { vi, expect, afterEach } from 'vitest';
 
 // Type definitions for mock globals
-interface IntersectionObserverCallback {
-  (entries: any[], observer: any): void;
+/* eslint-disable @typescript-eslint/no-unused-vars */
+interface _IntersectionObserverCallback {
+  (entries: unknown[], observer: unknown): void;
 }
 
-interface IntersectionObserverInit {
+interface _IntersectionObserverInit {
   root?: Element | null;
   rootMargin?: string;
   threshold?: number | number[];
 }
 
-interface ResizeObserverCallback {
-  (entries: any[], observer: any): void;
+interface _ResizeObserverCallback {
+  (entries: unknown[], observer: unknown): void;
 }
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 declare global {
-  const IntersectionObserver: any;
-  const ResizeObserver: any;
-  const WebSocket: any;
-  const fetch: any;
+  const IntersectionObserver: unknown;
+  const ResizeObserver: unknown;
+  const WebSocket: unknown;
+  const fetch: unknown;
+  var global: unknown;
 }
 
 // Mock IntersectionObserver
-(global as any).IntersectionObserver = vi.fn().mockImplementation(() => ({
+/* eslint-disable no-undef */
+global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
 
 // Mock ResizeObserver
-(global as any).ResizeObserver = vi.fn().mockImplementation(() => ({
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
 
 // Mock WebSocket
-(global as any).WebSocket = vi.fn().mockImplementation(() => ({
+global.WebSocket = vi.fn().mockImplementation(() => ({
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
   send: vi.fn(),
@@ -62,7 +66,8 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock fetch
-(global as any).fetch = vi.fn();
+global.fetch = vi.fn();
+/* eslint-enable no-undef */
 
 // Cleanup after each test
 afterEach(() => {

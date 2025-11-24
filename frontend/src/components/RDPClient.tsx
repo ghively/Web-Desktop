@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Play, Square, RefreshCw, Monitor, Copy, Eye, EyeOff, Server, User, Lock, Globe, Save, TestTube } from 'lucide-react';
 import { API_CONFIG } from '../config/api';
 
@@ -51,7 +51,7 @@ export const RDPClient: React.FC<RDPClientProps> = ({ windowId: _windowId }) => 
 
   const API_BASE = API_CONFIG.getEndpointUrl('rdp');
 
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -64,9 +64,9 @@ export const RDPClient: React.FC<RDPClientProps> = ({ windowId: _windowId }) => 
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
-  const loadProfiles = async () => {
+  const loadProfiles = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/profiles`);
       if (!response.ok) throw new Error('Failed to load profiles');
@@ -75,7 +75,7 @@ export const RDPClient: React.FC<RDPClientProps> = ({ windowId: _windowId }) => 
     } catch (err) {
       console.error('Failed to load profiles:', err);
     }
-  };
+  }, [API_BASE]);
 
   const testConnection = async () => {
     if (!connectionForm.host) {
