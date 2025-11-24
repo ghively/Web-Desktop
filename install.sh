@@ -38,6 +38,10 @@ FRONTEND_PORT="5173"
 # System user
 APP_USER="webdesktop"
 
+# Debug and runtime flags
+DEBUG=false
+DRY_RUN=false
+
 # Logging function
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
@@ -98,6 +102,37 @@ print_warning() {
 print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
     log "ERROR: $1"
+}
+
+debug() {
+    if [[ "$DEBUG" == "true" ]]; then
+        echo -e "${YELLOW}[DEBUG]${NC} $1" | tee -a "$LOG_FILE"
+    fi
+}
+
+dry_run() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${CYAN}[DRY-RUN]${NC} Would execute: $1"
+        return 0
+    fi
+    return 1
+}
+
+# Check if package exists in repositories for the current package manager
+package_exists() {
+    local package="$1"
+    case "$PKG_MANAGER" in
+        apt-get)
+            apt-cache show "$package" >/dev/null 2>&1
+            ;;
+        yum)
+            yum info "$package" >/dev/null 2>&1
+            ;;
+        *)
+            debug "Unknown package manager: $PKG_MANAGER, assuming package exists"
+            return 0
+            ;;
+    esac
 }
 
 # System requirements check
@@ -298,40 +333,45 @@ install_system_packages() {
     local success_count=0
     local total_packages=${#PACKAGES[@]}
 
-    echo "DEBUG: Starting package installation loop for ${#PACKAGES[@]} packages..."
-    echo "DEBUG: First few packages are: ${PACKAGES[@]:0:3}"
+    debug "Starting package installation loop for ${#PACKAGES[@]} packages..."
+    debug "First few packages are: ${PACKAGES[@]:0:3}"
 
     for i in "${!PACKAGES[@]}"; do
         package="${PACKAGES[$i]}"
-        echo "DEBUG: Package $((i+1))/${#PACKAGES[@]}: Attempting to install package: $package"
+        debug "Package $((i+1))/${#PACKAGES[@]}: Attempting to install package: $package"
         print_status "Installing: $package..."
 
+        # Skip actual installation in dry-run mode
+        if dry_run "$INSTALL_CMD $package"; then
+            print_success "✓ $package (dry-run)"
+            ((success_count++))
+            continue
+        fi
+
         # Check if package exists before attempting installation
-        if apt-cache show "$package" >/dev/null 2>&1; then
-            echo "DEBUG: Package $package exists in repositories"
+        if package_exists "$package"; then
+            debug "Package $package exists in repositories"
             # Use set +e to prevent script from exiting on package installation failure
             set +e
-            echo "DEBUG: set +e called, now installing $package"
+            debug "Installing $package with: $INSTALL_CMD"
             if $INSTALL_CMD "$package" >/dev/null 2>&1; then
                 print_success "✓ $package installed successfully"
                 ((success_count++))
-                echo "DEBUG: Package $package installed successfully"
+                debug "Package $package installed successfully"
             else
                 local exit_code=$?
                 print_warning "⚠ $package failed to install (exit code: $exit_code, may be optional)"
-                echo "DEBUG: Package $package failed with exit code: $exit_code"
+                debug "Package $package failed with exit code: $exit_code"
             fi
             set -e  # Re-enable strict error handling
-            echo "DEBUG: set -e called again, continuing to next package"
+            debug "Continuing to next package"
         else
             print_warning "○ $package not available in repositories"
-            echo "DEBUG: Package $package not found in repositories"
+            debug "Package $package not found in repositories"
         fi
-        echo "DEBUG: Completed processing package: $package, success count: $success_count"
-        echo "DEBUG: Continuing to next package..."
+        debug "Completed processing package: $package, success count: $success_count"
     done
-    echo "DEBUG: Package installation loop completed successfully"
-    echo "DEBUG: Package installation loop completed"
+    debug "Package installation loop completed"
 
     print_success "Essential packages: ${success_count}/${total_packages} installed"
 
@@ -342,7 +382,14 @@ install_system_packages() {
     for package in "${OPTIONAL_PACKAGES[@]}"; do
         print_status "Installing optional: $package..."
 
-        if apt-cache show "$package" >/dev/null 2>&1; then
+        # Skip actual installation in dry-run mode
+        if dry_run "$INSTALL_CMD $package"; then
+            print_success "✓ $package (dry-run)"
+            ((optional_success++))
+            continue
+        fi
+
+        if package_exists "$package"; then
             if $INSTALL_CMD "$package" >/dev/null 2>&1; then
                 print_success "✓ $package installed successfully"
                 ((optional_success++))
@@ -425,13 +472,17 @@ install_nodejs() {
     if [[ "$PKG_MANAGER" == "apt-get" ]]; then
         # Add NodeSource repository
         NODE_VERSION_LTS="20"
-        curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION_LTS}.x | bash -
-        $INSTALL_CMD nodejs
+        if ! dry_run "curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION_LTS}.x | bash -"; then
+            curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION_LTS}.x | bash -
+        fi
+        dry_run "$INSTALL_CMD nodejs" || $INSTALL_CMD nodejs
     elif [[ "$PKG_MANAGER" == "yum" ]]; then
         # Add NodeSource repository
         NODE_VERSION_LTS="20"
-        curl -fsSL https://rpm.nodesource.com/setup_${NODE_VERSION_LTS}.x | bash -
-        $INSTALL_CMD nodejs npm
+        if ! dry_run "curl -fsSL https://rpm.nodesource.com/setup_${NODE_VERSION_LTS}.x | bash -"; then
+            curl -fsSL https://rpm.nodesource.com/setup_${NODE_VERSION_LTS}.x | bash -
+        fi
+        dry_run "$INSTALL_CMD nodejs npm" || $INSTALL_CMD nodejs npm
     fi
 
     # Verify installation
@@ -446,11 +497,11 @@ install_nodejs() {
     # Install npm if not included
     if ! command -v npm >/dev/null 2>&1; then
         print_info "Installing npm..."
-        $INSTALL_CMD npm
+        dry_run "$INSTALL_CMD npm" || $INSTALL_CMD npm
     fi
 
     # Install pm2 globally for process management
-    npm install -g pm2
+    dry_run "npm install -g pm2" || npm install -g pm2
     print_success "PM2 process manager installed"
 }
 
@@ -1082,6 +1133,8 @@ main() {
         echo "  --help, -h     Show this help message"
         echo "  --skip-deps    Skip system package installation"
         echo "  --dev          Install in development mode"
+        echo "  --debug        Enable debug output"
+        echo "  --dry-run      Show what would be done without executing"
         echo
         exit 0
     fi
@@ -1098,57 +1151,64 @@ main() {
             --dev)
                 DEV_MODE=true
                 ;;
+            --debug)
+                DEBUG=true
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                DEBUG=true  # Enable debug when using dry-run
+                ;;
         esac
     done
 
     # Run installation steps
-    echo "DEBUG: Starting check_system_requirements..."
+    debug "Starting check_system_requirements..."
     check_system_requirements
-    echo "DEBUG: check_system_requirements completed"
+    debug "check_system_requirements completed"
 
     if [[ "$SKIP_DEPS" == false ]]; then
-        echo "DEBUG: Starting install_system_packages..."
+        debug "Starting install_system_packages..."
         install_system_packages
-        echo "DEBUG: install_system_packages completed"
-        echo "DEBUG: Starting install_nodejs..."
+        debug "install_system_packages completed"
+        debug "Starting install_nodejs..."
         install_nodejs
-        echo "DEBUG: install_nodejs completed"
+        debug "install_nodejs completed"
     fi
 
-    echo "DEBUG: Starting create_app_user..."
+    debug "Starting create_app_user..."
     create_app_user
-    echo "DEBUG: create_app_user completed"
-    echo "DEBUG: Starting create_directories..."
+    debug "create_app_user completed"
+    debug "Starting create_directories..."
     create_directories
-    echo "DEBUG: create_directories completed"
-    echo "DEBUG: Starting clone_repository..."
+    debug "create_directories completed"
+    debug "Starting clone_repository..."
     clone_repository
-    echo "DEBUG: clone_repository completed"
-    echo "DEBUG: Starting install_dependencies..."
+    debug "clone_repository completed"
+    debug "Starting install_dependencies..."
     install_dependencies
-    echo "DEBUG: install_dependencies completed"
-    echo "DEBUG: Starting create_environment_config..."
+    debug "install_dependencies completed"
+    debug "Starting create_environment_config..."
     create_environment_config
-    echo "DEBUG: create_environment_config completed"
-    echo "DEBUG: Starting create_systemd_service..."
+    debug "create_environment_config completed"
+    debug "Starting create_systemd_service..."
     create_systemd_service
-    echo "DEBUG: create_systemd_service completed"
-    echo "DEBUG: Starting configure_firewall..."
+    debug "create_systemd_service completed"
+    debug "Starting configure_firewall..."
     configure_firewall
-    echo "DEBUG: configure_firewall completed"
-    echo "DEBUG: Starting start_services..."
+    debug "configure_firewall completed"
+    debug "Starting start_services..."
     start_services
-    echo "DEBUG: start_services completed"
-    echo "DEBUG: Starting verify_dependencies..."
+    debug "start_services completed"
+    debug "Starting verify_dependencies..."
     verify_dependencies
-    echo "DEBUG: verify_dependencies completed"
-    echo "DEBUG: Starting create_maintenance_scripts..."
+    debug "verify_dependencies completed"
+    debug "Starting create_maintenance_scripts..."
     create_maintenance_scripts
-    echo "DEBUG: create_maintenance_scripts completed"
+    debug "create_maintenance_scripts completed"
 
-    echo "DEBUG: Starting print_summary..."
+    debug "Starting print_summary..."
     print_summary
-    echo "DEBUG: print_summary completed"
+    debug "print_summary completed"
 
     exit 0
 }
