@@ -182,12 +182,11 @@ install_system_packages() {
             ffmpeg
             handbrake-cli
             xrdp
-            wpa_supplicant
+            wpasupplicant
             network-manager
             lm-sensors
             upower
-            cpufrequtils
-            linux-cpupower
+            linux-cpupower-tools
             davfs2
             curlftpfs
             sshfs
