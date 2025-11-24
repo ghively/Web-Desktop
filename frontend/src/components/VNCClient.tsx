@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Play, Square, Trash2, RefreshCw, Monitor, Copy, Eye, EyeOff } from 'lucide-react';
 import { API_CONFIG } from '../config/api';
 

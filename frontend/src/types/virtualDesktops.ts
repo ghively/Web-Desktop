@@ -42,7 +42,7 @@ export interface LayoutTemplate {
     name: string;
     description: string;
     type: 'grid' | 'cascade' | 'vertical' | 'horizontal' | 'master-stack' | 'custom';
-    config: Record<string, any>;
+    config: Record<string, unknown>;
 }
 
 export interface WindowGroup {

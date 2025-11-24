@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ErrorBoundary, SafeComponent } from './index';
+import { SafeComponent } from './index';
 import { AlertTriangle, Bug, RefreshCw } from 'lucide-react';
 
 /**

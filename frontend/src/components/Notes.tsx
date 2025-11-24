@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Save, FileText, Eye, Bold, Italic, Link, List, Quote, Code, Plus, Search, Trash2, Calendar, Edit, Split } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { useSettings } from '../context/useSettings';

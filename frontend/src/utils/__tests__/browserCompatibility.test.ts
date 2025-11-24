@@ -1,3 +1,5 @@
+/// <reference path="../../types/globals.d.ts" />
+
 /**
  * Browser compatibility test suite
  * Tests feature detection and polyfills across different environments

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Globe, Plus, Trash2, RefreshCw, Lock, ArrowRight, Radio } from 'lucide-react';
 import { API_CONFIG } from '../config/api';
 

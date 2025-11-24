@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, Search, Zap, Shield, Settings, Play, Plus, X, Check, AlertTriangle, TrendingUp, FileText, Workflow } from 'lucide-react';
+import { Brain, Search, Zap, Shield, Plus, Check, AlertTriangle, TrendingUp, FileText, Workflow as WorkflowIcon } from 'lucide-react';
 
 interface AIService {
   name: string;
@@ -31,7 +31,11 @@ interface Workflow {
   description: string;
   active: boolean;
   triggers: string[];
-  actions: any[];
+  actions: Array<{
+    type: string;
+    description?: string;
+    config?: Record<string, unknown>;
+  }>;
 }
 
 interface SecurityEvent {
@@ -43,6 +47,7 @@ interface SecurityEvent {
   timestamp: string;
   resolved: boolean;
 }
+
 
 interface Recommendation {
   type: string;
@@ -218,16 +223,16 @@ const AIIntegration: React.FC<AIIntegrationProps> = () => {
         {/* Tabs */}
         <div className="flex space-x-4 mt-4">
           {[
-            { id: 'overview', label: 'Overview', icon: Brain },
-            { id: 'files', label: 'File Analysis', icon: FileText },
-            { id: 'search', label: 'Smart Search', icon: Search },
-            { id: 'workflows', label: 'Workflows', icon: Workflow },
-            { id: 'security', label: 'Security', icon: Shield },
-            { id: 'performance', label: 'Performance', icon: TrendingUp }
+            { id: 'overview' as const, label: 'Overview', icon: Brain },
+            { id: 'files' as const, label: 'File Analysis', icon: FileText },
+            { id: 'search' as const, label: 'Smart Search', icon: Search },
+            { id: 'workflows' as const, label: 'Workflows', icon: WorkflowIcon },
+            { id: 'security' as const, label: 'Security', icon: Shield },
+            { id: 'performance' as const, label: 'Performance', icon: TrendingUp }
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
                 activeTab === tab.id
                   ? 'bg-purple-600 text-white'
@@ -292,7 +297,7 @@ const AIIntegration: React.FC<AIIntegrationProps> = () => {
 
               <div className="bg-gray-800 rounded-lg p-4">
                 <div className="flex items-center space-x-3">
-                  <Workflow className="w-8 h-8 text-green-500" />
+                  <WorkflowIcon className="w-8 h-8 text-green-500" />
                   <div>
                     <div className="text-2xl font-bold">{workflows.filter(w => w.active).length}</div>
                     <div className="text-sm text-gray-400">Active Workflows</div>

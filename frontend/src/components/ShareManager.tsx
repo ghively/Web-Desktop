@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Share2, Trash2, RefreshCw, HardDrive, Users } from 'lucide-react';
 import { API_CONFIG } from '../config/api';
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Database, File, Filter, Folder, Hash, Clock, HardDrive, Play, Music, Image, FileText, RefreshCw, Trash2, Download, Eye, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { Search, Database, File, Hash, Play, Music, Image, FileText, RefreshCw } from 'lucide-react';
 import { useSettings } from '../context/exports';
 
 interface FileMetadata {
@@ -14,7 +14,7 @@ interface FileMetadata {
   hash: string;
   directoryId?: string;
   tags?: string[];
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   indexed: Date;
 }
 
@@ -33,7 +33,7 @@ interface DuplicateGroup {
   files: FileMetadata[];
 }
 
-export const FileMetadataManager: React.FC<{ windowId: string }> = ({ windowId }) => {
+export const FileMetadataManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'search' | 'duplicates' | 'indexing'>('search');
   const [files, setFiles] = useState<FileMetadata[]>([]);
   const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([]);
@@ -283,7 +283,7 @@ export const FileMetadataManager: React.FC<{ windowId: string }> = ({ windowId }
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              onClick={() => setActiveTab(id as any)}
+              onClick={() => setActiveTab(id as 'search' | 'duplicates' | 'indexing')}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
                 activeTab === id
                   ? 'bg-blue-500 text-white'

@@ -2,14 +2,35 @@
  * Performance optimization utilities for enhanced UI smoothness
  */
 
+// Type definitions
+interface FrameRequestCallback {
+  (timestamp: number): void;
+}
+
+interface RequestInit {
+  method?: string;
+  headers?: HeadersInit;
+  body?: BodyInit | null;
+  mode?: RequestMode;
+  credentials?: RequestCredentials;
+  cache?: RequestCache;
+  redirect?: RequestRedirect;
+  referrer?: string;
+  referrerPolicy?: ReferrerPolicy;
+  integrity?: string;
+  keepalive?: boolean;
+  signal?: AbortSignal | null;
+  window?: null;
+}
+
 /**
  * Throttle function to limit the rate of function execution
  */
-export const throttle = <T extends (...args: any[]) => any>(
+export const throttle = <T extends (...args: unknown[]) => unknown>(
     func: T,
     delay: number
 ): ((...args: Parameters<T>) => void) => {
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: number | null = null;
     let lastExecTime = 0;
 
     return (...args: Parameters<T>) => {
@@ -33,11 +54,11 @@ export const throttle = <T extends (...args: any[]) => any>(
 /**
  * Debounce function to delay function execution until after a pause
  */
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
     func: T,
     delay: number
 ): ((...args: Parameters<T>) => void) => {
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: number | null = null;
 
     return (...args: Parameters<T>) => {
         if (timeoutId) {
@@ -50,7 +71,7 @@ export const debounce = <T extends (...args: any[]) => any>(
 /**
  * Memoization utility for expensive computations
  */
-export const memoize = <T extends (...args: any[]) => any>(
+export const memoize = <T extends (...args: unknown[]) => unknown>(
     func: T,
     keyGenerator?: (...args: Parameters<T>) => string
 ): T => {
@@ -290,7 +311,7 @@ export class AnimationFrame {
     static throttle(callback: FrameRequestCallback): FrameRequestCallback {
         let rafId: number | null = null;
 
-        return (timestamp: number) => {
+        return (_timestamp: number) => {
             if (!rafId) {
                 rafId = requestAnimationFrame((frameTimestamp) => {
                     callback(frameTimestamp);
@@ -372,9 +393,19 @@ export const memoryManagement = {
     /**
      * Check memory usage (if available)
      */
-    getMemoryUsage: (): any => {
+    getMemoryUsage: (): {
+        usedJSHeapSize: number;
+        totalJSHeapSize: number;
+        jsHeapSizeLimit: number;
+    } | null => {
         if ('memory' in performance) {
-            return (performance as any).memory;
+            return (performance as Performance & {
+                memory: {
+                    usedJSHeapSize: number;
+                    totalJSHeapSize: number;
+                    jsHeapSizeLimit: number;
+                };
+            }).memory;
         }
         return null;
     },
@@ -462,11 +493,16 @@ export const networkOptimization = {
     /**
      * Cache API responses
      */
-    createCache: (ttl: number = 5 * 60 * 1000): Map<string, { data: any; timestamp: number }> => {
-        const cache = new Map<string, { data: any; timestamp: number }>();
+    createCache: (ttl: number = 5 * 60 * 1000): Map<string, { data: unknown; timestamp: number }> & {
+        get: (key: string) => unknown | null;
+        set: (key: string, data: unknown) => void;
+        clear: () => void;
+        delete: (key: string) => boolean;
+    } => {
+        const cache = new Map<string, { data: unknown; timestamp: number }>();
 
         return {
-            get: (key: string): any | null => {
+            get: (key: string): unknown | null => {
                 const entry = cache.get(key);
                 if (!entry) return null;
 
@@ -478,7 +514,7 @@ export const networkOptimization = {
                 return entry.data;
             },
 
-            set: (key: string, data: any): void => {
+            set: (key: string, data: unknown): void => {
                 cache.set(key, { data, timestamp: Date.now() });
             },
 
@@ -489,6 +525,6 @@ export const networkOptimization = {
             delete: (key: string): boolean => {
                 return cache.delete(key);
             },
-        } as any;
+        };
     },
 };

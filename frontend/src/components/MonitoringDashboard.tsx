@@ -74,7 +74,7 @@ export function MonitoringDashboard({
 
   const summary = useMemo(() => getMetricsSummary(), [getMetricsSummary]);
   const filteredErrors = useMemo(() => {
-    let filtered = selectedSeverity ? filterErrors(selectedSeverity, selectedTimeRange) : filterErrors(undefined, selectedTimeRange);
+    const filtered = selectedSeverity ? filterErrors(selectedSeverity, selectedTimeRange) : filterErrors(undefined, selectedTimeRange);
     return searchQuery ? searchErrors(searchQuery) : filtered;
   }, [filterErrors, filterMetrics, searchErrors, searchQuery, selectedSeverity, selectedTimeRange]);
 

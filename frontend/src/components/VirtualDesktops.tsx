@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useVirtualDesktopManager } from '../context/VirtualDesktopManager';
 import { Monitor, Plus, X, Settings, Layers, Grid, Maximize2 } from 'lucide-react';
 

@@ -375,7 +375,7 @@ export interface ModuleImport {
 export interface AppError {
     code: string;
     message: string;
-    details?: any;
+    details?: Record<string, unknown>;
     timestamp: string;
 }
 
@@ -384,5 +384,5 @@ export interface AppEvent {
     type: 'install' | 'uninstall' | 'launch' | 'close' | 'update' | 'error';
     appId: string;
     timestamp: string;
-    data?: any;
+    data?: Record<string, unknown>;
 }

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Terminal, Folder, FileText, Container, Play, Gauge, Tv, Globe, Share2, Search, Activity, Settings, Package, Database, Brain, Palette, Cpu, HardDrive, Wifi, Home, Zap, Disc, FileSearch, Monitor } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Terminal, Folder, FileText, Container, Play, Gauge, Tv, Globe, Share2, Search, Activity, Settings, Package, Database, Brain, Palette, Cpu, HardDrive, Wifi, Home, Zap, Disc, FileSearch, Monitor, Key } from 'lucide-react';
 import { TerminalComponent } from './Terminal';
 import { FileManager } from './FileManager';
 import { Notes } from './Notes';
@@ -227,7 +227,6 @@ export const AppLauncher = () => {
             description: 'AI-powered storage deduplication and management',
             isBuiltIn: true,
             action: () => {
-                const windowId = createWindowId('storage');
                 return openWindow('Smart Storage', <SmartStorage />);
             }
         },
@@ -439,7 +438,16 @@ export const AppLauncher = () => {
                 // Process marketplace apps
                 if (marketplaceResponse && marketplaceResponse.ok) {
                     const marketplaceData = await marketplaceResponse.json();
-                    const marketplaceApps = marketplaceData.apps.map((app: any) => ({
+                    const marketplaceApps = marketplaceData.apps.map((app: {
+                        manifest: {
+                            id: string;
+                            name: string;
+                            icon?: React.ComponentType<{ size?: number }>;
+                            description: string;
+                            category: string;
+                        };
+                        installPath: string;
+                    }) => ({
                         id: app.manifest.id,
                         name: app.manifest.name,
                         icon: app.manifest.icon || Package,

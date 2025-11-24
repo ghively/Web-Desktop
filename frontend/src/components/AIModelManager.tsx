@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, Cpu, Globe, Settings, Download, Trash2, Play, CheckCircle, XCircle, AlertTriangle, RefreshCw, Zap, Clock, DollarSign, Server, MessageSquare, Code, FileText, Image, BarChart3, Languages, BookOpen, TestTube, Copy, Save, Key, Eye, EyeOff } from 'lucide-react';
+import { Brain, Cpu, Globe, Settings, Trash2, Play, CheckCircle, XCircle, AlertTriangle, RefreshCw, Zap, Server, MessageSquare, Code, FileText, Image, BarChart3, Languages, TestTube, Save, Eye, EyeOff } from 'lucide-react';
 
 interface Model {
   name: string;
@@ -19,6 +19,21 @@ interface Model {
     input: number;
     output: number;
   };
+}
+
+interface TestResult {
+  provider?: string;
+  model?: string;
+  fallback?: boolean;
+  result?: {
+    response?: string;
+    choices?: Array<{
+      message?: {
+        content?: string;
+      };
+    }>;
+  };
+  error?: string;
 }
 
 interface TaskAssignment {
@@ -63,7 +78,7 @@ const AIModelManager: React.FC<{ windowId?: string }> = () => {
   const [models, setModels] = useState<{ ollama: Model[], openrouter: Model[] }>({ ollama: [], openrouter: [] });
   const [selectedTask, setSelectedTask] = useState('file-analysis');
   const [testPrompt, setTestPrompt] = useState('Analyze this text and provide a summary.');
-  const [testResult, setTestResult] = useState<any>(null);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
 
@@ -131,24 +146,7 @@ const AIModelManager: React.FC<{ windowId?: string }> = () => {
     }
   };
 
-  const pullModel = async (model: string) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/ai-model-manager/ollama/pull/${model}`, {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        await loadModels();
-        await loadStatus();
-      }
-    } catch (error) {
-      console.error('Failed to pull model:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  
   const deleteModel = async (model: string) => {
     if (!confirm(`Are you sure you want to delete ${model}?`)) return;
 

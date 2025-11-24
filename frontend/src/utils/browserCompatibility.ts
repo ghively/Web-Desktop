@@ -3,6 +3,11 @@
  * Provides feature detection and polyfills for cross-browser support
  */
 
+// Type definitions
+interface EventListener {
+  (evt: Event): void;
+}
+
 // Browser feature detection
 export const BrowserFeatures = {
   // CSS features
@@ -15,7 +20,7 @@ export const BrowserFeatures = {
   asyncAwait: () => (async () => {})() instanceof Promise,
   arrowFunctions: () => {
     try {
-      // eslint-disable-next-line no-new-func
+       
       new Function('return () => {}')();
       return true;
     } catch {
@@ -24,7 +29,7 @@ export const BrowserFeatures = {
   },
   destructuring: () => {
     try {
-      // eslint-disable-next-line no-new-func
+       
       const fn = new Function('const {x} = {x: 1}; return x === 1;');
       return fn() === true;
     } catch {
@@ -33,7 +38,7 @@ export const BrowserFeatures = {
   },
   spreadOperator: () => {
     try {
-      // eslint-disable-next-line no-new-func
+       
       const fn = new Function('const arr = [...[1,2,3]]; return arr.length === 3;');
       return fn() === true;
     } catch {
@@ -78,11 +83,9 @@ export const BrowserFeatures = {
           return true;
         },
       });
-      // @ts-ignore
       window.addEventListener('testPassive', null, opts);
-      // @ts-ignore
       window.removeEventListener('testPassive', null, opts);
-    } catch (e) {
+    } catch {
       // Ignore
     }
     return supportsPassive;
@@ -97,11 +100,11 @@ export const BrowserFeatures = {
   // Fullscreen API
   fullscreen: () => !!(
     document.fullscreenEnabled ||
-    // @ts-ignore
+    // @ts-expect-error - WebKit-specific fullscreen API
     document.webkitFullscreenEnabled ||
-    // @ts-ignore
+    // @ts-expect-error - Mozilla-specific fullscreen API
     document.mozFullScreenEnabled ||
-    // @ts-ignore
+    // @ts-expect-error - Microsoft-specific fullscreen API
     document.msFullscreenEnabled
   ),
 };
@@ -300,50 +303,46 @@ export const Polyfills = {
 
     const exitFn =
       document.exitFullscreen ||
-      // @ts-ignore
+      // @ts-expect-error
       document.webkitExitFullscreen ||
-      // @ts-ignore
+      // @ts-expect-error
       document.mozCancelFullScreen ||
-      // @ts-ignore
+      // @ts-expect-error
       document.msExitFullscreen;
 
     const fullscreenElement =
       document.fullscreenElement ||
-      // @ts-ignore
+      // @ts-expect-error
       document.webkitFullscreenElement ||
-      // @ts-ignore
+      // @ts-expect-error
       document.mozFullScreenElement ||
-      // @ts-ignore
+      // @ts-expect-error
       document.msFullscreenElement;
 
     const fullscreenEnabled =
       document.fullscreenEnabled ||
-      // @ts-ignore
+      // @ts-expect-error
       document.webkitFullscreenEnabled ||
-      // @ts-ignore
+      // @ts-expect-error
       document.mozFullScreenEnabled ||
-      // @ts-ignore
+      // @ts-expect-error
       document.msFullscreenEnabled;
 
     const fullscreenchange =
       'fullscreenchange' in document
         ? 'fullscreenchange'
-        : // @ts-ignore
-        'webkitfullscreenchange' in document
+        : 'webkitfullscreenchange' in document
         ? 'webkitfullscreenchange'
-        : // @ts-ignore
-        'mozfullscreenchange' in document
+        : 'mozfullscreenchange' in document
         ? 'mozfullscreenchange'
         : 'MSFullscreenChange';
 
     const fullscreenerror =
       'fullscreenerror' in document
         ? 'fullscreenerror'
-        : // @ts-ignore
-        'webkitfullscreenerror' in document
+        : 'webkitfullscreenerror' in document
         ? 'webkitfullscreenerror'
-        : // @ts-ignore
-        'mozfullscreenerror' in document
+        : 'mozfullscreenerror' in document
         ? 'mozfullscreenerror'
         : 'MSFullscreenError';
 
@@ -378,8 +377,8 @@ export const ComponentCompatibility = {
   // Check if file management features are supported
   fileManager: (): boolean => {
     return BrowserFeatures.fetch() &&
-           BrowserFeatures.clipboard() &&
            dragAndDrop();
+    // Removed clipboard requirement - it's not essential for file manager functionality
   },
 
   // Check if media features are supported

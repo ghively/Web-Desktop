@@ -1,22 +1,20 @@
 import { useState, useEffect } from 'react';
 import {
-    Code, Terminal, Settings, Package, FileText, Zap, Bug, Play, Save,
-    RefreshCw, Download, Upload, Eye, EyeOff, Plus, Trash2, Edit3,
-    FolderOpen, GitBranch, TestTube, Rocket, Shield, Database, Globe,
-    Monitor, Smartphone, Tablet, ChevronRight, ChevronDown, Copy, Check,
-    AlertCircle, CheckCircle, XCircle, Info, Clock, Cpu, HardDrive,
-    Activity, GitCommit, GitMerge, GitPullRequest, Layers
+    Code, Terminal, FileText, Bug, Save, RefreshCw, Upload, EyeOff, Plus,
+    Trash2, Edit3, FolderOpen, TestTube, Rocket, Globe, ChevronRight,
+    Cpu, HardDrive, Activity
 } from 'lucide-react';
-import { DeveloperTools as DeveloperToolsType, AppManifest, AppModule } from '../types/applications';
+import { AppManifest, AppModule } from '../types/applications';
 
 interface DeveloperToolsProps {
-    windowId: string;
     appId?: string;
     manifest?: AppManifest;
 }
 
-export const DeveloperTools = ({ windowId, appId, manifest }: DeveloperToolsProps) => {
-    const [activeTab, setActiveTab] = useState<'editor' | 'console' | 'debugger' | 'profiler' | 'inspector' | 'network'>('editor');
+type TabType = 'editor' | 'console' | 'debugger' | 'profiler' | 'inspector' | 'network';
+
+export const DeveloperTools = ({ appId, manifest }: DeveloperToolsProps) => {
+    const [activeTab, setActiveTab] = useState<TabType>('editor');
     const [expandedPanels, setExpandedPanels] = useState<Record<string, boolean>>({
         fileExplorer: true,
         properties: true,
@@ -32,15 +30,10 @@ export const DeveloperTools = ({ windowId, appId, manifest }: DeveloperToolsProp
         memory: 0,
         network: 0
     });
-    const [modules, setModules] = useState<AppModule[]>([]);
-    const [showBuildPanel, setShowBuildPanel] = useState(false);
-    const [buildStatus, setBuildStatus] = useState<'idle' | 'building' | 'success' | 'error'>('idle');
-    const [buildOutput, setBuildOutput] = useState<string[]>([]);
-
-    // Initialize with sample modules if manifest is available
-    useEffect(() => {
+    const [modules] = useState<AppModule[]>(() => {
+        // Initialize with sample modules if manifest is available
         if (manifest) {
-            setModules([
+            return [
                 {
                     id: `${manifest.id}-main`,
                     name: 'Main Module',
@@ -56,9 +49,13 @@ export const DeveloperTools = ({ windowId, appId, manifest }: DeveloperToolsProp
                     type: 'component',
                     sandboxed: true
                 }
-            ]);
+            ];
         }
-    }, [manifest]);
+        return [];
+    });
+
+    const [buildStatus, setBuildStatus] = useState<'idle' | 'building' | 'success' | 'error'>('idle');
+    const [buildOutput, setBuildOutput] = useState<string[]>([]);
 
     // Mock performance monitoring
     useEffect(() => {
@@ -84,17 +81,7 @@ export const DeveloperTools = ({ windowId, appId, manifest }: DeveloperToolsProp
         setConsoleLogs(prev => [...prev, { type, message, timestamp: new Date() }]);
     };
 
-    const addNetworkRequest = (method: string, url: string, status: number) => {
-        const request = {
-            id: Math.random().toString(36),
-            method,
-            url,
-            status,
-            time: Math.random() * 1000
-        };
-        setNetworkRequests(prev => [...prev, request]);
-    };
-
+    
     const buildApp = async () => {
         setBuildStatus('building');
         setBuildOutput(['Starting build process...', 'Compiling TypeScript...', 'Bundling assets...']);
@@ -499,7 +486,7 @@ export const DeveloperTools = ({ windowId, appId, manifest }: DeveloperToolsProp
                         return (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
+                                onClick={() => setActiveTab(tab.id as TabType)}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                                     activeTab === tab.id
                                         ? 'bg-gray-800 text-gray-100'

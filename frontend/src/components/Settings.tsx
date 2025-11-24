@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Image, Palette, Sliders, RotateCcw, Server, Database, Wifi, Shield } from 'lucide-react';
 import { useSettings, type CatppuccinTheme, type WallpaperDisplayMode } from '../context/exports';
 

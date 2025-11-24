@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Settings as SettingsIcon,
-  Key,
   Globe,
   Server,
   Shield,
@@ -10,18 +9,23 @@ import {
   Loader,
   Eye,
   EyeOff,
-  RefreshCw,
   Save,
   TestTube,
   Database,
-  Cpu,
   HardDrive,
   Wifi
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface EnvironmentConfigurationProps {
-  windowId?: string;
+  // windowId?: string; // Removed unused parameter
+}
+
+interface AIModel {
+  id: string;
+  name: string;
+  size?: string;
+  description?: string;
 }
 
 interface EnvironmentConfig {
@@ -30,13 +34,13 @@ interface EnvironmentConfig {
       url: string;
       enabled: boolean;
       api_key: string;
-      models: any[];
+      models: AIModel[];
     };
     openrouter: {
       url: string;
       enabled: boolean;
       api_key: string;
-      models: any[];
+      models: AIModel[];
     };
     home_assistant: {
       url: string;
@@ -111,17 +115,13 @@ interface EnvironmentConfig {
   };
 }
 
-export const EnvironmentConfiguration: React.FC<EnvironmentConfigurationProps> = ({ windowId }) => {
+export const EnvironmentConfiguration: React.FC<EnvironmentConfigurationProps> = () => {
   const [config, setConfig] = useState<EnvironmentConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [activeTab, setActiveTab] = useState('services');
-  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
+  // const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({}); // Unused but available for future implementation
   const [connectionTests, setConnectionTests] = useState<Record<string, { status: 'idle' | 'testing' | 'success' | 'error'; message: string }>>({});
-
-  useEffect(() => {
-    loadConfiguration();
-  }, []);
 
   const loadConfiguration = async () => {
     try {
@@ -135,7 +135,11 @@ export const EnvironmentConfiguration: React.FC<EnvironmentConfigurationProps> =
     }
   };
 
-  const saveConfiguration = async (section: string, data: any) => {
+  useEffect(() => {
+    loadConfiguration();
+  }, []);
+
+  const saveConfiguration = async (section: string, data: unknown) => {
     setSaveStatus('saving');
     try {
       const response = await fetch('/api/environment-config/config', {

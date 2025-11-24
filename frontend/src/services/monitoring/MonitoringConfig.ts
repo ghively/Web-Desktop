@@ -68,7 +68,7 @@ export interface PerformanceMetric {
   name: string;
   value: number;
   unit: 'ms' | 'bytes' | 'count' | 'percentage';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ErrorEvent {
@@ -85,7 +85,7 @@ export interface ErrorEvent {
   userId?: string;
   sessionId: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface UserInteraction {
@@ -100,8 +100,8 @@ export interface UserInteraction {
     text?: string;
   };
   position?: { x: number; y: number };
-  value?: any;
-  metadata?: Record<string, any>;
+  value?: unknown;
+  metadata?: Record<string, unknown>;
 }
 
 export interface HealthCheck {
@@ -110,7 +110,7 @@ export interface HealthCheck {
   name: string;
   status: 'healthy' | 'degraded' | 'unhealthy';
   responseTime: number;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 export interface SystemMetrics {
@@ -143,6 +143,6 @@ export interface MonitoringAlert {
   severity: 'info' | 'warning' | 'error' | 'critical';
   title: string;
   message: string;
-  metrics?: any;
+  metrics?: Record<string, unknown>;
   acknowledged: boolean;
 }

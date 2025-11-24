@@ -1,3 +1,4 @@
+import React from 'react';
 import { WindowManagerProvider, SettingsProvider, VirtualDesktopManagerProvider } from './context/exports';
 import { Desktop } from './components/Desktop';
 import { BrowserCompatibilityProvider } from './components/BrowserCompatibility';

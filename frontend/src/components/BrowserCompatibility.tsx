@@ -3,7 +3,7 @@
  * Initializes and manages browser compatibility features
  */
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { initializeCompatibility, BrowserInfo, ComponentCompatibility } from '../utils/browserCompatibility';
 
 interface BrowserCompatibilityState {

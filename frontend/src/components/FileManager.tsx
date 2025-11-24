@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DOMPurify from 'dompurify';
 import { Folder, ArrowLeft, RefreshCw, Home, File, FolderOpen, HardDrive, FileText, Image, Music, Video, Archive, Upload, Copy, Scissors, Trash2, Edit3, X, Eye, Plus, Cloud, Database } from 'lucide-react';
 import { useSettings } from '../context/useSettings';
@@ -16,7 +16,7 @@ interface FileItem {
 }
 
 interface FileManagerProps {
-    windowId: string;
+    // windowId: string; // Removed unused parameter
 }
 
 interface ContextMenu {
@@ -66,7 +66,7 @@ interface UploadState {
     controller?: AbortController;
 }
 
-export const FileManager: React.FC<FileManagerProps> = ({ windowId }) => {
+export const FileManager: React.FC<FileManagerProps> = () => {
     const { settings } = useSettings();
     const vfs = useVFS();
     const { trackInteraction, trackMetric, trackError } = useMonitoring({

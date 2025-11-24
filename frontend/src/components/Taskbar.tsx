@@ -1,3 +1,4 @@
+import React from 'react';
 import { useWindowManager } from '../context/exports';
 import { Minus, Play } from 'lucide-react';
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Container, Play, Square, RotateCcw, Clock, Activity } from 'lucide-react';
 import { useSettings } from '../context/useSettings';
 
@@ -61,7 +61,7 @@ export const ContainerManager: React.FC<ContainerManagerProps> = () => {
     const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    const loadContainers = async () => {
+    const loadContainers = useCallback(async () => {
         // Cancel any existing request
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -139,7 +139,7 @@ export const ContainerManager: React.FC<ContainerManagerProps> = () => {
             setLoading(false);
             abortControllerRef.current = null;
         }
-    };
+    }, [settings.backend.apiUrl]);
 
     const executeContainerAction = async (id: string, action: 'start' | 'stop' | 'restart') => {
         // Validate container ID
@@ -265,7 +265,7 @@ export const ContainerManager: React.FC<ContainerManagerProps> = () => {
                 abortControllerRef.current.abort();
             }
         };
-    }, []);
+    }, [loadContainers]);
 
     return (
         <div className="flex flex-col h-full bg-gray-900">

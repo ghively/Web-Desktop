@@ -19,12 +19,7 @@ const getApiBaseUrl = (): string => {
     const hostname = window.location.hostname;
     const port = import.meta.env.VITE_API_PORT || '3001';
 
-    // If on localhost, use localhost (common for development)
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return `http://localhost:${port}`;
-    }
-
-    // For other hostnames, use the same hostname
+    // Use the same hostname as the frontend for direct API access
     return `http://${hostname}:${port}`;
 };
 

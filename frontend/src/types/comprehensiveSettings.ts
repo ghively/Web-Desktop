@@ -226,7 +226,7 @@ export interface BackupDestination {
     username: string;
     password: string;
   };
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 export interface RetentionPolicy {
@@ -406,13 +406,13 @@ export interface AuditEvent {
   userAgent?: string;
   timestamp: Date;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  details: Record<string, any>;
+  details: Record<string, unknown>;
 }
 
 export interface ExportSettings {
   format: 'json' | 'csv' | 'syslog';
   destination: 'file' | 'syslog' | 'webhook' | 'email';
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 export interface SecurityPolicy {
@@ -439,7 +439,7 @@ export interface AdvancedSettings {
 export interface ModuleSettings {
   installedModules: Module[];
   enabledModules: string[];
-  moduleSettings: Record<string, any>;
+  moduleSettings: Record<string, unknown>;
   autoUpdate: boolean;
   repository: string[];
 }
@@ -452,7 +452,7 @@ export interface Module {
   author: string;
   category: string;
   dependencies: string[];
-  settings?: any;
+  settings?: unknown;
   isEnabled: boolean;
   isInstalled: boolean;
   updateAvailable?: string;
@@ -481,7 +481,7 @@ export interface Service {
   restartCount: number;
   lastRestart?: Date;
   logFile?: string;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 export interface SystemService {
@@ -508,7 +508,7 @@ export interface CachingSettings {
   type: 'memory' | 'disk' | 'redis' | 'memcached';
   size: number; // MB
   ttl: number; // seconds
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 export interface DevelopmentSettings {
@@ -537,7 +537,7 @@ export interface ExperimentalFeature {
   category: string;
   risk: 'low' | 'medium' | 'high';
   requirements?: string[];
-  settings?: Record<string, any>;
+  settings?: Record<string, unknown>;
 }
 
 // Main comprehensive settings interface

@@ -27,15 +27,7 @@ import {
   AlertCircle,
   CheckCircle,
   Info,
-  Loader,
-  Plus,
-  Trash2,
-  Edit,
-  Eye,
-  EyeOff,
-  Download,
-  Upload,
-  RotateCcw
+  Loader
 } from 'lucide-react';
 import { useSettings } from '../context/useSettings';
 import { clsx } from 'clsx';
@@ -126,14 +118,14 @@ const settingsCategories = [
   }
 ];
 
-export const ComprehensiveSettings: React.FC<ComprehensiveSettingsProps> = ({ windowId }) => {
-  const { settings, updateSettings } = useSettings();
+export const ComprehensiveSettings: React.FC<ComprehensiveSettingsProps> = () => {
+  const { settings } = useSettings();
   const [selectedCategory, setSelectedCategory] = useState('desktop');
   const [selectedSubcategory, setSelectedSubcategory] = useState('appearance');
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [hasChanges, setHasChanges] = useState(false);
-  const [settingsData, setSettingsData] = useState<any>({});
+  const [settingsData, setSettingsData] = useState<Record<string, Record<string, unknown>>>({});
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Find current category and subcategory
@@ -178,28 +170,38 @@ export const ComprehensiveSettings: React.FC<ComprehensiveSettingsProps> = ({ wi
   }, []);
 
   // Validate field in real-time
-  const validateField = useCallback((field: string, value: any): string => {
+  const validateField = useCallback((field: string, value: unknown): string => {
     switch (field) {
-      case 'hostname':
-        if (!value || value.trim().length === 0) return 'Hostname is required';
-        if (!/^[a-zA-Z0-9.-]+$/.test(value)) return 'Hostname can only contain letters, numbers, dots, and hyphens';
-        if (value.length > 253) return 'Hostname is too long';
+      case 'hostname': {
+        const hostnameValue = typeof value === 'string' ? value : String(value || '');
+        if (!hostnameValue || hostnameValue.trim().length === 0) return 'Hostname is required';
+        if (!/^[a-zA-Z0-9.-]+$/.test(hostnameValue)) return 'Hostname can only contain letters, numbers, dots, and hyphens';
+        if (hostnameValue.length > 253) return 'Hostname is too long';
         break;
-      case 'passwordMinLength':
-        if (value < 4) return 'Password must be at least 4 characters';
-        if (value > 128) return 'Password cannot be more than 128 characters';
+      }
+      case 'passwordMinLength': {
+        const passwordLength = typeof value === 'number' ? value : Number(value);
+        if (passwordLength < 4) return 'Password must be at least 4 characters';
+        if (passwordLength > 128) return 'Password cannot be more than 128 characters';
         break;
-      case 'sessionTimeout':
-        if (value < 1) return 'Session timeout must be at least 1 minute';
-        if (value > 1440) return 'Session timeout cannot exceed 24 hours';
+      }
+      case 'sessionTimeout': {
+        const sessionTimeout = typeof value === 'number' ? value : Number(value);
+        if (sessionTimeout < 1) return 'Session timeout must be at least 1 minute';
+        if (sessionTimeout > 1440) return 'Session timeout cannot exceed 24 hours';
         break;
-      case 'maxFailedAttempts':
-        if (value < 1) return 'Max failed attempts must be at least 1';
-        if (value > 100) return 'Max failed attempts cannot exceed 100';
+      }
+      case 'maxFailedAttempts': {
+        const maxAttempts = typeof value === 'number' ? value : Number(value);
+        if (maxAttempts < 1) return 'Max failed attempts must be at least 1';
+        if (maxAttempts > 100) return 'Max failed attempts cannot exceed 100';
         break;
-      case 'ip':
-        if (value && !/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(value)) return 'Invalid IP address format';
+      }
+      case 'ip': {
+        const ipValue = typeof value === 'string' ? value : String(value || '');
+        if (ipValue && !/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ipValue)) return 'Invalid IP address format';
         break;
+      }
       default:
         return '';
     }
@@ -207,7 +209,7 @@ export const ComprehensiveSettings: React.FC<ComprehensiveSettingsProps> = ({ wi
   }, []);
 
   // Handle settings changes with validation
-  const handleSettingsChange = useCallback((category: string, field: string, value: any) => {
+  const handleSettingsChange = useCallback((category: string, field: string, value: unknown) => {
     setHasChanges(true);
 
     // Validate field
@@ -494,7 +496,7 @@ export const ComprehensiveSettings: React.FC<ComprehensiveSettingsProps> = ({ wi
 };
 
 // Placeholder components for each subcategory
-const DesktopAppearanceSettings: React.FC<{ onSettingsChange: (category: string, field: string, value: any) => void }> = ({ onSettingsChange }) => (
+const DesktopAppearanceSettings: React.FC = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Desktop Appearance</h3>
     <div className="space-y-6">
@@ -530,7 +532,7 @@ const DesktopAppearanceSettings: React.FC<{ onSettingsChange: (category: string,
   </div>
 );
 
-const SoundsSettings: React.FC<{ onSettingsChange: (category: string, field: string, value: any) => void }> = () => (
+const SoundsSettings: React.FC = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Sounds & Notifications</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -539,7 +541,7 @@ const SoundsSettings: React.FC<{ onSettingsChange: (category: string, field: str
   </div>
 );
 
-const DateTimeSettings: React.FC<{ onSettingsChange: (category: string, field: string, value: any) => void }> = () => (
+const DateTimeSettings: React.FC = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Date & Time</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -549,8 +551,8 @@ const DateTimeSettings: React.FC<{ onSettingsChange: (category: string, field: s
 );
 
 interface SystemGeneralSettingsProps {
-  settingsData?: any;
-  handleSettingsChange?: (category: string, field: string, value: any) => void;
+  settingsData?: Record<string, unknown>;
+  handleSettingsChange?: (category: string, field: string, value: unknown) => void;
   validationErrors?: Record<string, string>;
   isLoading?: boolean;
 }
@@ -728,7 +730,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
   );
 };
 
-const SystemUpdatesSettings: React.FC<{ onSettingsChange: (category: string, field: string, value: any) => void }> = () => (
+const SystemUpdatesSettings: React.FC = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">System Updates</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -737,7 +739,7 @@ const SystemUpdatesSettings: React.FC<{ onSettingsChange: (category: string, fie
   </div>
 );
 
-const SystemInfoSettings: React.FC<{ onSettingsChange: (category: string, field: string, value: any) => void }> = () => (
+const SystemInfoSettings: React.FC = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">System Information</h3>
     <div className="bg-gray-800 rounded-lg p-6">

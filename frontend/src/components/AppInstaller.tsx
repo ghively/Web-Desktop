@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Download, CheckCircle, XCircle, AlertCircle, Shield, Package,
-    Terminal, Eye, EyeOff, RefreshCw, Settings, Info, FileText,
-    ChevronRight, ChevronDown, Clock, Zap, HardDrive, Globe, Lock
+    Settings, FileText, ChevronRight, ChevronDown, HardDrive, Globe, Lock
 } from 'lucide-react';
-import { MarketplaceApp, AppPermission, SandboxConfig, InstallationProgress } from '../types/applications';
+import { MarketplaceApp, SandboxConfig } from '../types/applications';
 import { useAccessibility } from '../utils/accessibility';
 
 interface AppInstallerProps {
@@ -107,7 +106,12 @@ export const AppInstaller = ({ app, onClose, onInstallComplete, backendUrl }: Ap
                 } else {
                     setStage('installing');
                     setMessage(data.message || 'Installing...');
-                    announceStatus(`Installation in progress: ${progress}%`);
+                    // Use functional update to avoid dependency on progress state
+                    setProgress(prevProgress => {
+                        const newProgress = data.progress || prevProgress;
+                        announceStatus(`Installation in progress: ${newProgress}%`);
+                        return newProgress;
+                    });
                 }
             } catch (error) {
                 console.error('Failed to check installation status:', error);
@@ -115,7 +119,7 @@ export const AppInstaller = ({ app, onClose, onInstallComplete, backendUrl }: Ap
         }, 2000);
 
         return () => clearInterval(interval);
-    }, [sessionId, backendUrl, onInstallComplete]);
+    }, [sessionId, backendUrl, onInstallComplete, announceStatus]);
 
     const toggleSection = (section: string) => {
         setExpandedSections(prev => ({
@@ -520,7 +524,7 @@ export const AppInstaller = ({ app, onClose, onInstallComplete, backendUrl }: Ap
                                             value={sandboxConfig.type}
                                             onChange={(e) => setSandboxConfig(prev => ({
                                                 ...prev,
-                                                type: e.target.value as any
+                                                type: e.target.value as 'full' | 'partial' | 'none'
                                             }))}
                                             className="w-full px-3 py-2 bg-gray-700 text-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
                                         >

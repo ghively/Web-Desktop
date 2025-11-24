@@ -10,7 +10,7 @@ export interface VFSNode {
   permissions: FilePermissions;
   owner: string;
   group: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface FilePermissions {
@@ -76,7 +76,7 @@ export interface VFSMount {
   path: string;
   adapter: VFSAdapter;
   autoMount: boolean;
-  options: Record<string, any>;
+  options: Record<string, unknown>;
   mountedAt: Date;
 }
 
@@ -105,9 +105,9 @@ export interface VFSTransaction {
 // Main VFS Manager interface
 export interface VFSManager {
   // Event handling
-  on(event: string, listener: (...args: any[]) => void): this;
-  off(event: string, listener: (...args: any[]) => void): this;
-  emit(event: string, ...args: any[]): boolean;
+  on(event: string, listener: (...args: unknown[]) => void): this;
+  off(event: string, listener: (...args: unknown[]) => void): this;
+  emit(event: string, ...args: unknown[]): boolean;
 
   // Adapter management
   registerAdapter(adapter: VFSAdapter): void;

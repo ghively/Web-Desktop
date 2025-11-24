@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWindowManager, useSettings, AppLauncherProvider, useAppLauncher } from '../context/exports';
 import { Window } from './Window';
 import { Terminal, Folder, FileText, Container, Cpu, Gauge, Tv, Globe, Share2, Search, Settings, Activity } from 'lucide-react';

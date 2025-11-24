@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useVirtualDesktopManager, useWindowManager } from '../context/exports';
 import { LayoutTemplate, DEFAULT_LAYOUT_TEMPLATES } from '../types/virtualDesktops';
 import { Grid, Layers, Columns, Rows, Copy, Save, Trash2, Plus, Settings, Eye, EyeOff } from 'lucide-react';

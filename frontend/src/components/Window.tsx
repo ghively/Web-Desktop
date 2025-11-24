@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { Rnd } from 'react-rnd';
 import { X, Minus, Square, Monitor, Layers } from 'lucide-react';
 import { useWindowManager, useSettings, useVirtualDesktopManager, type WindowState } from '../context/exports';
