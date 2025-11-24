@@ -299,8 +299,11 @@ install_system_packages() {
     local total_packages=${#PACKAGES[@]}
 
     echo "DEBUG: Starting package installation loop for ${#PACKAGES[@]} packages..."
-    for package in "${PACKAGES[@]}"; do
-        echo "DEBUG: Attempting to install package: $package"
+    echo "DEBUG: First few packages are: ${PACKAGES[@]:0:3}"
+
+    for i in "${!PACKAGES[@]}"; do
+        package="${PACKAGES[$i]}"
+        echo "DEBUG: Package $((i+1))/${#PACKAGES[@]}: Attempting to install package: $package"
         print_status "Installing: $package..."
 
         # Check if package exists before attempting installation
@@ -308,6 +311,7 @@ install_system_packages() {
             echo "DEBUG: Package $package exists in repositories"
             # Use set +e to prevent script from exiting on package installation failure
             set +e
+            echo "DEBUG: set +e called, now installing $package"
             if $INSTALL_CMD "$package" >/dev/null 2>&1; then
                 print_success "✓ $package installed successfully"
                 ((success_count++))
@@ -318,12 +322,15 @@ install_system_packages() {
                 echo "DEBUG: Package $package failed with exit code: $exit_code"
             fi
             set -e  # Re-enable strict error handling
+            echo "DEBUG: set -e called again, continuing to next package"
         else
             print_warning "○ $package not available in repositories"
             echo "DEBUG: Package $package not found in repositories"
         fi
         echo "DEBUG: Completed processing package: $package, success count: $success_count"
+        echo "DEBUG: Continuing to next package..."
     done
+    echo "DEBUG: Package installation loop completed successfully"
     echo "DEBUG: Package installation loop completed"
 
     print_success "Essential packages: ${success_count}/${total_packages} installed"
