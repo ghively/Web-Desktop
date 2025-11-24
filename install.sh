@@ -328,6 +328,22 @@ install_system_packages() {
         exit 1
     fi
 
+    # Pre-configure packages that require interactive input
+    print_info "Pre-configuring packages to prevent hanging..."
+
+    # Configure davfs2 to accept prompts automatically
+    if [[ "$PKG_MANAGER" == "apt-get" ]]; then
+        debug "Setting up davfs2 auto-configuration..."
+        # Set debconf to non-interactive for davfs2
+        echo "davfs2 davfs2/enable_webdav boolean true" | debconf-set-selections
+        echo "davfs2 davfs2/suid_allow boolean true" | debconf-set-selections
+        # Create davfs2 config directory if it doesn't exist to prevent prompts
+        mkdir -p /etc/davfs2
+        # Set permissions for davfs2 to work without interactive prompts
+        chmod 600 /etc/davfs2/secrets 2>/dev/null || touch /etc/davfs2/secrets && chmod 600 /etc/davfs2/secrets
+        debug "davfs2 pre-configuration completed"
+    fi
+
     # Install essential packages with robust error handling
     print_info "Installing essential packages (${#PACKAGES[@]} packages)..."
     local success_count=0
@@ -354,7 +370,8 @@ install_system_packages() {
             # Use set +e to prevent script from exiting on package installation failure
             set +e
             debug "Installing $package with: $INSTALL_CMD"
-            if $INSTALL_CMD "$package" >/dev/null 2>&1; then
+            # Set non-interactive mode to prevent prompts
+            if DEBIAN_FRONTEND=noninteractive $INSTALL_CMD "$package" >/dev/null 2>&1; then
                 print_success "✓ $package installed successfully"
                 ((success_count++))
                 debug "Package $package installed successfully"
@@ -390,7 +407,7 @@ install_system_packages() {
         fi
 
         if package_exists "$package"; then
-            if $INSTALL_CMD "$package" >/dev/null 2>&1; then
+            if DEBIAN_FRONTEND=noninteractive $INSTALL_CMD "$package" >/dev/null 2>&1; then
                 print_success "✓ $package installed successfully"
                 ((optional_success++))
             else
@@ -408,16 +425,25 @@ install_system_packages() {
 
     # Enable and start nginx
     if command -v nginx >/dev/null 2>&1; then
+        print_info "Starting Nginx service..."
         systemctl enable nginx
-        systemctl start nginx
-        print_success "Nginx service started and enabled"
+        if timeout 45 systemctl start nginx 2>/dev/null; then
+            print_success "Nginx service started and enabled"
+        else
+            print_warning "Nginx service failed to start within 45 seconds"
+        fi
     fi
 
     # Start and enable Docker if installed
     if command -v docker >/dev/null 2>&1; then
-        systemctl start docker
-        systemctl enable docker
-        print_success "Docker service started and enabled"
+        print_info "Starting Docker service..."
+        # Use timeout to prevent hanging on Docker startup
+        if timeout 90 systemctl start docker 2>/dev/null; then
+            systemctl enable docker
+            print_success "Docker service started and enabled"
+        else
+            print_warning "Docker service failed to start within 90 seconds (will retry later)"
+        fi
 
         # Add webdesktop user to docker group
         usermod -aG docker "$APP_USER"
@@ -426,23 +452,35 @@ install_system_packages() {
 
     # Enable and start CUPS (printing)
     if command -v cups >/dev/null 2>&1; then
+        print_info "Starting CUPS printing service..."
         systemctl enable cups
-        systemctl start cups
-        print_success "CUPS printing service started and enabled"
+        if timeout 45 systemctl start cups 2>/dev/null; then
+            print_success "CUPS printing service started and enabled"
+        else
+            print_warning "CUPS service failed to start within 45 seconds"
+        fi
     fi
 
     # Enable and start Avahi (network discovery)
     if command -v avahi-daemon >/dev/null 2>&1; then
+        print_info "Starting Avahi network discovery..."
         systemctl enable avahi-daemon
-        systemctl start avahi-daemon
-        print_success "Avahi network discovery started and enabled"
+        if timeout 45 systemctl start avahi-daemon 2>/dev/null; then
+            print_success "Avahi network discovery started and enabled"
+        else
+            print_warning "Avahi service failed to start within 45 seconds"
+        fi
     fi
 
     # Enable and start Bluetooth
     if command -v bluetooth >/dev/null 2>&1; then
+        print_info "Starting Bluetooth service..."
         systemctl enable bluetooth
-        systemctl start bluetooth
-        print_success "Bluetooth service started and enabled"
+        if timeout 45 systemctl start bluetooth 2>/dev/null; then
+            print_success "Bluetooth service started and enabled"
+        else
+            print_warning "Bluetooth service failed to start within 45 seconds"
+        fi
     fi
 
     # Configure sensors for hardware monitoring
