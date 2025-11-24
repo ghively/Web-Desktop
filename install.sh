@@ -293,19 +293,49 @@ install_system_packages() {
         exit 1
     fi
 
-    # Install essential packages
-    print_info "Installing essential packages..."
-    $INSTALL_CMD "${PACKAGES[@]}"
+    # Install essential packages with robust error handling
+    print_info "Installing essential packages (${#PACKAGES[@]} packages)..."
+    local success_count=0
+    local total_packages=${#PACKAGES[@]}
 
-    # Install optional packages (with error handling)
-    print_info "Installing optional packages for advanced features..."
-    for package in "${OPTIONAL_PACKAGES[@]}"; do
-        if $INSTALL_CMD "$package" 2>/dev/null; then
-            print_success "Installed: $package"
+    for package in "${PACKAGES[@]}"; do
+        print_status "Installing: $package..."
+
+        # Check if package exists before attempting installation
+        if apt-cache show "$package" >/dev/null 2>&1; then
+            if $INSTALL_CMD "$package" >/dev/null 2>&1; then
+                print_success "✓ $package installed successfully"
+                ((success_count++))
+            else
+                print_warning "⚠ $package failed to install (may be optional)"
+            fi
         else
-            print_warning "Failed to install: $package (optional)"
+            print_warning "○ $package not available in repositories"
         fi
     done
+
+    print_success "Essential packages: ${success_count}/${total_packages} installed"
+
+    # Install optional packages with error handling
+    print_info "Installing optional packages for advanced features (${#OPTIONAL_PACKAGES[@]} packages)..."
+    local optional_success=0
+
+    for package in "${OPTIONAL_PACKAGES[@]}"; do
+        print_status "Installing optional: $package..."
+
+        if apt-cache show "$package" >/dev/null 2>&1; then
+            if $INSTALL_CMD "$package" >/dev/null 2>&1; then
+                print_success "✓ $package installed successfully"
+                ((optional_success++))
+            else
+                print_info "○ $package failed (optional, continuing)"
+            fi
+        else
+            print_info "○ $package not available (optional)"
+        fi
+    done
+
+    print_success "Optional packages: ${optional_success}/${#OPTIONAL_PACKAGES[@]} installed"
 
     # Start and enable essential services
     print_info "Starting and enabling essential services..."
