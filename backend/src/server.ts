@@ -30,6 +30,7 @@ import mediaServerRoutes from './routes/media-server';
 import fileMetadataRoutes from './routes/file-metadata';
 import monitoringRoutes from './routes/monitoring';
 import rdpRoutes from './routes/rdp';
+import environmentConfigRoutes from './routes/environment-config';
 
 const app = express();
 const server = http.createServer(app);
@@ -86,6 +87,7 @@ app.use('/api/media-server', mediaServerRoutes);
 app.use('/api/file-metadata', fileMetadataRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/rdp', rdpRoutes);
+app.use('/api/environment-config', environmentConfigRoutes);
 
 // Serve installed marketplace apps
 app.use('/apps', express.static(path.join(process.env.HOME || '', '.web-desktop', 'marketplace', 'apps')));

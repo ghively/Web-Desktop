@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Terminal, Folder, FileText, Container, Play, Gauge, Tv, Globe, Share2, Search, Activity, Settings, Package, Database, Brain, Palette, Cpu, HardDrive, Wifi, Home, Zap, Disc, FileSearch } from 'lucide-react';
+import { Terminal, Folder, FileText, Container, Play, Gauge, Tv, Globe, Share2, Search, Activity, Settings, Package, Database, Brain, Palette, Cpu, HardDrive, Wifi, Home, Zap, Disc, FileSearch, Monitor } from 'lucide-react';
 import { TerminalComponent } from './Terminal';
 import { FileManager } from './FileManager';
 import { Notes } from './Notes';
 import { ContainerManager } from './ContainerManager';
 import { ControlPanel } from './ControlPanel';
 import { VNCClient } from './VNCClient';
+import { RDPClient } from './RDPClient';
 import { NginxProxyManager } from './NginxProxyManager';
 import { ShareManager } from './ShareManager';
 import { SystemMonitor } from './SystemMonitor';
 import { ComprehensiveSettings } from './ComprehensiveSettings';
+import { EnvironmentConfiguration } from './EnvironmentConfiguration';
 import { Marketplace } from './Marketplace';
 import { DeveloperTools } from './DeveloperTools';
 import SmartStorage from './SmartStorage';
@@ -131,6 +133,17 @@ export const AppLauncher = () => {
             }
         },
         {
+            id: 'environment-config',
+            name: 'Environment',
+            icon: Key, // Use Key icon for environment configuration
+            description: 'API keys, external services, and system configuration',
+            isBuiltIn: true,
+            action: () => {
+                const windowId = createWindowId('env-config');
+                return openWindow('Environment Configuration', <EnvironmentConfiguration windowId={windowId} />);
+            }
+        },
+        {
             id: 'vnc-client',
             name: 'VNC Client',
             icon: Tv, // Using Tv icon for VNC Client
@@ -139,6 +152,17 @@ export const AppLauncher = () => {
             action: () => {
                 const windowId = createWindowId('vnc');
                 return openWindow('VNC Client', <VNCClient windowId={windowId} />);
+            }
+        },
+        {
+            id: 'rdp-client',
+            name: 'RDP Client',
+            icon: Monitor, // Using Monitor icon for RDP Client
+            description: 'Connect to Windows and Linux systems via RDP',
+            isBuiltIn: true,
+            action: () => {
+                const windowId = createWindowId('rdp');
+                return openWindow('RDP Client', <RDPClient windowId={windowId} />);
             }
         },
         {
