@@ -7,7 +7,9 @@ export { ControlPanel } from './ControlPanel';
 export { VNCClient } from './VNCClient';
 export { NginxProxyManager } from './NginxProxyManager';
 export { ShareManager } from './ShareManager';
-export { AppLauncher } from './AppLauncher';
+export { EnhancedAppLauncher as AppLauncher } from './AppLauncher';
+export { default as SystemTools } from './SystemTools';
+export { default as ControlCenter } from './ControlCenter';
 
 // Layout components
 export { Window } from './Window';

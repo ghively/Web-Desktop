@@ -1,151 +1,39 @@
 
 import React, { useState, useEffect } from 'react';
-import { useWindowManager, useSettings, AppLauncherProvider, useAppLauncher } from '../context/exports';
+import { useWindowManager, useSettings, AppLauncherProvider } from '../context/exports';
 import { Window } from './Window';
-import { Terminal, Folder, FileText, Container, Cpu, Gauge, Tv, Globe, Share2, Search, Settings, Activity } from 'lucide-react';
-import { TerminalComponent } from './Terminal';
-import { FileManager } from './FileManager';
-import { Notes } from './Notes';
-import { ContainerManager } from './ContainerManager';
-import { ControlPanel } from './ControlPanel';
-import { VNCClient } from './VNCClient';
-import { NginxProxyManager } from './NginxProxyManager';
-import { ShareManager } from './ShareManager';
+import { WindowGroup } from './WindowGroup';
 import { AppLauncher } from './AppLauncher';
 import { Taskbar } from './Taskbar';
-import { Settings as SettingsComponent } from './Settings';
 import { VirtualDesktops } from './VirtualDesktops';
 import { WindowLayoutTools } from './WindowLayoutTools';
 import { DesktopErrorBoundary } from './error-boundaries';
-import { Monitoring } from './Monitoring';
+import { DesktopHeader } from './DesktopHeader';
+import { GlobalSearch } from './GlobalSearch';
+import { WorkspaceTemplates } from './WorkspaceTemplates';
+import { KeyboardShortcuts, useKeyboardShortcuts } from './KeyboardShortcuts';
 
-const TopBar = ({ onSettingsClick }: { onSettingsClick: () => void }) => {
-    const { openWindow } = useWindowManager();
-    const { openLauncher } = useAppLauncher();
-
-    return (
-        <div className="fixed top-0 left-0 right-0 h-10 bg-gray-900/80 backdrop-blur-md border-b border-gray-700 flex items-center justify-between px-4 z-50">
-            <div className="flex items-center gap-4">
-                <button
-                    onClick={openLauncher}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-all duration-200 px-3 py-2 rounded-lg hover:bg-gray-800/80 hover:shadow-md focus-enhanced"
-                    title="Launch apps (Alt+Space)"
-                    aria-label="Open application launcher"
-                >
-                    <Search size={16} />
-                    <span>Launch</span>
-                </button>
-                <span className="font-bold text-blue-400 text-lg px-3 py-1 bg-blue-500/10 rounded-lg">Omarchy Web</span>
-                <div className="h-4 w-px bg-gray-700" />
-                <button
-                    onClick={() => openWindow('Terminal', <TerminalComponent windowId={`terminal-${Date.now()}`} />)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-all duration-200 px-3 py-2 rounded-lg hover:bg-gray-800/80 hover:shadow-md hover:scale-105 focus-enhanced"
-                    title="System terminal"
-                    aria-label="Open terminal"
-                >
-                    <Terminal size={16} />
-                    <span>Terminal</span>
-                </button>
-                <button
-                    onClick={() => openWindow('Files', <FileManager windowId={`fm-${Date.now()}`} />)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-all duration-200 px-3 py-2 rounded-lg hover:bg-gray-800/80 hover:shadow-md hover:scale-105 focus-enhanced"
-                    title="File system browser"
-                    aria-label="Open file manager"
-                >
-                    <Folder size={16} />
-                    <span>Files</span>
-                </button>
-                <button
-                    onClick={() => openWindow('Notes', <Notes windowId={`notes-${Date.now()}`} />)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-all duration-200 px-3 py-2 rounded-lg hover:bg-gray-800/80 hover:shadow-md hover:scale-105 focus-enhanced"
-                    title="Markdown notes editor"
-                    aria-label="Open notes"
-                >
-                    <FileText size={16} />
-                    <span>Notes</span>
-                </button>
-                <button
-                    onClick={() => openWindow('Containers', <ContainerManager windowId={`containers-${Date.now()}`} />)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-all duration-200 px-3 py-2 rounded-lg hover:bg-gray-800/80 hover:shadow-md hover:scale-105 focus-enhanced"
-                    title="Docker container management"
-                    aria-label="Open container manager"
-                >
-                    <Container size={16} />
-                    <span>Containers</span>
-                </button>
-                <button
-                    onClick={() => openWindow('Control Panel', <ControlPanel windowId={`cp-${Date.now()}`} />)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-all duration-200 px-3 py-2 rounded-lg hover:bg-gray-800/80 hover:shadow-md hover:scale-105 focus-enhanced"
-                    title="System Control Panel"
-                    aria-label="Open control panel"
-                >
-                    <Gauge size={16} />
-                    <span>Control Panel</span>
-                </button>
-                <button
-                    onClick={() => openWindow('VNC Client', <VNCClient windowId={`vnc-${Date.now()}`} />)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-all duration-200 px-3 py-2 rounded-lg hover:bg-gray-800/80 hover:shadow-md hover:scale-105 focus-enhanced"
-                    title="VNC Remote Desktop Client"
-                    aria-label="Open VNC client"
-                >
-                    <Tv size={16} />
-                    <span>VNC Client</span>
-                </button>
-                <button
-                    onClick={() => openWindow('Nginx Proxy Manager', <NginxProxyManager windowId={`npm-${Date.now()}`} />)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-all duration-200 px-3 py-2 rounded-lg hover:bg-gray-800/80 hover:shadow-md hover:scale-105 focus-enhanced"
-                    title="Manage Nginx Proxy Hosts"
-                    aria-label="Open Nginx proxy manager"
-                >
-                    <Globe size={16} />
-                    <span>Nginx Proxy</span>
-                </button>
-                <button
-                    onClick={() => openWindow('Share Manager', <ShareManager windowId={`sm-${Date.now()}`} />)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-all duration-200 px-3 py-2 rounded-lg hover:bg-gray-800/80 hover:shadow-md hover:scale-105 focus-enhanced"
-                    title="Manage Network Shares (NFS/SMB)"
-                    aria-label="Open share manager"
-                >
-                    <Share2 size={16} />
-                    <span>Shares</span>
-                </button>
-                <button
-                    onClick={() => openWindow('Monitoring', <Monitoring windowId={`monitoring-${Date.now()}`} />)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-all duration-200 px-3 py-2 rounded-lg hover:bg-gray-800/80 hover:shadow-md hover:scale-105 focus-enhanced"
-                    title="System Monitoring Dashboard"
-                    aria-label="Open monitoring dashboard"
-                >
-                    <Activity size={16} />
-                    <span>Monitoring</span>
-                </button>
-                <div className="h-4 w-px bg-gray-700" />
-                <button
-                    onClick={onSettingsClick}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-all duration-200 px-3 py-2 rounded-lg hover:bg-gray-800/80 hover:shadow-md hover:scale-105 focus-enhanced"
-                    title="Desktop Settings"
-                    aria-label="Open settings"
-                >
-                    <Settings size={16} />
-                    <span>Settings</span>
-                </button>
-            </div>
-
-            <div className="flex items-center gap-4 text-sm text-gray-400">
-                <div className="flex items-center gap-2">
-                    <Cpu size={16} />
-                    <span>CPU: 12%</span>
-                </div>
-                <span>{new Date().toLocaleTimeString()}</span>
-            </div>
-        </div>
-    );
-};
 
 export const Desktop = () => {
-    const { windows, activeWindowId, maximizeWindow, minimizeWindow, closeWindow, toggleLayoutMode, focusWindow } = useWindowManager();
+    const {
+        windows,
+        windowGroups,
+        activeWindowId,
+        maximizeWindow,
+        minimizeWindow,
+        closeWindow,
+        toggleLayoutMode,
+        focusWindow,
+        getWindowsForDesktop,
+        getWindowGroup
+    } = useWindowManager();
     const { settings } = useSettings();
     const [error, setError] = useState<string | null>(null);
-    const [showSettings, setShowSettings] = useState(false);
+    const [showWorkspaceManager, setShowWorkspaceManager] = useState(false);
+    const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+
+    // Initialize enhanced keyboard shortcuts
+    useKeyboardShortcuts();
 
     // Global error handler
     useEffect(() => {
@@ -211,7 +99,7 @@ export const Desktop = () => {
             // Alt + Tab: Focus next window
             if (altKey && key === 'Tab') {
                 event.preventDefault();
-                const visibleWindows = windows.filter(w => !w.isMinimized);
+                const visibleWindows = windows.filter(w => !w.isMinimized && !w.tabData?.isTabbed);
                 if (visibleWindows.length > 1) {
                     const currentIndex = visibleWindows.findIndex(w => w.id === activeWindowId);
                     const nextIndex = shiftKey
@@ -222,6 +110,20 @@ export const Desktop = () => {
                         focusWindow(nextWindow.id);
                     }
                 }
+                return;
+            }
+
+            // Super + W: Show workspace manager
+            if (metaKey && key === 'w') {
+                event.preventDefault();
+                setShowWorkspaceManager(prev => !prev);
+                return;
+            }
+
+            // Super + ?: Show keyboard shortcuts
+            if (metaKey && (key === '/' || key === '?')) {
+                event.preventDefault();
+                setShowKeyboardShortcuts(prev => !prev);
                 return;
             }
         };
@@ -267,18 +169,23 @@ export const Desktop = () => {
                 </div>
             )}
 
-            <TopBar onSettingsClick={() => setShowSettings(true)} />
+            <DesktopHeader />
             <AppLauncher />
 
-            {/* Settings Modal */}
-            {showSettings && (
-                <SettingsComponent onClose={() => setShowSettings(false)} />
-            )}
-
-            <div className="absolute top-10 left-0 right-0 bottom-0 z-10">
-                {windows.map(window => (
-                    <Window key={window.id} window={window} />
+  
+            <div className="absolute top-12 left-0 right-0 bottom-0 z-10">
+                {/* Render window groups first */}
+                {windowGroups.map(group => (
+                    <WindowGroup key={group.id} group={group} />
                 ))}
+
+                {/* Render individual windows (those not in groups) */}
+                {windows.map(window => {
+                    // Skip windows that are in groups (they're rendered by WindowGroup)
+                    if (window.tabData?.isTabbed) return null;
+
+                    return <Window key={window.id} window={window} />;
+                })}
             </div>
 
             {/* Taskbar for minimized windows */}
@@ -287,6 +194,27 @@ export const Desktop = () => {
             {/* Virtual Desktops and Layout Tools */}
             <VirtualDesktops />
             <WindowLayoutTools />
+
+            {/* Global Search */}
+            <GlobalSearch />
+
+            {/* Workspace Templates Manager */}
+            {showWorkspaceManager && (
+                <WorkspaceTemplates
+                    onClose={() => setShowWorkspaceManager(false)}
+                    onApplyTemplate={(templateId) => {
+                        console.log('Applied template:', templateId);
+                        setShowWorkspaceManager(false);
+                    }}
+                />
+            )}
+
+            {/* Keyboard Shortcuts Help */}
+            {showKeyboardShortcuts && (
+                <KeyboardShortcuts
+                    onClose={() => setShowKeyboardShortcuts(false)}
+                />
+            )}
         </div>
             </AppLauncherProvider>
         </DesktopErrorBoundary>

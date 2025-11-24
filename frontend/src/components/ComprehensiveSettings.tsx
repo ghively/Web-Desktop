@@ -34,6 +34,8 @@ import { clsx } from 'clsx';
 
 interface ComprehensiveSettingsProps {
   windowId?: string;
+  initialTab?: string;
+  initialSection?: string;
 }
 
 // Settings categories with icons and descriptions
@@ -118,10 +120,10 @@ const settingsCategories = [
   }
 ];
 
-export const ComprehensiveSettings: React.FC<ComprehensiveSettingsProps> = () => {
+export const ComprehensiveSettings: React.FC<ComprehensiveSettingsProps> = ({ initialTab, initialSection }) => {
   const { settings } = useSettings();
-  const [selectedCategory, setSelectedCategory] = useState('desktop');
-  const [selectedSubcategory, setSelectedSubcategory] = useState('appearance');
+  const [selectedCategory, setSelectedCategory] = useState(initialTab || 'desktop');
+  const [selectedSubcategory, setSelectedSubcategory] = useState(initialSection || 'appearance');
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [hasChanges, setHasChanges] = useState(false);

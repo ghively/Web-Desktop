@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Image, Palette, Sliders, RotateCcw, Server, Database, Wifi, Shield } from 'lucide-react';
 import { useSettings, type CatppuccinTheme, type WallpaperDisplayMode } from '../context/exports';
+import { Loading } from './ui/Loading';
 
 interface SettingsProps {
     onClose: () => void;
@@ -83,6 +84,8 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     const { settings, setWallpaperType, setWallpaperImage, setWallpaperDisplayMode, setWindowOpacity, setTheme, resetSettings, updateSettings } = useSettings();
     const [customImageUrl, setCustomImageUrl] = useState(settings.wallpaper.imageUrl || '');
     const [activeTab, setActiveTab] = useState<'appearance' | 'wallpaper' | 'backend' | 'advanced'>('appearance');
+    const [isTestingApi, setIsTestingApi] = useState(false);
+    const [isTestingWs, setIsTestingWs] = useState(false);
 
     // Update customImageUrl when the wallpaper.imageUrl changes, but not when it's changed locally
     useEffect(() => {
@@ -521,6 +524,7 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                                         <div className="flex gap-3">
                                             <button
                                                 onClick={async () => {
+                                                    setIsTestingApi(true);
                                                     try {
                                                         const response = await fetch(settings.backend.apiUrl + '/api/system/info');
                                                         if (response.ok) {
@@ -530,26 +534,58 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                                                         }
                                                     } catch (error) {
                                                         alert('API connection failed: ' + error);
+                                                    } finally {
+                                                        setIsTestingApi(false);
                                                     }
                                                 }}
-                                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                                                disabled={isTestingApi}
+                                                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
                                             >
-                                                Test API Connection
+                                                {isTestingApi ? (
+                                                    <>
+                                                        <Loading variant="dots" size="sm" className="text-white" />
+                                                        Testing...
+                                                    </>
+                                                ) : (
+                                                    'Test API Connection'
+                                                )}
                                             </button>
                                             <button
                                                 onClick={() => {
+                                                    setIsTestingWs(true);
                                                     const ws = new WebSocket(settings.backend.wsUrl);
                                                     ws.onopen = () => {
                                                         alert('WebSocket connection successful!');
                                                         ws.close();
+                                                        setIsTestingWs(false);
                                                     };
                                                     ws.onerror = () => {
                                                         alert('WebSocket connection failed');
+                                                        setIsTestingWs(false);
                                                     };
+                                                    ws.onclose = () => {
+                                                        setIsTestingWs(false);
+                                                    };
+                                                    // Set a timeout for the connection
+                                                    setTimeout(() => {
+                                                        if (ws.readyState === WebSocket.CONNECTING) {
+                                                            ws.close();
+                                                            alert('WebSocket connection timeout');
+                                                            setIsTestingWs(false);
+                                                        }
+                                                    }, 5000);
                                                 }}
-                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                                disabled={isTestingWs}
+                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
                                             >
-                                                Test WebSocket
+                                                {isTestingWs ? (
+                                                    <>
+                                                        <Loading variant="dots" size="sm" className="text-white" />
+                                                        Testing...
+                                                    </>
+                                                ) : (
+                                                    'Test WebSocket'
+                                                )}
                                             </button>
                                         </div>
                                     </div>

@@ -261,119 +261,122 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+    <div className="h-full flex flex-col bg-gray-900 text-gray-100">
+      {/* Header */}
+      <div className="p-6 border-b border-gray-800">
+        <div className="flex items-center gap-3 mb-4">
           <HardDrive className="w-8 h-8 text-blue-600" />
-          Storage Pools
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <h1 className="text-2xl font-bold">Storage Pools</h1>
+        </div>
+        <p className="text-gray-400">
           Manage multiple disks and remote storage with unified access
         </p>
       </div>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Pools</h3>
-              <Server className="w-5 h-5 text-blue-500" />
-            </div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalPools}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">{stats.connectedPools} connected</div>
-          </div>
+      {/* Content */}
+      <div className="flex-1 p-6 overflow-auto">
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Space</h3>
-              <HardDrive className="w-5 h-5 text-green-500" />
+        {/* Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-400">Total Pools</h3>
+                <Server className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="text-2xl font-bold text-blue-500">{stats.totalPools}</div>
+              <div className="text-xs text-gray-500">{stats.connectedPools} connected</div>
             </div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{formatFileSize(stats.totalSpace)}</div>
-          </div>
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Used Space</h3>
-              <Upload className="w-5 h-5 text-orange-500" />
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-400">Total Space</h3>
+                <HardDrive className="w-5 h-5 text-green-500" />
+              </div>
+              <div className="text-2xl font-bold text-green-500">{formatFileSize(stats.totalSpace)}</div>
             </div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{formatFileSize(stats.usedSpace)}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              {stats.totalSpace > 0 ? Math.round((stats.usedSpace / stats.totalSpace) * 100) : 0}% used
+
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-400">Used Space</h3>
+                <Upload className="w-5 h-5 text-orange-500" />
+              </div>
+              <div className="text-2xl font-bold text-orange-500">{formatFileSize(stats.usedSpace)}</div>
+              <div className="text-xs text-gray-500">
+                {stats.totalSpace > 0 ? Math.round((stats.usedSpace / stats.totalSpace) * 100) : 0}% used
+              </div>
+            </div>
+
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-400">Available Space</h3>
+                <Download className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="text-2xl font-bold text-blue-500">{formatFileSize(stats.availableSpace)}</div>
             </div>
           </div>
+        )}
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Available Space</h3>
-              <Download className="w-5 h-5 text-blue-500" />
-            </div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{formatFileSize(stats.availableSpace)}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab Navigation */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
-        <div className="flex border-b border-gray-200 dark:border-gray-700">
+          {/* Tab Navigation */}
+        <div className="flex gap-1 bg-gray-800 rounded-lg p-1 mb-6">
           <button
             onClick={() => setActiveTab('pools')}
-            className={`px-6 py-3 font-medium text-sm border-b-2 ${
+            className={`flex-1 px-4 py-2 rounded-md transition-all flex items-center justify-center gap-2 ${
               activeTab === 'pools'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-gray-700'
             }`}
           >
-            <Server className="w-4 h-4 inline mr-2" />
-            Storage Pools
+            <Server className="w-4 h-4" />
+            Pools
           </button>
           <button
             onClick={() => setActiveTab('create')}
-            className={`px-6 py-3 font-medium text-sm border-b-2 ${
+            className={`flex-1 px-4 py-2 rounded-md transition-all flex items-center justify-center gap-2 ${
               activeTab === 'create'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-gray-700'
             }`}
           >
-            <Plus className="w-4 h-4 inline mr-2" />
+            <Plus className="w-4 h-4" />
             Add Pool
           </button>
           <button
             onClick={() => setActiveTab('disks')}
-            className={`px-6 py-3 font-medium text-sm border-b-2 ${
+            className={`flex-1 px-4 py-2 rounded-md transition-all flex items-center justify-center gap-2 ${
               activeTab === 'disks'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-gray-700'
             }`}
           >
-            <Scan className="w-4 h-4 inline mr-2" />
-            Local Disks
+            <Scan className="w-4 h-4" />
+            Disks
           </button>
         </div>
 
         {/* Storage Pools Tab */}
         {activeTab === 'pools' && (
-          <div className="p-6">
-            <div className="mb-4 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-100">
                 Storage Pools ({pools.length})
               </h3>
               <button
                 onClick={() => { loadPools(); loadStats(); }}
-                className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-1"
+                className="px-3 py-1.5 text-sm bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 hover:text-gray-100 transition-all flex items-center gap-2"
               >
-                <RefreshCw className="w-3 h-3" />
+                <RefreshCw className="w-4 h-4" />
                 Refresh
               </button>
             </div>
 
             {pools.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Server className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No storage pools configured</p>
+              <div className="bg-gray-800 border border-gray-700 rounded-lg p-8 text-center">
+                <Server className="w-12 h-12 mx-auto mb-4 text-gray-600" />
+                <p className="text-gray-400 mb-4">No storage pools configured</p>
                 <button
                   onClick={() => setActiveTab('create')}
-                  className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
                 >
                   Add First Storage Pool
                 </button>
@@ -381,47 +384,49 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
             ) : (
               <div className="space-y-4">
                 {pools.map((pool) => (
-                  <div key={pool.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  <div key={pool.id} className="bg-gray-800 border border-gray-700 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        {getTypeIcon(pool.type)}
+                        <div className="text-blue-400">
+                          {getTypeIcon(pool.type)}
+                        </div>
                         <div>
-                          <h4 className="font-medium text-gray-900 dark:text-white">{pool.name}</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{pool.type.toUpperCase()} • {pool.accessMode}</p>
+                          <h4 className="font-medium text-gray-100">{pool.name}</h4>
+                          <p className="text-sm text-gray-400">{pool.type.toUpperCase()} • {pool.accessMode}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(pool.status)}
                         <button
                           onClick={() => setSelectedPool(pool)}
-                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                          className="p-1.5 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded transition-all"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => deletePool(pool.id)}
-                          className="p-1 text-red-400 hover:text-red-600"
+                          className="p-1.5 text-red-400 hover:text-red-300 hover:bg-gray-700 rounded transition-all"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
 
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                      <div>Path: {pool.path}</div>
-                      {pool.mountPoint && <div>Mount: {pool.mountPoint}</div>}
-                      {pool.device && <div>Device: {pool.device}</div>}
+                    <div className="text-sm text-gray-400 mb-3 space-y-1">
+                      <div>Path: <span className="text-gray-300">{pool.path}</span></div>
+                      {pool.mountPoint && <div>Mount: <span className="text-gray-300">{pool.mountPoint}</span></div>}
+                      {pool.device && <div>Device: <span className="text-gray-300">{pool.device}</span></div>}
                     </div>
 
                     {pool.size.total > 0 && (
                       <div className="mb-3">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Usage</span>
-                          <span>{formatFileSize(pool.size.used)} / {formatFileSize(pool.size.total)}</span>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-400">Usage</span>
+                          <span className="text-gray-300">{formatFileSize(pool.size.used)} / {formatFileSize(pool.size.total)}</span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div className="w-full bg-gray-700 rounded-full h-2">
                           <div
-                            className="bg-blue-600 h-2 rounded-full"
+                            className="bg-blue-500 h-2 rounded-full transition-all"
                             style={{ width: `${(pool.size.used / pool.size.total) * 100}%` }}
                           />
                         </div>
@@ -432,17 +437,17 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
                       {pool.status === 'connected' ? (
                         <button
                           onClick={() => unmountPool(pool.id)}
-                          className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 flex items-center gap-1"
+                          className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 flex items-center gap-2 transition-all"
                         >
-                          <Unlock className="w-3 h-3" />
+                          <Unlock className="w-4 h-4" />
                           Unmount
                         </button>
                       ) : (
                         <button
                           onClick={() => mountPool(pool.id)}
-                          className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 flex items-center gap-1"
+                          className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 flex items-center gap-2 transition-all"
                         >
-                          <Lock className="w-3 h-3" />
+                          <Lock className="w-4 h-4" />
                           Mount
                         </button>
                       )}
@@ -456,87 +461,88 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
 
         {/* Create Pool Tab */}
         {activeTab === 'create' && (
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Add Storage Pool</h3>
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-gray-100">Add Storage Pool</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Pool Name
-                </label>
-                <input
-                  type="text"
-                  value={newPool.name}
-                  onChange={(e) => setNewPool({ ...newPool, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="e.g., Media Storage"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Type
-                </label>
-                <select
-                  value={newPool.type}
-                  onChange={(e) => setNewPool({ ...newPool, type: e.target.value as StoragePool['type'] })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="local">Local Disk</option>
-                  <option value="webdav">WebDAV</option>
-                  <option value="smb">SMB/CIFS</option>
-                  <option value="ftp">FTP</option>
-                  <option value="sftp">SFTP</option>
-                  <option value="nfs">NFS</option>
-                </select>
-              </div>
-
-              {newPool.type === 'local' ? (
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Device
-                  </label>
-                  <select
-                    value={newPool.device}
-                    onChange={(e) => setNewPool({ ...newPool, device: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="">Select device...</option>
-                    {localDisks.map((disk) => (
-                      <optgroup key={disk.name} label={disk.name}>
-                        {disk.partitions.map((part) => (
-                          <option key={part.name} value={`/dev/${part.name}`}>
-                            {part.name} ({part.size}) {part.fstype}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Path/URL
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Pool Name
                   </label>
                   <input
                     type="text"
-                    value={newPool.path}
-                    onChange={(e) => setNewPool({ ...newPool, path: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder={
-                      newPool.type === 'webdav' ? 'https://example.com/webdav' :
-                      newPool.type === 'smb' ? '//server/share' :
-                      newPool.type === 'ftp' || newPool.type === 'sftp' ? 'ftp.example.com' :
-                      newPool.type === 'nfs' ? 'server:/export/path' : ''
-                    }
+                    value={newPool.name}
+                    onChange={(e) => setNewPool({ ...newPool, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    placeholder="e.g., Media Storage"
                   />
                 </div>
-              )}
 
-              {(newPool.type === 'webdav' || newPool.type === 'smb' || newPool.type === 'ftp' || newPool.type === 'sftp') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Type
+                  </label>
+                  <select
+                    value={newPool.type}
+                    onChange={(e) => setNewPool({ ...newPool, type: e.target.value as StoragePool['type'] })}
+                    className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  >
+                    <option value="local">Local Disk</option>
+                    <option value="webdav">WebDAV</option>
+                    <option value="smb">SMB/CIFS</option>
+                    <option value="ftp">FTP</option>
+                    <option value="sftp">SFTP</option>
+                    <option value="nfs">NFS</option>
+                  </select>
+                </div>
+
+                {newPool.type === 'local' ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Device
+                    </label>
+                    <select
+                      value={newPool.device}
+                      onChange={(e) => setNewPool({ ...newPool, device: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    >
+                      <option value="">Select device...</option>
+                      {localDisks.map((disk) => (
+                        <optgroup key={disk.name} label={disk.name}>
+                          {disk.partitions.map((part) => (
+                            <option key={part.name} value={`/dev/${part.name}`}>
+                              {part.name} ({part.size}) {part.fstype}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Path/URL
+                    </label>
+                    <input
+                      type="text"
+                      value={newPool.path}
+                      onChange={(e) => setNewPool({ ...newPool, path: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      placeholder={
+                        newPool.type === 'webdav' ? 'https://example.com/webdav' :
+                        newPool.type === 'smb' ? '//server/share' :
+                        newPool.type === 'ftp' || newPool.type === 'sftp' ? 'ftp.example.com' :
+                        newPool.type === 'nfs' ? 'server:/export/path' : ''
+                      }
+                    />
+                  </div>
+                )}
+
+                {(newPool.type === 'webdav' || newPool.type === 'smb' || newPool.type === 'ftp' || newPool.type === 'sftp') && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Username
                     </label>
                     <input
@@ -546,12 +552,12 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
                         ...newPool,
                         credentials: { ...newPool.credentials, username: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Password
                     </label>
                     <div className="flex gap-2">
@@ -562,11 +568,11 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
                           ...newPool,
                           credentials: { ...newPool.credentials, password: e.target.value }
                         })}
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="flex-1 px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       />
                       <button
                         onClick={() => setShowPasswords({ ...showPasswords, password: !showPasswords.password })}
-                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 hover:bg-gray-600 transition-all"
                       >
                         {showPasswords.password ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -575,14 +581,14 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
                 </>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Access Mode
                 </label>
                 <select
                   value={newPool.accessMode}
                   onChange={(e) => setNewPool({ ...newPool, accessMode: e.target.value as StoragePool['accessMode'] })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 >
                   <option value="read">Read Only</option>
                   <option value="write">Write Only</option>
@@ -590,25 +596,26 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
                 </select>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   id="autoMount"
                   checked={newPool.autoMount}
                   onChange={(e) => setNewPool({ ...newPool, autoMount: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
                 />
-                <label htmlFor="autoMount" className="text-sm text-gray-700 dark:text-gray-300">
+                <label htmlFor="autoMount" className="text-sm text-gray-300">
                   Auto-mount on startup
                 </label>
               </div>
             </div>
+          </div>
 
-            <div className="mt-6 flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={createPool}
                 disabled={isLoading || !newPool.name}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
               >
                 <Save className="w-4 h-4" />
                 {isLoading ? 'Creating...' : 'Create Pool'}
@@ -617,7 +624,7 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
                 <button
                   onClick={testConnection}
                   disabled={isLoading}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2"
+                  className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Test Connection
@@ -625,7 +632,7 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
               )}
               <button
                 onClick={() => setActiveTab('pools')}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-all"
               >
                 Cancel
               </button>
@@ -635,46 +642,48 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
 
         {/* Local Disks Tab */}
         {activeTab === 'disks' && (
-          <div className="p-6">
-            <div className="mb-4 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-100">
                 Available Local Disks
               </h3>
               <button
                 onClick={loadLocalDisks}
-                className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-1"
+                className="px-3 py-1.5 text-sm bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 hover:text-gray-100 transition-all flex items-center gap-2"
               >
-                <RefreshCw className="w-3 h-3" />
+                <RefreshCw className="w-4 h-4" />
                 Scan
               </button>
             </div>
 
             {localDisks.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <HardDrive className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No local disks found</p>
+              <div className="bg-gray-800 border border-gray-700 rounded-lg p-8 text-center">
+                <HardDrive className="w-12 h-12 mx-auto mb-4 text-gray-600" />
+                <p className="text-gray-400">No local disks found</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {localDisks.map((disk) => (
-                  <div key={disk.name} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <HardDrive className="w-5 h-5 text-blue-500" />
+                  <div key={disk.name} className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="text-blue-400">
+                        <HardDrive className="w-5 h-5" />
+                      </div>
                       <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white">{disk.name}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{disk.size} • {disk.model}</p>
+                        <h4 className="font-medium text-gray-100">{disk.name}</h4>
+                        <p className="text-sm text-gray-400">{disk.size} • {disk.model}</p>
                       </div>
                     </div>
 
                     {disk.partitions.length > 0 && (
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300">Partitions:</h5>
+                      <div className="space-y-3">
+                        <h5 className="text-sm font-medium text-gray-300">Partitions:</h5>
                         {disk.partitions.map((partition) => (
-                          <div key={partition.name} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                            <span className="text-sm font-medium">{partition.name}</span>
+                          <div key={partition.name} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                            <span className="text-sm font-medium text-gray-200">{partition.name}</span>
                             <div className="text-right">
-                              <div className="text-sm">{partition.size}</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                              <div className="text-sm text-gray-300">{partition.size}</div>
+                              <div className="text-xs text-gray-500">
                                 {partition.fstype} {partition.mountpoint && `• ${partition.mountpoint}`}
                               </div>
                             </div>

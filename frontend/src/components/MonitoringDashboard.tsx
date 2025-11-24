@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from './ui/alert';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useMonitoringContext } from '../context/MonitoringContext';
+import { Loading } from './ui/Loading';
 import {
   LineChart,
   Line,
@@ -59,6 +60,7 @@ export function MonitoringDashboard({
   const [selectedTimeRange] = useState(3600000); // 1 hour
   const [selectedSeverity, setSelectedSeverity] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const summary = useMemo(() => getMetricsSummary(), [getMetricsSummary]);
   const filteredErrors = useMemo(() => {
@@ -68,8 +70,17 @@ export function MonitoringDashboard({
 
   const recentMetrics = useMemo(() => filterMetrics(undefined, selectedTimeRange), [filterMetrics, selectedTimeRange]);
 
-  // Auto-refresh
+  // Auto-refresh and initial load
   useEffect(() => {
+    // Initial data load
+    const loadInitialData = async () => {
+      setIsInitialLoading(true);
+      await refreshData();
+      setIsInitialLoading(false);
+    };
+
+    loadInitialData();
+
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
@@ -158,6 +169,19 @@ export function MonitoringDashboard({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
+  // Show loading state for initial data load
+  if (isInitialLoading) {
+    return (
+      <div className={`flex items-center justify-center h-full p-6 ${className}`}>
+        <Loading
+          variant="dots"
+          text="Loading monitoring data..."
+          size="lg"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={`space-y-6 p-6 ${className}`}>

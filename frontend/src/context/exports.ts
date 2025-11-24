@@ -2,7 +2,17 @@
 export { useWindowManager } from './useWindowManager';
 export { WindowManagerProvider } from './WindowManager';
 export { WindowManagerContext } from './types';
-export type { WindowManagerContextType, WindowState } from './types';
+export type {
+    WindowManagerContextType,
+    WindowState,
+    WindowGroup,
+    WorkspaceTemplate,
+    WindowRule,
+    SnapZone,
+    WorkspaceState,
+    WindowTab,
+    ApplicationCategory
+} from './types';
 
 // Virtual Desktop context
 export { VirtualDesktopManagerProvider } from './VirtualDesktopManager';

@@ -6,6 +6,7 @@ import '@xterm/xterm/css/xterm.css';
 import { useSettings } from '../context/useSettings';
 import { AsyncErrorBoundary } from './error-boundaries';
 import { useMonitoring } from '../hooks/useMonitoring';
+import { Loading } from './ui/Loading';
 
 interface TerminalProps {
     windowId: string;
@@ -469,7 +470,13 @@ export const TerminalComponent: React.FC<TerminalProps> = ({ windowId }) => {
                                 </p>
                             </div>
                             {connectionState === 'connecting' || connectionState === 'reconnecting' ? (
-                                <RefreshCw size={12} className="text-yellow-400 animate-spin" />
+                                <div className="scale-75">
+                                    <Loading
+                                        variant="dots"
+                                        size="sm"
+                                        className="text-yellow-400"
+                                    />
+                                </div>
                             ) : (
                                 <StatusIcon size={12} className={connectionStatus.color} />
                             )}

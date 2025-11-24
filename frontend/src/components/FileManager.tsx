@@ -6,6 +6,7 @@ import { useVFS } from '../hooks/useVFS';
 import { VFSNode } from '../types/vfs';
 import { AsyncErrorBoundary } from './error-boundaries';
 import { useMonitoring, useApiMonitoring } from '../hooks/useMonitoring';
+import { Loading } from './ui/Loading';
 
 interface FileItem {
     name: string;
@@ -17,6 +18,7 @@ interface FileItem {
 
 interface FileManagerProps {
     windowId?: string;
+    initialPath?: string;
 }
 
 interface ContextMenu {
@@ -66,7 +68,7 @@ interface UploadState {
     controller?: AbortController;
 }
 
-export const FileManager: React.FC<FileManagerProps> = () => {
+export const FileManager: React.FC<FileManagerProps> = ({ initialPath }) => {
     const { settings } = useSettings();
     const vfs = useVFS();
     const { trackInteraction, trackMetric, trackError } = useMonitoring({
@@ -742,6 +744,13 @@ export const FileManager: React.FC<FileManagerProps> = () => {
         return () => document.removeEventListener('click', handleClick);
     }, []);
 
+    // Handle initial path from props
+    useEffect(() => {
+        if (initialPath && initialPath !== vfs.currentPath) {
+            vfs.setCurrentPath(initialPath);
+        }
+    }, [initialPath, vfs]);
+
     // Add custom styles for toast animations
     useEffect(() => {
         const style = document.createElement('style');
@@ -976,9 +985,12 @@ export const FileManager: React.FC<FileManagerProps> = () => {
             {/* File List */}
             <div className="flex-1 overflow-y-auto p-4">
                 {loading && (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mb-3"></div>
-                        Loading directory...
+                    <div className="flex items-center justify-center h-full">
+                        <Loading
+                            variant="spinner"
+                            text="Loading directory..."
+                            size="lg"
+                        />
                     </div>
                 )}
 

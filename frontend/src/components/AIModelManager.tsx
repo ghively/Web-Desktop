@@ -216,135 +216,141 @@ const AIModelManager: React.FC<{ windowId?: string }> = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+    <div className="h-full flex flex-col bg-gray-900 text-gray-100">
+      {/* Header */}
+      <div className="p-6 border-b border-gray-800">
+        <div className="flex items-center gap-3 mb-4">
           <Brain className="w-8 h-8 text-purple-600" />
-          AI Model Manager
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <h1 className="text-2xl font-bold">AI Model Manager</h1>
+        </div>
+        <p className="text-gray-400">
           Manage Ollama and OpenRouter models with intelligent task routing
         </p>
       </div>
 
-      {/* Status Cards */}
-      {status && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-green-600" />
-                Ollama
-              </h3>
-              {status.ollama.connected ? (
-                <CheckCircle className="w-5 h-5 text-green-500" />
-              ) : (
-                <XCircle className="w-5 h-5 text-red-500" />
-              )}
+      {/* Content */}
+      <div className="flex-1 p-6 overflow-auto">
+        {/* Status Cards */}
+        {status && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Cpu className="w-5 h-5 text-green-600" />
+                  Ollama
+                </h3>
+                {status.ollama.connected ? (
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-red-500" />
+                )}
+              </div>
+              <div className="text-sm text-gray-400">
+                <div>Host: {config?.ollama.host}:{config?.ollama.port}</div>
+                <div>Models: {status.ollama.models.length}</div>
+                <div>Status: {status.ollama.connected ? 'Connected' : 'Disconnected'}</div>
+              </div>
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              <div>Host: {config?.ollama.host}:{config?.ollama.port}</div>
-              <div>Models: {status.ollama.models.length}</div>
-              <div>Status: {status.ollama.connected ? 'Connected' : 'Disconnected'}</div>
+
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-blue-600" />
+                  OpenRouter
+                </h3>
+                {status.openrouter.connected ? (
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-red-500" />
+                )}
+              </div>
+              <div className="text-sm text-gray-400">
+                <div>API Key: {status.openrouter.configured ? 'Configured' : 'Not configured'}</div>
+                <div>Models: {status.openrouter.models.length}</div>
+                <div>Status: {status.openrouter.connected ? 'Connected' : 'Disconnected'}</div>
+              </div>
             </div>
           </div>
+        )}
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Globe className="w-5 h-5 text-blue-600" />
-                OpenRouter
-              </h3>
-              {status.openrouter.connected ? (
-                <CheckCircle className="w-5 h-5 text-green-500" />
-              ) : (
-                <XCircle className="w-5 h-5 text-red-500" />
-              )}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              <div>API Key: {status.openrouter.configured ? 'Configured' : 'Not configured'}</div>
-              <div>Models: {status.openrouter.models.length}</div>
-              <div>Status: {status.openrouter.connected ? 'Connected' : 'Disconnected'}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab Navigation */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
-        <div className="flex border-b border-gray-200 dark:border-gray-700">
+        {/* Tab Navigation */}
+        <div className="flex gap-1 bg-gray-800 rounded-lg p-1 mb-6">
           <button
             onClick={() => setActiveTab('models')}
-            className={`px-6 py-3 font-medium text-sm border-b-2 ${
+            className={`flex-1 px-4 py-2 rounded-md transition-all flex items-center justify-center gap-2 ${
               activeTab === 'models'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-gray-700'
             }`}
           >
-            <Server className="w-4 h-4 inline mr-2" />
+            <Server className="w-4 h-4" />
             Models
           </button>
           <button
             onClick={() => setActiveTab('tasks')}
-            className={`px-6 py-3 font-medium text-sm border-b-2 ${
+            className={`flex-1 px-4 py-2 rounded-md transition-all flex items-center justify-center gap-2 ${
               activeTab === 'tasks'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-gray-700'
             }`}
           >
-            <Zap className="w-4 h-4 inline mr-2" />
-            Task Assignment
+            <Zap className="w-4 h-4" />
+            Tasks
           </button>
           <button
             onClick={() => setActiveTab('config')}
-            className={`px-6 py-3 font-medium text-sm border-b-2 ${
+            className={`flex-1 px-4 py-2 rounded-md transition-all flex items-center justify-center gap-2 ${
               activeTab === 'config'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-gray-700'
             }`}
           >
-            <Settings className="w-4 h-4 inline mr-2" />
-            Configuration
+            <Settings className="w-4 h-4" />
+            Config
           </button>
           <button
             onClick={() => setActiveTab('test')}
-            className={`px-6 py-3 font-medium text-sm border-b-2 ${
+            className={`flex-1 px-4 py-2 rounded-md transition-all flex items-center justify-center gap-2 ${
               activeTab === 'test'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-gray-700'
             }`}
           >
-            <TestTube className="w-4 h-4 inline mr-2" />
-            Test Models
+            <TestTube className="w-4 h-4" />
+            Test
           </button>
         </div>
 
         {/* Models Tab */}
         {activeTab === 'models' && (
-          <div className="p-6">
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Local Models (Ollama)</h3>
+          <div className="space-y-6">
+            {/* Local Models Section */}
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Cpu className="w-5 h-5" />
+                Local Models (Ollama)
+              </h3>
               {models.ollama.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Cpu className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No local models installed</p>
+                <div className="text-center py-8">
+                  <Cpu className="w-12 h-12 mx-auto mb-3 text-gray-600 opacity-50" />
+                  <p className="text-gray-400">No local models installed</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {models.ollama.map((model) => (
-                    <div key={model.name} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div key={model.name} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 dark:text-white">{model.name}</h4>
+                        <h4 className="font-medium text-gray-100">{model.name}</h4>
                         <div className="flex gap-2">
                           <button
                             onClick={() => deleteModel(model.name)}
-                            className="text-red-600 hover:text-red-800"
+                            className="text-red-400 hover:text-red-300 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                      <div className="text-sm text-gray-400 space-y-1">
                         <div>Size: {formatFileSize(model.size)}</div>
                         <div>Modified: {model.modified_at ? new Date(model.modified_at).toLocaleDateString() : 'Unknown'}</div>
                         {model.details?.parameter_size && (
@@ -360,24 +366,27 @@ const AIModelManager: React.FC<{ windowId?: string }> = () => {
               )}
             </div>
 
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cloud Models (OpenRouter)</h3>
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Globe className="w-5 h-5" />
+                Cloud Models (OpenRouter)
+              </h3>
               {models.openrouter.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Globe className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Configure OpenRouter API key to access cloud models</p>
+                <div className="text-center py-8">
+                  <Globe className="w-12 h-12 mx-auto mb-3 text-gray-600 opacity-50" />
+                  <p className="text-gray-400">Configure OpenRouter API key to access cloud models</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {models.openrouter.map((model) => (
-                    <div key={model.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div key={model.id} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 dark:text-white">{model.name}</h4>
-                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                        <h4 className="font-medium text-gray-100">{model.name}</h4>
+                        <span className="text-xs bg-blue-600 text-blue-100 px-2 py-1 rounded">
                           {model.provider}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                      <div className="text-sm text-gray-400 space-y-1">
                         <div>Context: {model.context?.toLocaleString()} tokens</div>
                         {model.pricing && (
                           <div className="flex justify-between">
@@ -396,97 +405,95 @@ const AIModelManager: React.FC<{ windowId?: string }> = () => {
 
         {/* Task Assignment Tab */}
         {activeTab === 'tasks' && config && (
-          <div className="p-6">
-            <div className="space-y-6">
-              {Object.entries(TASK_DEFINITIONS).map(([taskType, definition]) => {
-                const Icon = definition.icon;
-                const assignment = config.taskAssignments[taskType] || {
-                  provider: 'ollama' as const,
-                  preferredModel: '',
-                  fallbackProvider: 'ollama' as const,
-                  fallbackModel: ''
-                };
+          <div className="space-y-6">
+            {Object.entries(TASK_DEFINITIONS).map(([taskType, definition]) => {
+              const Icon = definition.icon;
+              const assignment = config.taskAssignments[taskType] || {
+                provider: 'ollama' as const,
+                preferredModel: '',
+                fallbackProvider: 'ollama' as const,
+                fallbackModel: ''
+              };
 
-                return (
-                  <div key={taskType} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Icon className={`w-5 h-5 ${definition.color}`} />
-                      <h4 className="font-medium text-gray-900 dark:text-white">{definition.name}</h4>
+              return (
+                <div key={taskType} className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Icon className={`w-5 h-5 ${definition.color}`} />
+                    <h4 className="font-medium text-gray-100">{definition.name}</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Preferred Model
+                      </label>
+                      <div className="flex gap-2">
+                        <select
+                          value={assignment.provider}
+                          onChange={(e) => {
+                            const newAssignment = { ...assignment, provider: e.target.value as 'ollama' | 'openrouter' };
+                            updateTaskAssignment(taskType, newAssignment);
+                          }}
+                          className="px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="ollama">Ollama</option>
+                          <option value="openrouter">OpenRouter</option>
+                        </select>
+
+                        <select
+                          value={assignment.preferredModel}
+                          onChange={(e) => {
+                            const newAssignment = { ...assignment, preferredModel: e.target.value };
+                            updateTaskAssignment(taskType, newAssignment);
+                          }}
+                          className="flex-1 px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {(assignment.provider === 'ollama' ? models.ollama : models.openrouter).map((model) => (
+                            <option key={model.name || model.id} value={model.name || model.id}>
+                              {model.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Preferred Model
-                        </label>
-                        <div className="flex gap-2">
-                          <select
-                            value={assignment.provider}
-                            onChange={(e) => {
-                              const newAssignment = { ...assignment, provider: e.target.value as 'ollama' | 'openrouter' };
-                              updateTaskAssignment(taskType, newAssignment);
-                            }}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          >
-                            <option value="ollama">Ollama</option>
-                            <option value="openrouter">OpenRouter</option>
-                          </select>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Fallback Model
+                      </label>
+                      <div className="flex gap-2">
+                        <select
+                          value={assignment.fallbackProvider}
+                          onChange={(e) => {
+                            const newAssignment = { ...assignment, fallbackProvider: e.target.value as 'ollama' | 'openrouter' };
+                            updateTaskAssignment(taskType, newAssignment);
+                          }}
+                          className="px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="ollama">Ollama</option>
+                          <option value="openrouter">OpenRouter</option>
+                        </select>
 
-                          <select
-                            value={assignment.preferredModel}
-                            onChange={(e) => {
-                              const newAssignment = { ...assignment, preferredModel: e.target.value };
-                              updateTaskAssignment(taskType, newAssignment);
-                            }}
-                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          >
-                            {(assignment.provider === 'ollama' ? models.ollama : models.openrouter).map((model) => (
-                              <option key={model.name || model.id} value={model.name || model.id}>
-                                {model.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Fallback Model
-                        </label>
-                        <div className="flex gap-2">
-                          <select
-                            value={assignment.fallbackProvider}
-                            onChange={(e) => {
-                              const newAssignment = { ...assignment, fallbackProvider: e.target.value as 'ollama' | 'openrouter' };
-                              updateTaskAssignment(taskType, newAssignment);
-                            }}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          >
-                            <option value="ollama">Ollama</option>
-                            <option value="openrouter">OpenRouter</option>
-                          </select>
-
-                          <select
-                            value={assignment.fallbackModel}
-                            onChange={(e) => {
-                              const newAssignment = { ...assignment, fallbackModel: e.target.value };
-                              updateTaskAssignment(taskType, newAssignment);
-                            }}
-                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          >
-                            {(assignment.fallbackProvider === 'ollama' ? models.ollama : models.openrouter).map((model) => (
-                              <option key={model.name || model.id} value={model.name || model.id}>
-                                {model.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                        <select
+                          value={assignment.fallbackModel}
+                          onChange={(e) => {
+                            const newAssignment = { ...assignment, fallbackModel: e.target.value };
+                            updateTaskAssignment(taskType, newAssignment);
+                          }}
+                          className="flex-1 px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {(assignment.fallbackProvider === 'ollama' ? models.ollama : models.openrouter).map((model) => (
+                            <option key={model.name || model.id} value={model.name || model.id}>
+                              {model.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
