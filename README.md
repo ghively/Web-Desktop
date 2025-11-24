@@ -5,19 +5,23 @@
 ![Node.js](https://img.shields.io/badge/node.js-18%2B-brightgreen.svg)
 ![React](https://img.shields.io/badge/react-19.2.0-blue.svg)
 ![TypeScript](https://img.shields.io/badge/typescript-5%2B-blue.svg)
-![Status](https://img.shields.io/badge/status-production%20ready-success.svg)
-![Security](https://img.shields.io/badge/security-enterprise%20grade-brightgreen.svg)
+![Status](https://img.shields.io/badge/status-development%20%7C%20beta-yellow.svg)
+![Security](https://img.shields.io/badge/security-actively%20developing-orange.svg)
 ![Coverage](https://img.shields.io/badge/coverage-85%2B-brightgreen.svg)
 
-> A comprehensive enterprise-grade web-based desktop environment with 17,442 files, dual frontend implementations, and 24+ API routes. Combines the best features from Synology DiskStation, ArozOS, and OS.js with modern React 19.2.0 + TypeScript architecture. **80% complete, production deployment ready in 2-3 weeks**.
+> ⚠️ **DISCLAIMER: THIS IS LIKELY NOT FULLY WORKING SOFTWARE** ⚠️
+> **USE AT YOUR OWN RISK** - This is a development project with incomplete features and potential bugs.
+> This project is provided **AS-IS** without any warranty. It may not work as expected, could have security vulnerabilities, and may contain broken functionality. Do not use in production environments or for critical data.
 
-## 🚀 Quick Start - **Production Ready** ✅
+> A comprehensive web-based desktop environment with dual frontend implementations and 24+ API routes. Combines features from Synology DiskStation, ArozOS, and OS.js with modern React 19.2.0 + TypeScript architecture. **Currently in development/beta stage**.
 
-### 🎉 **Status: 100% Feature Complete - Enterprise Grade**
-- ✅ **Dual Frontend**: React 19.2.0 + Legacy JavaScript (100% parity)
-- ✅ **24 Features**: Complete enterprise-grade feature set
-- ✅ **Zero Critical Issues**: All security and functionality resolved
-- ✅ **Production Ready**: Comprehensive testing and validation completed
+## 🚀 Quick Start - **Development/Beta Version** ⚠️
+
+### 🎉 **Status: Active Development - Beta Stage**
+- ✅ **Dual Frontend**: React 19.2.0 + Legacy JavaScript (active development)
+- ✅ **24+ Features**: Comprehensive feature set (many in development)
+- ⚠️ **Known Issues**: Some features may be incomplete or have bugs
+- ⚠️ **Use for Development**: Not recommended for production use
 
 ### Prerequisites
 - Node.js 18+ (LTS recommended)
@@ -31,8 +35,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/web-desktop.git
-cd web-desktop
+git clone https://github.com/ghively/Web-Desktop.git
+cd Web-Desktop
 
 # Install dependencies
 npm install
@@ -49,36 +53,52 @@ Access your web desktop at:
 - **Backend API**: http://localhost:3001
 - **Legacy Frontend**: http://localhost:5174
 
-### Production Deployment
+### Production Deployment ⚠️
+
+> **⚠️ NOT RECOMMENDED FOR PRODUCTION USE**
+> This software is in active development and may contain security vulnerabilities, bugs, or incomplete functionality. Use for testing and development only.
 
 ```bash
-# Build production bundles
+# Build production bundles (development purposes only)
 cd backend && npm run build
 cd ../frontend && npm run build
 
-# Start production server
+# Start production server (development purposes only)
 cd backend && npm start
+```
+
+### Automated Installation (Ubuntu)
+
+```bash
+# For Ubuntu servers (development/testing only)
+wget https://raw.githubusercontent.com/ghively/Web-Desktop/main/install.sh
+chmod +x install.sh
+sudo ./install.sh
+
+# Access at http://your-server-ip:5173
 ```
 
 ## 🎉 What's New in v1.0.1
 
-### ✅ **Security & Stability Complete**
-- **100% Audit Completion**: All 30 audit issues resolved (Critical: 5/5, High: 8/8, Medium: 12/12, Low: 5/5)
-- **Enterprise Security**: Path traversal protection, command injection fixes, input validation
-- **Memory Management**: Eliminated memory leaks, race conditions fixed
-- **Cross-Platform**: Full Windows/Linux/macOS compatibility
+### ✅ **Recent Development Progress**
+- **TypeScript Compilation**: Fixed all compilation errors and resolved missing dependencies
+- **Environment Configuration**: Added comprehensive GUI-based environment and API key management
+- **Dual Frontend Support**: Enhanced React and legacy JavaScript frontends with improved parity
+- **Development Infrastructure**: Automated installation script for Ubuntu deployment
+- **API Integration**: Added external service connections (Ollama, Home Assistant, media servers)
 
-### 🚀 **Enhanced User Experience**
-- **Advanced Monitoring**: Real-time performance metrics and system health dashboard
-- **Professional UI**: Smooth animations, loading states, accessibility improvements
-- **Browser Support**: Chrome 108+, Firefox 107+, Safari 16+, Edge 108+
-- **Error Handling**: Comprehensive error boundaries with recovery options
+### ⚠️ **Current Development Status**
+- **Active Development**: Features being implemented and refined
+- **Bug Fixes**: Ongoing resolution of discovered issues
+- **Documentation**: Comprehensive guides being updated
+- **Testing**: Continuous testing and validation in progress
 
-### 🔧 **Developer Excellence**
-- **Testing Framework**: Jest + Vitest + Playwright with >85% coverage
-- **TypeScript Strict Mode**: Enhanced type safety throughout codebase
-- **Documentation**: 15+ comprehensive documents for users and developers
-- **CI/CD Ready**: Automated testing and quality gates
+### 🚀 **User Experience Features**
+- **Window Management**: Tiling and floating window modes
+- **File Management**: Virtual file system with multiple storage adapters
+- **System Monitoring**: Real-time system metrics and health dashboards
+- **AI Integration**: Local AI model management and configuration
+- **Media Processing**: FFmpeg and media server integration
 
 ---
 
@@ -465,28 +485,35 @@ See [TESTING.md](./TESTING.md) for comprehensive testing guide, best practices, 
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
-## 📊 Security & Quality Metrics
+## 📊 Development Status & Quality Metrics
 
-### Audit Completion Status ✅
-- **Critical Issues**: 5/5 resolved (100%)
-- **High Priority Issues**: 8/8 resolved (100%)
-- **Medium Priority Issues**: 12/12 resolved (100%)
-- **Low Priority Issues**: 5/5 resolved (100%)
-- **Overall Completion**: 30/30 issues (100%)
+### Current Development Status ⚠️
+- **Critical Issues**: Resolved compilation errors and missing dependencies ✅
+- **High Priority Issues**: API functionality and basic features working ✅
+- **Medium Priority Issues**: Some features may be incomplete or have bugs ⚠️
+- **Low Priority Issues**: Documentation updates and minor improvements in progress ⚠️
+- **Overall Completion**: Core functionality working, advanced features in development ⚠️
 
 ### Code Quality 📈
 - **Test Coverage**: >85% (Frontend: 85%+, Backend: 80%+)
-- **TypeScript**: Strict mode enabled with zero type errors
-- **Security**: Enterprise-grade with comprehensive input validation
-- **Performance**: Optimized with <100ms API response times
-- **Accessibility**: WCAG AA compliant with full keyboard navigation
+- **TypeScript**: Strict mode enabled with zero compilation errors ✅
+- **Security**: Basic validation and input sanitization implemented ⚠️
+- **Performance**: Optimized development environment ⚠️
+- **Accessibility**: Basic keyboard navigation and UI improvements ⚠️
 
-### Production Readiness 🚀
-- **Security**: All vulnerabilities patched, regular security audits
-- **Stability**: Memory leak free, comprehensive error handling
-- **Monitoring**: Real-time performance and health monitoring
-- **Documentation**: 15+ comprehensive documents for all user types
-- **Testing**: Automated CI/CD with 100+ test cases
+### Development Readiness 🚀
+- **Core Features**: Window management, file management, basic system monitoring ✅
+- **API Integration**: External service connections and environment configuration ✅
+- **Stability**: Known issues exist, bug fixes ongoing ⚠️
+- **Documentation**: Comprehensive guides available, being updated ⚠️
+- **Testing**: Unit tests implemented, integration testing in progress ⚠️
+
+### Known Limitations ⚠️
+- Some advanced features may be incomplete
+- Performance optimization ongoing
+- Security audit not completed for production use
+- Some external service integrations may need manual configuration
+- Browser compatibility testing ongoing
 
 ## 🙏 Acknowledgments
 
@@ -497,8 +524,8 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-username/web-desktop/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/web-desktop/discussions)
+- **Issues**: [GitHub Issues](https://github.com/ghively/Web-Desktop/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ghively/Web-Desktop/discussions)
 - **Documentation**: [📚 Complete Documentation Portal](./docs/)
 
 ### Quick Help
