@@ -185,18 +185,82 @@ function initializeSettings() {
     const wallpaperInput = document.getElementById('wallpaper-url');
     const gradientCheckbox = document.getElementById('use-gradient');
 
+    // New menubar transparency controls
+    const menubarOpacitySlider = document.getElementById('menubar-opacity-slider');
+    const menubarOpacityValue = document.getElementById('menubar-opacity-value');
+
+    // New wallpaper upload controls
+    const wallpaperFile = document.getElementById('wallpaper-file');
+    const wallpaperUploadBtn = document.getElementById('wallpaper-upload-btn');
+    const wallpaperClearBtn = document.getElementById('wallpaper-clear-btn');
+    const wallpaperSize = document.getElementById('wallpaper-size');
+
     if (!panel) return;
 
     opacitySlider.value = localStorage.getItem('windowOpacity') || '0.95';
     opacityValue.textContent = (parseFloat(opacitySlider.value) * 100).toFixed(0) + '%';
-    wallpaperInput.value = localStorage.getItem('wallpaper') || 'https://cdn.mos.cms.futurecdn.net/AoWXgnHSxAAPxqymPQMQYL-1200-80.jpg';
+    wallpaperInput.value = localStorage.getItem('wallpaper') || '';
     gradientCheckbox.checked = localStorage.getItem('useGradient') === 'true';
+
+    // Initialize menubar transparency
+    const savedMenubarOpacity = localStorage.getItem('menubarOpacity') || '0.9';
+    menubarOpacitySlider.value = savedMenubarOpacity;
+    menubarOpacityValue.textContent = (parseFloat(savedMenubarOpacity) * 100).toFixed(0) + '%';
+    updateMenubarOpacity(savedMenubarOpacity);
+
+    // Initialize wallpaper settings
+    const savedWallpaperSize = localStorage.getItem('wallpaperSize') || 'cover';
+    wallpaperSize.value = savedWallpaperSize;
+    updateWallpaperSize(savedWallpaperSize);
+
+    // Initialize wallpaper from localStorage
+    const savedWallpaper = localStorage.getItem('currentWallpaper');
+    if (savedWallpaper) {
+        setDesktopWallpaper(savedWallpaper);
+    }
 
     opacitySlider.addEventListener('input', (e) => {
         const value = e.target.value;
         opacityValue.textContent = (parseFloat(value) * 100).toFixed(0) + '%';
         document.documentElement.style.setProperty('--window-opacity', value);
         localStorage.setItem('windowOpacity', value);
+    });
+
+    // Menubar transparency control
+    menubarOpacitySlider.addEventListener('input', (e) => {
+        const value = e.target.value;
+        menubarOpacityValue.textContent = (parseFloat(value) * 100).toFixed(0) + '%';
+        updateMenubarOpacity(value);
+        localStorage.setItem('menubarOpacity', value);
+    });
+
+    // Wallpaper upload functionality
+    wallpaperUploadBtn.addEventListener('click', () => {
+        wallpaperFile.click();
+    });
+
+    wallpaperFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imageData = e.target.result;
+                setDesktopWallpaper(imageData);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    wallpaperClearBtn.addEventListener('click', () => {
+        clearDesktopWallpaper();
+        wallpaperFile.value = '';
+    });
+
+    // Wallpaper size control
+    wallpaperSize.addEventListener('change', (e) => {
+        const size = e.target.value;
+        updateWallpaperSize(size);
+        localStorage.setItem('wallpaperSize', size);
     });
 
     wallpaperInput.addEventListener('change', (e) => {
@@ -233,6 +297,60 @@ function initializeSettings() {
             panel.classList.add('hidden');
         }
     });
+}
+
+// Helper function to update menubar transparency
+function updateMenubarOpacity(opacity) {
+    const topbar = document.getElementById('topbar');
+    if (topbar) {
+        topbar.style.opacity = opacity;
+        topbar.style.backgroundColor = `rgba(30, 30, 46, ${opacity})`; // --base with opacity
+    }
+}
+
+// Helper function to set desktop wallpaper
+function setDesktopWallpaper(imageData) {
+    const desktopArea = document.getElementById('desktop-area');
+    if (desktopArea) {
+        // Remove any existing dynamic wallpaper style
+        clearDesktopWallpaper();
+
+        // Apply wallpaper directly to desktop-area
+        const size = localStorage.getItem('wallpaperSize') || 'cover';
+        desktopArea.style.backgroundImage = `url(${imageData})`;
+        desktopArea.style.backgroundSize = size;
+        desktopArea.style.backgroundPosition = 'center center';
+        desktopArea.style.backgroundRepeat = 'no-repeat';
+        desktopArea.classList.add('has-wallpaper');
+
+        // Store the wallpaper for persistence
+        localStorage.setItem('currentWallpaper', imageData);
+    }
+}
+
+// Helper function to clear desktop wallpaper
+function clearDesktopWallpaper() {
+    const desktopArea = document.getElementById('desktop-area');
+    if (desktopArea) {
+        desktopArea.style.backgroundImage = '';
+        desktopArea.classList.remove('has-wallpaper');
+        localStorage.removeItem('currentWallpaper');
+
+        // Remove any dynamic style elements
+        const existingStyle = document.getElementById('dynamic-wallpaper-style');
+        if (existingStyle) {
+            existingStyle.remove();
+        }
+    }
+}
+
+// Helper function to update wallpaper size
+function updateWallpaperSize(size) {
+    const desktopArea = document.getElementById('desktop-area');
+    if (desktopArea) {
+        desktopArea.style.backgroundSize = size;
+        localStorage.setItem('wallpaperSize', size);
+    }
 }
 
 function openSettings() {
@@ -2681,24 +2799,33 @@ async function fetchInstalledApps() {
         const data = await response.json();
 
         installedApps = [
+            // Core apps (not on floating buttons)
             { name: 'Terminal', icon: '📟', id: 'terminal', description: 'System terminal with shell access' },
             { name: 'File Manager', icon: '📂', id: 'filemanager', description: 'Browse and manage files' },
             { name: 'Notes', icon: '📝', id: 'notes', description: 'Markdown notes editor' },
             { name: 'Text Editor', icon: '💻', id: 'editor', description: 'Monaco code editor' },
             { name: 'Containers', icon: '🐳', id: 'containers', description: 'Docker container management' },
-            { name: 'Control Panel', icon: '⚙️', id: 'controlpanel', description: 'System settings and configuration' },
-            { name: 'Virtual Desktops', icon: '🖥️', id: 'virtual-desktops', description: 'Switch and manage desktops' },
+
+            // Desktop floating button apps (16 total)
+            { name: 'Marketplace', icon: '🛒', id: 'marketplace', description: 'Browse and install apps' },
+            { name: 'VNC', icon: '💻', id: 'vnc', description: 'Remote desktop connections' },
+            { name: 'Layout Tools', icon: '📐', id: 'layout-tools', description: 'Window layout management' },
+            { name: 'Desktops', icon: '🖥️', id: 'virtual-desktops', description: 'Switch and manage desktops' },
             { name: 'AI Integration', icon: '🤖', id: 'ai-integration', description: 'AI services and chat' },
             { name: 'AI Models', icon: '🧠', id: 'ai-models', description: 'Model routing and status' },
-            { name: 'Storage Pools', icon: '💾', id: 'storage-pools', description: 'Manage pools and volumes' },
+            { name: 'Storage', icon: '💾', id: 'storage-pools', description: 'Manage pools and volumes' },
             { name: 'Proxy', icon: '🌐', id: 'proxy', description: 'Nginx proxy status' },
             { name: 'Shares', icon: '📁', id: 'shares', description: 'NFS/SMB shares' },
             { name: 'WiFi', icon: '📶', id: 'wifi', description: 'WiFi interfaces and networks' },
             { name: 'Media Server', icon: '🎬', id: 'media', description: 'Libraries and transcoding' },
             { name: 'Home Assistant', icon: '🏠', id: 'home-assistant', description: 'Smart home status' },
-            { name: 'Power', icon: '🔋', id: 'power', description: 'Power controls and status' },
             { name: 'Monitoring', icon: '📊', id: 'monitoring', description: 'System monitoring dashboard' },
-            { name: 'VNC Client', icon: '💻', id: 'vnc', description: 'Remote desktop connections' },
+            { name: 'Control Panel', icon: '⚙️', id: 'controlpanel', description: 'System settings and configuration' },
+            { name: 'Theme', icon: '🎨', id: 'theme-customizer', description: 'Customize desktop themes' },
+            { name: 'Settings', icon: '⚙️', id: 'settings', description: 'Desktop settings and preferences' },
+
+            // Additional apps
+            { name: 'Power Management', icon: '🔋', id: 'power', description: 'Power controls and status' },
             { name: 'RDP Client', icon: '🖥️', id: 'rdp', description: 'Windows/Linux remote desktop' },
             ...data.apps.map(app => ({
                 name: app.name,
@@ -2711,23 +2838,33 @@ async function fetchInstalledApps() {
     } catch (err) {
         console.error('Failed to fetch installed apps:', err);
         installedApps = [
+            // Core apps (not on floating buttons)
             { name: 'Terminal', icon: '📟', id: 'terminal', description: 'System terminal with shell access' },
             { name: 'File Manager', icon: '📂', id: 'filemanager', description: 'Browse and manage files' },
             { name: 'Notes', icon: '📝', id: 'notes', description: 'Markdown notes editor' },
             { name: 'Text Editor', icon: '💻', id: 'editor', description: 'Monaco code editor' },
             { name: 'Containers', icon: '🐳', id: 'containers', description: 'Docker container management' },
-            { name: 'Control Panel', icon: '⚙️', id: 'controlpanel', description: 'System settings and configuration' },
-            { name: 'Virtual Desktops', icon: '🖥️', id: 'virtual-desktops', description: 'Switch and manage desktops' },
+
+            // Desktop floating button apps (16 total)
+            { name: 'Marketplace', icon: '🛒', id: 'marketplace', description: 'Browse and install apps' },
+            { name: 'VNC', icon: '💻', id: 'vnc', description: 'Remote desktop connections' },
+            { name: 'Layout Tools', icon: '📐', id: 'layout-tools', description: 'Window layout management' },
+            { name: 'Desktops', icon: '🖥️', id: 'virtual-desktops', description: 'Switch and manage desktops' },
             { name: 'AI Integration', icon: '🤖', id: 'ai-integration', description: 'AI services and chat' },
             { name: 'AI Models', icon: '🧠', id: 'ai-models', description: 'Model routing and status' },
-            { name: 'Storage Pools', icon: '💾', id: 'storage-pools', description: 'Manage pools and volumes' },
+            { name: 'Storage', icon: '💾', id: 'storage-pools', description: 'Manage pools and volumes' },
             { name: 'Proxy', icon: '🌐', id: 'proxy', description: 'Nginx proxy status' },
             { name: 'Shares', icon: '📁', id: 'shares', description: 'NFS/SMB shares' },
             { name: 'WiFi', icon: '📶', id: 'wifi', description: 'WiFi interfaces and networks' },
             { name: 'Media Server', icon: '🎬', id: 'media', description: 'Libraries and transcoding' },
             { name: 'Home Assistant', icon: '🏠', id: 'home-assistant', description: 'Smart home status' },
-            { name: 'Power', icon: '🔋', id: 'power', description: 'Power controls and status' },
-            { name: 'VNC Client', icon: '💻', id: 'vnc', description: 'Remote desktop connections' },
+            { name: 'Monitoring', icon: '📊', id: 'monitoring', description: 'System monitoring dashboard' },
+            { name: 'Control Panel', icon: '⚙️', id: 'controlpanel', description: 'System settings and configuration' },
+            { name: 'Theme', icon: '🎨', id: 'theme-customizer', description: 'Customize desktop themes' },
+            { name: 'Settings', icon: '⚙️', id: 'settings', description: 'Desktop settings and preferences' },
+
+            // Additional apps
+            { name: 'Power Management', icon: '🔋', id: 'power', description: 'Power controls and status' },
             { name: 'RDP Client', icon: '🖥️', id: 'rdp', description: 'Windows/Linux remote desktop' }
         ];
     }
@@ -2869,6 +3006,22 @@ function launchApp(appId) {
             return;
         case 'rdp':
             openRDPClient();
+            return;
+        case 'marketplace':
+            openMarketplace();
+            return;
+        case 'layout-tools':
+            openWindowLayoutTools();
+            return;
+        case 'theme-customizer':
+            if (typeof themeCustomizer !== 'undefined') {
+                themeCustomizer.open();
+            } else {
+                console.error('Theme customizer not loaded');
+            }
+            return;
+        case 'settings':
+            openSettings();
             return;
         default:
             title = appId;

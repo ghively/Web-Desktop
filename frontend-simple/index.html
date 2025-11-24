@@ -20,20 +20,24 @@
 
     <!-- Markdown parser -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js"></script>
-    <!-- Fuse.js -->
-    <script src="/lib/fuse.min.js"></script>
-    <!-- xterm.js -->
-    <link rel="stylesheet" href="/lib/xterm.css" />
-    <script src="/lib/xterm.js"></script>
-    <script src="/lib/xterm-addon-fit.js"></script>
-    <!-- Monaco Editor -->
-    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+    <!-- Fuse.js for fuzzy search -->
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
     <!-- xterm.js -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@4.18.0/css/xterm.css" />
     <script src="https://cdn.jsdelivr.net/npm/xterm@4.18.0/lib/xterm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.js"></script>
-    <!-- Fuse.js for fuzzy search -->
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+    <!-- Monaco Editor -->
+    <script>
+        // Store original define function
+        var originalDefine = window.define;
+        // Temporarily disable AMD to prevent conflicts
+        window.define = undefined;
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+    <script>
+        // Restore AMD if it existed
+        window.define = originalDefine;
+    </script>
 </head>
 
 <body>
@@ -153,6 +157,57 @@
                                 <input type="checkbox" id="use-gradient">
                             </div>
                         </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Menubar Transparency</span>
+                            <div class="setting-control">
+                                <input type="range" id="menubar-opacity-slider" min="0.1" max="1" step="0.05" value="0.9">
+                                <span id="menubar-opacity-value">90%</span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Wallpaper Image</span>
+                            <div class="setting-control">
+                                <input type="file" id="wallpaper-file" accept="image/*" style="display: none;">
+                                <button id="wallpaper-upload-btn" class="wallpaper-upload-btn">Choose Image</button>
+                                <button id="wallpaper-clear-btn" class="wallpaper-clear-btn">Clear</button>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Wallpaper Size</span>
+                            <div class="setting-control">
+                                <select id="wallpaper-size">
+                                    <option value="cover">Cover (Stretch)</option>
+                                    <option value="contain">Contain (Fit)</option>
+                                    <option value="100% 100%">Fill (Stretch to Fill)</option>
+                                    <option value="auto">Original Size</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theme Customizer Panel -->
+        <div id="theme-customizer-panel" class="hidden">
+            <div class="theme-customizer-content">
+                <div class="theme-customizer-header">
+                    <h2>Theme Customizer</h2>
+                    <button id="close-theme-customizer" class="window-button close"></button>
+                </div>
+                <div class="theme-customizer-body">
+                    <div class="theme-section">
+                        <h3>Preset Themes</h3>
+                        <div id="preset-themes" class="theme-grid">
+                            <!-- Preset themes will be populated here -->
+                        </div>
+                    </div>
+                    <div class="theme-section">
+                        <h3>Custom Themes</h3>
+                        <div id="custom-themes" class="theme-grid">
+                            <!-- Custom themes will be populated here -->
+                        </div>
+                        <button id="add-custom-theme" class="add-theme-btn">+ Add Custom Theme</button>
                     </div>
                 </div>
             </div>

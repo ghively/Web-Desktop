@@ -36,22 +36,13 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-// Enhanced CORS configuration
+// Simple permissive CORS for development - allows any origin
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'],
+    origin: '*', // Allow any origin
     credentials: false,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: '*', // Allow any headers
 }));
-
-// Security headers
-app.use((_req, res, next) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    next();
-});
 
 // Body parsing with size limits
 app.use(express.json({ limit: '10mb' }));
@@ -406,7 +397,10 @@ process.on('SIGTERM', () => {
 
 const PORT = process.env.PORT || 3001;
 
-server.listen(PORT, () => {
+// Listen on all interfaces to allow access from any hostname
+// @ts-ignore - Express server.listen() accepts hostname parameter at runtime
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server accessible from any hostname on port ${PORT}`);
     console.log('WebSocket terminal endpoint available on the same port');
 });

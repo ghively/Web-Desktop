@@ -519,3 +519,48 @@ body::before {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--surface2);
 }
+
+/* Wallpaper Upload Buttons */
+.wallpaper-upload-btn,
+.wallpaper-clear-btn {
+    padding: 0.375rem 0.75rem;
+    background: var(--surface1);
+    border: var(--border-width) solid var(--overlay0);
+    border-radius: var(--border-radius-sm);
+    color: var(--text);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    margin-right: var(--spacing-sm);
+}
+
+.wallpaper-upload-btn:hover,
+.wallpaper-clear-btn:hover {
+    background: var(--surface2);
+    border-color: var(--blue);
+}
+
+.wallpaper-clear-btn {
+    background: var(--red);
+    color: var(--base);
+}
+
+.wallpaper-clear-btn:hover {
+    background: var(--red);
+    opacity: 0.8;
+}
+
+/* Wallpaper Background Support */
+#desktop-area {
+    position: relative;
+    overflow: hidden;
+    background: var(--mantle);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    transition: background-image var(--transition-normal);
+}
+
+#desktop-area:not(.has-wallpaper) {
+    background-image: none;
+}

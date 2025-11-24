@@ -547,6 +547,12 @@ class ThemeCustomizer {
         const presetContainer = document.getElementById('preset-themes');
         const customContainer = document.getElementById('custom-themes');
 
+        // Check if containers exist (elements might not be loaded yet)
+        if (!presetContainer || !customContainer) {
+            console.warn('Theme customizer containers not found, skipping theme population');
+            return;
+        }
+
         // Populate preset themes
         presetContainer.innerHTML = Object.entries(this.catppuccinThemes).map(([key, theme]) => `
             <div class="theme-card ${this.currentTheme === key ? 'active' : ''}" onclick="themeCustomizer.applyTheme('${key}')">
