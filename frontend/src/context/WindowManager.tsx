@@ -340,11 +340,9 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                                 : globalThis.window.innerHeight * (1 - hRatio) - 16
                         };
                     });
-                    break;
+                }
 
                 case 'grid': {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment
-                    // @ts-ignore: Complex template parsing issue
                     const { rows = 2, cols = 2 } = template.config as { rows?: number; cols?: number };
                     const gap = 8;
                     const startX = gap;
@@ -353,7 +351,6 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                     const availableH = window.innerHeight - 48 - (gap * 2);
                     const cellW = (availableW - (gap * (cols - 1))) / cols;
                     const cellH = (availableH - (gap * (rows - 1))) / rows;
-                    // eslint-enable @typescript-eslint/no-unused-vars
 
                     return prev.map((window, index) => {
                         if (window.isMinimized) return window;
@@ -412,7 +409,6 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                             };
                         }
                     });
-                    break;
                 }
 
                 default:
