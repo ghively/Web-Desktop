@@ -298,21 +298,33 @@ install_system_packages() {
     local success_count=0
     local total_packages=${#PACKAGES[@]}
 
+    echo "DEBUG: Starting package installation loop for ${#PACKAGES[@]} packages..."
     for package in "${PACKAGES[@]}"; do
+        echo "DEBUG: Attempting to install package: $package"
         print_status "Installing: $package..."
 
         # Check if package exists before attempting installation
         if apt-cache show "$package" >/dev/null 2>&1; then
+            echo "DEBUG: Package $package exists in repositories"
+            # Use set +e to prevent script from exiting on package installation failure
+            set +e
             if $INSTALL_CMD "$package" >/dev/null 2>&1; then
                 print_success "✓ $package installed successfully"
                 ((success_count++))
+                echo "DEBUG: Package $package installed successfully"
             else
-                print_warning "⚠ $package failed to install (may be optional)"
+                local exit_code=$?
+                print_warning "⚠ $package failed to install (exit code: $exit_code, may be optional)"
+                echo "DEBUG: Package $package failed with exit code: $exit_code"
             fi
+            set -e  # Re-enable strict error handling
         else
             print_warning "○ $package not available in repositories"
+            echo "DEBUG: Package $package not found in repositories"
         fi
+        echo "DEBUG: Completed processing package: $package, success count: $success_count"
     done
+    echo "DEBUG: Package installation loop completed"
 
     print_success "Essential packages: ${success_count}/${total_packages} installed"
 
