@@ -100,7 +100,7 @@ export interface SnapZone {
     bounds: { x: number; y: number; width: number; height: number };
     action: {
         type: 'tile' | 'maximize' | 'position' | 'layout';
-        config?: Record<string, any>;
+        config?: Record<string, unknown>;
     };
 }
 

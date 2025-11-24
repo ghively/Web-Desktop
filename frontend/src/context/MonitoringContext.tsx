@@ -90,6 +90,14 @@ export function MonitoringProvider({ children, config: initialConfig, autoInitia
     };
   }, [autoInitialize, initialConfig, isInitialized]);
 
+  const refreshData = useCallback(() => {
+    setMetrics(monitoringService.getMetrics());
+    setErrors(monitoringService.getErrors());
+    setInteractions(monitoringService.getInteractions());
+    setHealthChecks(monitoringService.getHealthChecks());
+    setAlerts(monitoringService.getAlerts());
+  }, []);
+
   // Periodically refresh data
   useEffect(() => {
     if (!isInitialized) return;
@@ -102,7 +110,7 @@ export function MonitoringProvider({ children, config: initialConfig, autoInitia
     refreshData();
 
     return () => clearInterval(refreshInterval);
-  }, [isInitialized]);
+  }, [isInitialized, refreshData]);
 
   // System metrics collection
   useEffect(() => {
@@ -116,9 +124,9 @@ export function MonitoringProvider({ children, config: initialConfig, autoInitia
           cores: navigator.hardwareConcurrency || 1,
         },
         memory: 'memory' in performance ? {
-          used: (performance as any).memory.usedJSHeapSize,
-          total: (performance as any).memory.totalJSHeapSize,
-          percentage: ((performance as any).memory.usedJSHeapSize / (performance as any).memory.totalJSHeapSize) * 100,
+          used: (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number } }).memory.usedJSHeapSize,
+          total: (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number } }).memory.totalJSHeapSize,
+          percentage: ((performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number } }).memory.usedJSHeapSize / (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number } }).memory.totalJSHeapSize) * 100,
         } : {
           used: 0,
           total: 0,
@@ -126,8 +134,8 @@ export function MonitoringProvider({ children, config: initialConfig, autoInitia
         },
         network: {
           online: navigator.onLine,
-          downlink: (navigator as any).connection?.downlink,
-          rtt: (navigator as any).connection?.rtt,
+          downlink: (navigator as { connection?: { downlink?: number; rtt?: number } }).connection?.downlink,
+          rtt: (navigator as { connection?: { downlink?: number; rtt?: number } }).connection?.rtt,
         },
       };
 
@@ -153,14 +161,6 @@ export function MonitoringProvider({ children, config: initialConfig, autoInitia
 
     return () => clearInterval(metricsInterval);
   }, [isInitialized]);
-
-  const refreshData = useCallback(() => {
-    setMetrics(monitoringService.getMetrics());
-    setErrors(monitoringService.getErrors());
-    setInteractions(monitoringService.getInteractions());
-    setHealthChecks(monitoringService.getHealthChecks());
-    setAlerts(monitoringService.getAlerts());
-  }, []);
 
   const updateConfig = useCallback((newConfig: Partial<MonitoringConfig>) => {
     const updatedConfig = { ...config, ...newConfig };

@@ -87,6 +87,7 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     // Update customImageUrl when the wallpaper.imageUrl changes, but not when it's changed locally
     useEffect(() => {
         if (settings.wallpaper.imageUrl !== customImageUrl) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCustomImageUrl(settings.wallpaper.imageUrl || '');
         }
     }, [settings.wallpaper.imageUrl, customImageUrl]);

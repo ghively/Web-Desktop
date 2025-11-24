@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Play, Film, Tv, Music, Download, Upload, Settings, Wifi, WifiOff, CheckCircle, AlertTriangle, Clock, RefreshCw, PlayCircle, Pause, MoreHorizontal, Zap, File, Monitor, Activity, Plus, Trash2, Edit, Save, X, Eye, Search, Filter } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Play, Film, Tv, Download, Settings, Wifi, WifiOff, CheckCircle, Clock, RefreshCw, PlayCircle, Pause, Zap, Monitor, Activity, Plus, X } from 'lucide-react';
 
 interface MediaServerConfig {
   jellyfin: {
@@ -166,11 +166,11 @@ interface QueueItem {
   mtime: number;
 }
 
-export default function MediaServer({ windowId }: { windowId?: string }) {
+export default function MediaServer() {
   const [activeTab, setActiveTab] = useState<'overview' | 'libraries' | 'transcoding' | 'sonarr' | 'radarr' | 'sabnzbd' | 'settings'>('overview');
   const [config, setConfig] = useState<MediaServerConfig | null>(null);
-  const [libraries, setLibraries] = useState<any[]>([]);
-  const [selectedLibrary, setSelectedLibrary] = useState<any>(null);
+  const [libraries, setLibraries] = useState<unknown[]>([]);
+  const [selectedLibrary, setSelectedLibrary] = useState<unknown>(null);
   const [libraryItems, setLibraryItems] = useState<MediaItem[]>([]);
   const [transcodingQueue, setTranscodingQueue] = useState<TranscodingJob[]>([]);
   const [activeTranscoding, setActiveTranscoding] = useState<TranscodingJob[]>([]);
@@ -179,7 +179,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
   const [sabnzbdQueue, setSabnzbdQueue] = useState<QueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
-  const [selectedServer, setSelectedServer] = useState<'jellyfin' | 'emby' | 'sonarr' | 'radarr' | 'sabnzbd'>('jellyfin');
+  const [selectedServer] = useState<'jellyfin' | 'emby' | 'sonarr' | 'radarr' | 'sabnzbd'>('jellyfin');
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [configForm, setConfigForm] = useState({
     jellyfin: { url: '', apiKey: '', enabled: false },
@@ -208,7 +208,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
   // Fetch data
   useEffect(() => {
     fetchConfig();
-  }, []);
+  }, [fetchConfig]);
 
   useEffect(() => {
     if (config) {
@@ -220,7 +220,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
     }
   }, [activeTab, config]);
 
-  const fetchConfig = async () => {
+  const fetchConfig = useCallback(async () => {
     try {
       const response = await fetch('/api/media-server/config');
       const data = await response.json();
@@ -238,7 +238,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
         const handbrakeTest = await fetch('/api/media-server/handbrake/test');
         const handbrakeData = await handbrakeTest.json();
         setHandbrakeAvailable(handbrakeData.success);
-      } catch (error) {
+      } catch {
         setHandbrakeAvailable(false);
       }
 
@@ -255,7 +255,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
     } catch (error) {
       console.error('Failed to fetch media server config:', error);
     }
-  };
+  }, [handbrakeAvailable]);
 
   const fetchLibraries = async () => {
     setIsLoading(true);
@@ -270,7 +270,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
     }
   };
 
-  const fetchLibraryItems = async (library: any) => {
+  const fetchLibraryItems = async (library: Record<string, unknown>) => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/media-server/libraries/${library.libraryId}/items?server=${library.server}`);
@@ -345,7 +345,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
         success: data.success,
         message: data.success ? `Connected successfully! Version: ${data.version}` : data.error
       });
-    } catch (error: any) {
+    } catch (error) {
       setTestResult({
         success: false,
         message: error.message || 'Connection test failed'
@@ -367,7 +367,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
       await fetchConfig();
       setShowConfigDialog(false);
       setTestResult(null);
-    } catch (error: any) {
+    } catch (error) {
       setTestResult({
         success: false,
         message: `Failed to save configuration: ${error.message}`
@@ -389,7 +389,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
       if (data.jobId) {
         await fetchTranscodingStatus();
       }
-    } catch (error: any) {
+    } catch (error) {
       alert(`Failed to start transcoding: ${error.message}`);
     }
   };
@@ -400,7 +400,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
         method: 'POST'
       });
       await fetchSeries();
-    } catch (error: any) {
+    } catch (error) {
       alert(`Failed to refresh series: ${error.message}`);
     }
   };
@@ -411,7 +411,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
         method: 'POST'
       });
       await fetchMovies();
-    } catch (error: any) {
+    } catch (error) {
       alert(`Failed to refresh movie: ${error.message}`);
     }
   };
@@ -448,7 +448,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
     return enabled ? Icon : WifiOff;
   };
 
-  const getServerStatus = (serverConfig: any) => {
+  const getServerStatus = (serverConfig: Record<string, unknown>) => {
     if (!serverConfig.url || !serverConfig.apiKey) return 'Not configured';
     if (serverConfig.enabled) return 'Connected';
     return 'Disabled';
@@ -465,7 +465,7 @@ export default function MediaServer({ windowId }: { windowId?: string }) {
 
         {/* Server Status */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-          {['jellyfin', 'emby', 'sonarr', 'radarr', 'sabnzbd'].map((server: any) => {
+          {['jellyfin', 'emby', 'sonarr', 'radarr', 'sabnzbd'].map((server: string) => {
             const serverConfig = config?.[server] || { enabled: false };
             const Icon = getServerIcon(server, serverConfig.enabled);
             const status = getServerStatus(serverConfig);

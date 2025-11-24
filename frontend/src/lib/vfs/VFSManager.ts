@@ -1,22 +1,41 @@
 import { VFSManager, VFSAdapter, VFSMount, VFSNode, FileOperation, VFSTransaction, FileWatcher, FileWatchEvent, VFSError, VFSErrorCodes, VFSAdapterCapabilities, FilePermissions } from '../../types/vfs';
 
-class SimpleEmitter {
-  private listeners: Map<string, Array<(...args: any[]) => void>> = new Map();
+// Use global Buffer from globals.d.ts
+declare global {
+  var Buffer: {
+    from(data: string | ArrayBuffer | Uint8Array, encoding?: string): Buffer;
+    alloc(size: number): Buffer;
+    byteLength(string: string, encoding?: string): number;
+    isBuffer(obj: unknown): boolean;
+  };
 
-  on(event: string, listener: (...args: any[]) => void): this {
+  interface Buffer {
+    length: number;
+    toString(encoding?: string): string;
+    toJSON(): { type: 'Buffer', data: number[] };
+    write(string: string, offset?: number, length?: number, encoding?: string): number;
+    slice(start?: number, end?: number): Buffer;
+    copy(targetBuffer: Buffer, targetStart?: number, sourceStart?: number, sourceEnd?: number): number;
+  }
+}
+
+class SimpleEmitter {
+  private listeners: Map<string, Array<(...args: unknown[]) => void>> = new Map();
+
+  on(event: string, listener: (...args: unknown[]) => void): this {
     const arr = this.listeners.get(event) || [];
     arr.push(listener);
     this.listeners.set(event, arr);
     return this;
   }
 
-  off(event: string, listener: (...args: any[]) => void): this {
+  off(event: string, listener: (...args: unknown[]) => void): this {
     const arr = this.listeners.get(event) || [];
     this.listeners.set(event, arr.filter(l => l !== listener));
     return this;
   }
 
-  emit(event: string, ...args: any[]): boolean {
+  emit(event: string, ...args: unknown[]): boolean {
     const arr = this.listeners.get(event) || [];
     arr.forEach(fn => fn(...args));
     return arr.length > 0;
@@ -29,7 +48,7 @@ export class WebDesktopVFSManager extends SimpleEmitter implements VFSManager {
   private watchers: Map<string, FileWatcher[]> = new Map();
   private transactions: Map<string, VFSTransaction> = new Map();
   private operations: Map<string, FileOperation> = new Map();
-  private cache: Map<string, { data: any; timestamp: number; ttl: number }> = new Map();
+  private cache: Map<string, { data: unknown; timestamp: number; ttl: number }> = new Map();
   private cacheStats = { hits: 0, misses: 0, size: 0 };
 
   constructor() {
@@ -73,7 +92,7 @@ export class WebDesktopVFSManager extends SimpleEmitter implements VFSManager {
   }
 
   // Mount management
-  async mount(path: string, adapter: VFSAdapter, options: Record<string, any> = {}): Promise<VFSMount> {
+  async mount(path: string, adapter: VFSAdapter, options: Record<string, unknown> = {}): Promise<VFSMount> {
     if (this.mounts.has(path)) {
       throw new VFSError(`Mount point already exists: ${path}`, VFSErrorCodes.MOUNT_POINT_EXISTS, path);
     }

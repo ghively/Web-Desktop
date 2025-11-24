@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useVirtualDesktopManager } from '../context/VirtualDesktopManager';
-import { Monitor, Plus, X, Settings, Layers, Grid, Maximize2 } from 'lucide-react';
+import { Monitor, Plus, X, Settings, Layers } from 'lucide-react';
 
 interface DesktopThumbnailProps {
-    desktop: any;
+    desktop: Record<string, unknown>;
     isActive: boolean;
     onClick: () => void;
     onDelete: () => void;
@@ -117,6 +117,15 @@ export const VirtualDesktops: React.FC = () => {
     const [isCreatingDesktop, setIsCreatingDesktop] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const handleCreateDesktop = useCallback(() => {
+        setIsCreatingDesktop(true);
+        const name = prompt('Enter desktop name:');
+        if (name) {
+            createDesktop(name);
+        }
+        setIsCreatingDesktop(false);
+    }, [createDesktop]);
+
     // Handle keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -135,16 +144,7 @@ export const VirtualDesktops: React.FC = () => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
-    const handleCreateDesktop = () => {
-        setIsCreatingDesktop(true);
-        const name = prompt('Enter desktop name:');
-        if (name) {
-            createDesktop(name);
-        }
-        setIsCreatingDesktop(false);
-    };
+    }, [handleCreateDesktop]);
 
     const handleDeleteDesktop = (desktopId: string) => {
         if (confirm('Are you sure you want to delete this desktop?')) {
@@ -176,7 +176,7 @@ export const VirtualDesktops: React.FC = () => {
             try {
                 importConfiguration(event.target?.result as string);
                 alert('Configuration imported successfully!');
-            } catch (error) {
+            } catch {
                 alert('Failed to import configuration: Invalid format');
             }
         };

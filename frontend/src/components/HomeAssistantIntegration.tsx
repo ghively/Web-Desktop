@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Home, Power, Lightbulb, Thermometer, DoorOpen, Camera, Lock, Waves, Wind, Settings, Play, Pause, AlertTriangle, CheckCircle, Wifi, WifiOff, RefreshCw, Globe, MapPin, Clock, Activity, Code, Zap, Droplets, Sun, Moon, Cloud } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Home, Power, Lightbulb, Thermometer, DoorOpen, Camera, Lock, Wind, Settings, Play, Pause, AlertTriangle, CheckCircle, Wifi, WifiOff, RefreshCw, MapPin, Clock, Activity, Code, Zap, Droplets, Sun, Cloud } from 'lucide-react';
 
 interface HomeAssistantConfig {
   url: string;
@@ -20,7 +20,7 @@ interface EntityState {
   state: string;
   last_changed: string;
   last_updated: string;
-  attributes: Record<string, any>;
+  attributes: Record<string, unknown>;
   context: {
     id: string;
     user_id?: string;
@@ -54,9 +54,9 @@ interface Automation {
   name: string;
   description?: string;
   mode: 'single' | 'restart' | 'queued' | 'parallel' | 'max';
-  trigger: any[];
-  condition: any[];
-  action: any[];
+  trigger: Record<string, unknown>[];
+  condition: Record<string, unknown>[];
+  action: Record<string, unknown>[];
   last_triggered?: string;
   current: number;
   max: number;
@@ -68,14 +68,14 @@ interface Script {
   name: string;
   description?: string;
   mode: 'single' | 'restart' | 'queued' | 'parallel' | 'max';
-  sequence: any[];
+  sequence: Record<string, unknown>[];
   last_triggered?: string;
   current: number;
   max: number;
   is_enabled: boolean;
 }
 
-export default function HomeAssistantIntegration({ windowId }: { windowId?: string }) {
+export default function HomeAssistantIntegration() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'devices' | 'automations' | 'scripts' | 'settings'>('dashboard');
   const [config, setConfig] = useState<HomeAssistantConfig | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -99,7 +99,7 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
   // Load configuration
   useEffect(() => {
     fetchConfig();
-  }, []);
+  }, [fetchConfig]);
 
   // Set up event streaming when connected
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
     };
   }, [isConnected]);
 
-  const fetchConfig = async () => {
+  const fetchConfig = useCallback(async () => {
     try {
       const response = await fetch('/api/home-assistant/config');
       const data = await response.json();
@@ -136,7 +136,7 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
     } catch (error) {
       console.error('Failed to fetch Home Assistant config:', error);
     }
-  };
+  }, []);
 
   const fetchStatus = async () => {
     try {
@@ -148,7 +148,7 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
     }
   };
 
-  const fetchStates = async () => {
+  const fetchStates = useCallback(async () => {
     if (!isConnected) return;
 
     setIsLoading(true);
@@ -161,9 +161,9 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isConnected]);
 
-  const fetchDevices = async () => {
+  const fetchDevices = useCallback(async () => {
     if (!isConnected) return;
 
     setIsLoading(true);
@@ -176,9 +176,9 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isConnected]);
 
-  const fetchAreas = async () => {
+  const fetchAreas = useCallback(async () => {
     if (!isConnected) return;
 
     setIsLoading(true);
@@ -191,9 +191,9 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isConnected]);
 
-  const fetchAutomations = async () => {
+  const fetchAutomations = useCallback(async () => {
     if (!isConnected) return;
 
     setIsLoading(true);
@@ -206,9 +206,9 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isConnected]);
 
-  const fetchScripts = async () => {
+  const fetchScripts = useCallback(async () => {
     if (!isConnected) return;
 
     setIsLoading(true);
@@ -221,7 +221,7 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isConnected]);
 
   const setupEventStream = () => {
     if (eventSourceRef.current) {
@@ -263,7 +263,7 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
         success: data.success,
         message: data.success ? `Connected successfully! Version: ${data.version}` : data.error
       });
-    } catch (error: any) {
+    } catch (error) {
       setTestResult({
         success: false,
         message: error.message || 'Connection test failed'
@@ -291,7 +291,7 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
         const error = await response.json();
         throw new Error(error.error);
       }
-    } catch (error: any) {
+    } catch (error) {
       setTestResult({
         success: false,
         message: error.message || 'Failed to save configuration'
@@ -301,7 +301,7 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
     }
   };
 
-  const callService = async (domain: string, service: string, serviceData?: any) => {
+  const callService = async (domain: string, service: string, serviceData?: Record<string, unknown>) => {
     try {
       await fetch(`/api/home-assistant/services/${domain}/${service}`, {
         method: 'POST',
@@ -330,7 +330,7 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
     await callService('script', entityId.replace('script.', ''));
   };
 
-  const getEntityIcon = (entityId: string, attributes?: any) => {
+  const getEntityIcon = (entityId: string) => {
     const domain = entityId.split('.')[0];
 
     const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
@@ -356,10 +356,7 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
     return states.filter(state => state.entity_id.startsWith(domain));
   };
 
-  const getEntitiesByArea = (areaId: string) => {
-    return states.filter(state => state.attributes?.area_id === areaId);
-  };
-
+  
   useEffect(() => {
     fetchStatus();
     const interval = setInterval(fetchStatus, 5000);
@@ -374,7 +371,7 @@ export default function HomeAssistantIntegration({ windowId }: { windowId?: stri
       if (activeTab === 'automations') fetchAutomations();
       if (activeTab === 'scripts') fetchScripts();
     }
-  }, [isConnected, activeTab]);
+  }, [isConnected, activeTab, fetchStates, fetchDevices, fetchAreas, fetchAutomations, fetchScripts]);
 
   const commonDomains = ['light', 'switch', 'cover', 'climate', 'sensor', 'binary_sensor', 'lock'];
 

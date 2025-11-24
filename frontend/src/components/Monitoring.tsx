@@ -1,10 +1,6 @@
 import React from 'react';
 import { MonitoringDashboard } from './MonitoringDashboard';
 import { useMonitoring } from '../hooks/useMonitoring';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Activity, AlertTriangle, CheckCircle, Settings } from 'lucide-react';
 
 interface MonitoringProps {
   className?: string;

@@ -4,10 +4,15 @@ import {
   ErrorEvent,
   UserInteraction,
   HealthCheck,
-  SystemMetrics,
   MonitoringAlert,
   defaultMonitoringConfig
 } from './MonitoringConfig';
+
+declare global {
+  namespace NodeJS {
+    interface Timeout { }
+  }
+}
 
 export class MonitoringService {
   private config: MonitoringConfig;
@@ -60,7 +65,7 @@ export class MonitoringService {
       const entries = list.getEntries();
       entries.forEach(entry => {
         if (entry.entryType === 'navigation') {
-          const nav: any = entry as any;
+          const nav = entry as PerformanceNavigationTiming;
           const domEnd = Number(nav.domContentLoadedEventEnd || 0);
           const domStart = Number(nav.domContentLoadedEventStart || 0);
           const fetchStart = Number(nav.fetchStart || 0);
@@ -177,14 +182,14 @@ export class MonitoringService {
           id: this.generateId(),
           timestamp: Date.now(),
           type: 'network',
-          message: `Failed to load resource: ${(event.target as any)?.src || (event.target as any)?.href}`,
+          message: `Failed to load resource: ${(event.target as { src?: string; href?: string })?.src || (event.target as { src?: string; href?: string })?.href}`,
           userAgent: navigator.userAgent,
           url: window.location.href,
           sessionId: this.sessionId,
           severity: 'medium',
           context: {
             element: (event.target as HTMLElement | null)?.tagName,
-            source: (event.target as any)?.src || (event.target as any)?.href,
+            source: (event.target as { src?: string; href?: string })?.src || (event.target as { src?: string; href?: string })?.href,
           }
         });
       }
@@ -246,7 +251,7 @@ export class MonitoringService {
     // Monitor memory usage (if available)
     if ('memory' in performance) {
       const checkMemory = () => {
-        const memory = (performance as any).memory;
+        const memory = (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
         this.recordMetric({
           id: this.generateId(),
           timestamp: Date.now(),
@@ -483,7 +488,7 @@ export class MonitoringService {
     return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  private determineErrorSeverity(error: any): 'low' | 'medium' | 'high' | 'critical' {
+  private determineErrorSeverity(error: Error | { message?: string }): 'low' | 'medium' | 'high' | 'critical' {
     if (!error) return 'medium';
 
     const message = error.message || '';
@@ -529,7 +534,7 @@ export class MonitoringService {
       const flushTimer = setInterval(() => {
         this.flushMetrics();
       }, this.config.performanceMonitoring.flushInterval);
-      this.timers.push(flushTimer as any);
+      this.timers.push(flushTimer as unknown);
     }
 
     // Perform health checks periodically
@@ -540,7 +545,7 @@ export class MonitoringService {
           return response.ok;
         });
       }, this.config.healthMonitoring.checkInterval);
-      this.timers.push(healthTimer as any);
+      this.timers.push(healthTimer as unknown);
     }
   }
 

@@ -49,7 +49,7 @@ export const AppInstaller = ({ app, onClose, onInstallComplete, backendUrl }: Ap
         if (modalRef.current) {
             const focusableElements = modalRef.current.querySelectorAll(
                 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-            ) as NodeListOf<HTMLElement>;
+            ) as HTMLElement[];
 
             if (focusableElements.length > 0) {
                 focusableElements[0].focus();

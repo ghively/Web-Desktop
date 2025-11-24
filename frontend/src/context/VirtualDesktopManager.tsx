@@ -2,18 +2,16 @@ import React, { createContext, useState, useEffect, useCallback, useRef, useCont
 import type { ReactNode } from 'react';
 import type {
     VirtualDesktop,
-    WindowLayout,
     LayoutTemplate,
     WindowGroup,
     VirtualDesktopSettings,
     DesktopSnapshot,
-    WindowSnapshot,
     SnapZone,
     VirtualDesktopManagerContextType
 } from '../types/virtualDesktops';
 import { DEFAULT_LAYOUT_TEMPLATES, DEFAULT_VIRTUAL_DESKTOP_SETTINGS } from '../types/virtualDesktops';
 
-export const VirtualDesktopManagerContext = createContext<VirtualDesktopManagerContextType | undefined>(undefined);
+const VirtualDesktopManagerContext = createContext<VirtualDesktopManagerContextType | undefined>(undefined);
 
 export const VirtualDesktopManagerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [desktops, setDesktops] = useState<VirtualDesktop[]>([]);
@@ -23,6 +21,19 @@ export const VirtualDesktopManagerProvider: React.FC<{ children: ReactNode }> = 
     const [enableSnapping, setEnableSnapping] = useState(true);
     const [settings, setSettings] = useState<VirtualDesktopSettings>(DEFAULT_VIRTUAL_DESKTOP_SETTINGS);
     const snapshots = useRef<Map<string, DesktopSnapshot>>(new Map());
+
+    // Switch to a desktop (defined early to avoid hoisting issues)
+    const switchDesktop = useCallback((desktopId: string) => {
+        const desktop = desktops.find(d => d.id === desktopId);
+        if (!desktop) return;
+
+        setCurrentDesktopId(desktopId);
+        setDesktops(prev => prev.map(d => ({
+            ...d,
+            isActive: d.id === desktopId,
+            lastAccessed: d.id === desktopId ? Date.now() : d.lastAccessed
+        })));
+    }, [desktops]);
 
     // Initialize with default desktops
     useEffect(() => {
@@ -45,8 +56,12 @@ export const VirtualDesktopManagerProvider: React.FC<{ children: ReactNode }> = 
             lastAccessed: Date.now()
         }));
 
-        setDesktops(defaultDesktops);
-        setCurrentDesktopId(defaultDesktops[0]?.id || null);
+        setTimeout(() => {
+            setDesktops(defaultDesktops);
+            if (defaultDesktops[0]?.id) {
+                setCurrentDesktopId(defaultDesktops[0].id);
+            }
+        }, 0);
     }, [settings.desktopCount]);
 
     // Keyboard shortcuts for desktop switching
@@ -83,7 +98,9 @@ export const VirtualDesktopManagerProvider: React.FC<{ children: ReactNode }> = 
         try {
             const saved = localStorage.getItem('virtual-desktop-settings');
             if (saved) {
-                setSettings(prev => ({ ...prev, ...JSON.parse(saved) }));
+                setTimeout(() => {
+                    setSettings(prev => ({ ...prev, ...JSON.parse(saved) }));
+                }, 0);
             }
         } catch (error) {
             console.warn('Failed to load virtual desktop settings:', error);
@@ -138,24 +155,6 @@ export const VirtualDesktopManagerProvider: React.FC<{ children: ReactNode }> = 
             return reindexed;
         });
     }, [currentDesktopId, desktops.length]);
-
-    // Switch to a desktop
-    const switchDesktop = useCallback((desktopId: string) => {
-        const desktop = desktops.find(d => d.id === desktopId);
-        if (!desktop) return;
-
-        // Save snapshot of current desktop
-        if (currentDesktopId) {
-            saveDesktopSnapshot(currentDesktopId);
-        }
-
-        setCurrentDesktopId(desktopId);
-        setDesktops(prev => prev.map(d => ({
-            ...d,
-            isActive: d.id === desktopId,
-            lastAccessed: d.id === desktopId ? Date.now() : d.lastAccessed
-        })));
-    }, [currentDesktopId, desktops]);
 
     // Move window to desktop
     const moveWindowToDesktop = useCallback((windowId: string, desktopId: string) => {
@@ -384,6 +383,8 @@ export const VirtualDesktopManagerProvider: React.FC<{ children: ReactNode }> = 
         </VirtualDesktopManagerContext.Provider>
     );
 };
+
+export { VirtualDesktopManagerContext };
 
 export const useVirtualDesktopManager = (): VirtualDesktopManagerContextType => {
     const ctx = useContext(VirtualDesktopManagerContext);

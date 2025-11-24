@@ -2,6 +2,25 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { VFSManager, VFSNode, VFSMount, FileOperation, FileWatchEvent, VFSAdapter, FileWatcher } from '../types/vfs';
 import { WebDesktopVFSManager } from '../lib/vfs/VFSManager';
 
+// Use global Buffer from globals.d.ts
+declare global {
+  var Buffer: {
+    from(data: string | ArrayBuffer | Uint8Array, encoding?: string): Buffer;
+    alloc(size: number): Buffer;
+    byteLength(string: string, encoding?: string): number;
+    isBuffer(obj: unknown): boolean;
+  };
+
+  interface Buffer {
+    length: number;
+    toString(encoding?: string): string;
+    toJSON(): { type: 'Buffer', data: number[] };
+    write(string: string, offset?: number, length?: number, encoding?: string): number;
+    slice(start?: number, end?: number): Buffer;
+    copy(targetBuffer: Buffer, targetStart?: number, sourceStart?: number, sourceEnd?: number): number;
+  }
+}
+
 // Create a global VFS instance
 let vfsManager: VFSManager | null = null;
 
@@ -30,7 +49,7 @@ export interface UseVFSReturn {
   move: (src: string, dest: string) => Promise<FileOperation>;
 
   // Mount management
-  mount: (path: string, adapter: any, options?: Record<string, any>) => Promise<VFSMount>;
+  mount: (path: string, adapter: Record<string, unknown>, options?: Record<string, unknown>) => Promise<VFSMount>;
   unmount: (path: string) => Promise<void>;
   listMounts: () => VFSMount[];
 
@@ -229,7 +248,7 @@ export const useVFS = (options: UseVFSOptions = {}): UseVFSReturn => {
   }, [vfs, currentPath, loadDirectory]);
 
   // Mount management
-  const mount = useCallback(async (path: string, adapter: any, options?: Record<string, any>): Promise<VFSMount> => {
+  const mount = useCallback(async (path: string, adapter: Record<string, unknown>, options?: Record<string, unknown>): Promise<VFSMount> => {
     return await vfs.mount(path, adapter, options);
   }, [vfs]);
 
@@ -261,7 +280,7 @@ export const useVFS = (options: UseVFSOptions = {}): UseVFSReturn => {
   }, []); // Remove dependencies to prevent infinite loop
 
   return {
-    getAdapter: (name: string) => (vfs as any).getAdapter ? (vfs as any).getAdapter(name) : null,
+    getAdapter: (name: string) => (vfs as VFSManager & { getAdapter?: (name: string) => VFSAdapter | null }).getAdapter ? (vfs as VFSManager & { getAdapter?: (name: string) => VFSAdapter | null }).getAdapter(name) : null,
     // File operations
     readFile,
     writeFile,

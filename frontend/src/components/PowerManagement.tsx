@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Power, Zap, Battery, BatteryCharging, Thermometer, Cpu, Sun, Moon, Settings, AlertTriangle, CheckCircle, Clock, Activity, Monitor, Wifi, WifiOff, Play, Pause, Plus, Trash2, Edit, Save, X, RefreshCw } from 'lucide-react';
+import { Power, Zap, Battery, BatteryCharging, Thermometer, Cpu, Sun, Moon, Settings, AlertTriangle, Clock, Activity, Play, Pause, Plus, Trash2, Edit, RefreshCw } from 'lucide-react';
 
 interface PowerStatus {
   battery: {
@@ -73,7 +73,8 @@ interface PowerPlan {
   };
 }
 
-export default function PowerManagement({ windowId }: { windowId?: string }) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function PowerManagement({ windowId: _windowId }: { windowId?: string }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'battery' | 'thermal' | 'plans' | 'rules'>('overview');
   const [status, setStatus] = useState<PowerStatus | null>(null);
   const [config, setConfig] = useState<PowerConfig | null>(null);
@@ -192,7 +193,7 @@ export default function PowerManagement({ windowId }: { windowId?: string }) {
 
       // Success message (note: for shutdown/reboot, this may not display)
       console.log(`${action} initiated successfully`);
-    } catch (error: any) {
+    } catch (error) {
       alert(`Failed to ${action}: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -229,7 +230,7 @@ export default function PowerManagement({ windowId }: { windowId?: string }) {
       }
 
       await fetchStatus();
-    } catch (error: any) {
+    } catch (error) {
       alert(`Failed to set CPU governor: ${error.message}`);
     }
   };
@@ -272,7 +273,7 @@ export default function PowerManagement({ windowId }: { windowId?: string }) {
         conditions: {},
         action: 'suspend'
       });
-    } catch (error: any) {
+    } catch (error) {
       alert(`Failed to save rule: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -296,7 +297,7 @@ export default function PowerManagement({ windowId }: { windowId?: string }) {
       });
 
       await fetchConfig();
-    } catch (error: any) {
+    } catch (error) {
       alert(`Failed to delete rule: ${error.message}`);
     }
   };
@@ -317,7 +318,7 @@ export default function PowerManagement({ windowId }: { windowId?: string }) {
       });
 
       await fetchConfig();
-    } catch (error: any) {
+    } catch (error) {
       alert(`Failed to update rule: ${error.message}`);
     }
   };
@@ -329,7 +330,7 @@ export default function PowerManagement({ windowId }: { windowId?: string }) {
         method: 'POST'
       });
       setIsMonitoring(enabled);
-    } catch (error: any) {
+    } catch (error) {
       alert(`Failed to ${action} monitoring: ${error.message}`);
     }
   };
@@ -923,7 +924,7 @@ export default function PowerManagement({ windowId }: { windowId?: string }) {
                           {Object.entries(rule.conditions).map(([key, value]) => {
                               if (!value) return null;
 
-                              const val: any = value as any;
+                              const val = value as Record<string, unknown>;
                               let conditionText = '';
                               switch (key) {
                                 case 'batteryLevel':
@@ -987,7 +988,7 @@ export default function PowerManagement({ windowId }: { windowId?: string }) {
                 <label className="block text-sm font-medium mb-2">Action</label>
                 <select
                   value={newRule.action || 'suspend'}
-                  onChange={(e) => setNewRule({ ...newRule, action: e.target.value as any })}
+                  onChange={(e) => setNewRule({ ...newRule, action: e.target.value as 'suspend' | 'hibernate' | 'shutdown' })}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none"
                 >
                   <option value="suspend">Suspend</option>
@@ -1014,7 +1015,8 @@ export default function PowerManagement({ windowId }: { windowId?: string }) {
                             }
                           });
                         } else {
-                          const { batteryLevel, ...rest } = newRule.conditions || {};
+                          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                          const { batteryLevel: _batteryLevel, ...rest } = newRule.conditions || {};
                           setNewRule({ ...newRule, conditions: rest });
                         }
                       }}
@@ -1055,7 +1057,8 @@ export default function PowerManagement({ windowId }: { windowId?: string }) {
                             }
                           });
                         } else {
-                          const { temperature, ...rest } = newRule.conditions || {};
+                          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                          const { temperature: _temperature, ...rest } = newRule.conditions || {};
                           setNewRule({ ...newRule, conditions: rest });
                         }
                       }}

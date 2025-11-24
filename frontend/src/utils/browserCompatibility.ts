@@ -8,6 +8,16 @@ interface EventListener {
   (evt: Event): void;
 }
 
+interface AddEventListenerOptions {
+  capture?: boolean;
+  once?: boolean;
+  passive?: boolean;
+}
+
+interface XMLHttpRequestBodyInit {
+  data?: string | Document | Blob | FormData | URLSearchParams | ReadableStream<Uint8Array> | ArrayBufferView | ArrayBuffer;
+}
+
 // Browser feature detection
 export const BrowserFeatures = {
   // CSS features
@@ -100,11 +110,11 @@ export const BrowserFeatures = {
   // Fullscreen API
   fullscreen: () => !!(
     document.fullscreenEnabled ||
-    // @ts-expect-error - WebKit-specific fullscreen API
+    // @ts-expect-error - legacy browser fullscreen API - WebKit-specific fullscreen API
     document.webkitFullscreenEnabled ||
-    // @ts-expect-error - Mozilla-specific fullscreen API
+    // @ts-expect-error - legacy browser fullscreen API - Mozilla-specific fullscreen API
     document.mozFullScreenEnabled ||
-    // @ts-expect-error - Microsoft-specific fullscreen API
+    // @ts-expect-error - legacy browser fullscreen API - Microsoft-specific fullscreen API
     document.msFullscreenEnabled
   ),
 };
@@ -245,7 +255,7 @@ export const Polyfills = {
     }
 
     // Fallback to XMLHttpRequest if fetch is not available
-    const fetchPolyfill = (url: string, options?: RequestInit): Promise<Response> => {
+    const fetchPolyfill = (url: string, options?: Record<string, unknown>): Promise<Response> => {
       const opts = options || {};
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -279,7 +289,7 @@ export const Polyfills = {
         };
 
         xhr.onerror = () => reject(new Error('Network error'));
-        xhr.send(opts.body as any);
+        xhr.send(opts.body as XMLHttpRequestBodyInit);
       });
     };
     return fetchPolyfill;
@@ -294,7 +304,7 @@ export const Polyfills = {
     fullscreenchange: string;
     fullscreenerror: string;
   } => {
-    const element = document.documentElement as any;
+    const element = document.documentElement as HTMLElement;
     const requestFn =
       element.requestFullscreen ||
       element.webkitRequestFullscreen ||
@@ -303,29 +313,29 @@ export const Polyfills = {
 
     const exitFn =
       document.exitFullscreen ||
-      // @ts-expect-error
+      // @ts-expect-error - legacy browser fullscreen API
       document.webkitExitFullscreen ||
-      // @ts-expect-error
+      // @ts-expect-error - legacy browser fullscreen API
       document.mozCancelFullScreen ||
-      // @ts-expect-error
+      // @ts-expect-error - legacy browser fullscreen API
       document.msExitFullscreen;
 
     const fullscreenElement =
       document.fullscreenElement ||
-      // @ts-expect-error
+      // @ts-expect-error - legacy browser fullscreen API
       document.webkitFullscreenElement ||
-      // @ts-expect-error
+      // @ts-expect-error - legacy browser fullscreen API
       document.mozFullScreenElement ||
-      // @ts-expect-error
+      // @ts-expect-error - legacy browser fullscreen API
       document.msFullscreenElement;
 
     const fullscreenEnabled =
       document.fullscreenEnabled ||
-      // @ts-expect-error
+      // @ts-expect-error - legacy browser fullscreen API
       document.webkitFullscreenEnabled ||
-      // @ts-expect-error
+      // @ts-expect-error - legacy browser fullscreen API
       document.mozFullScreenEnabled ||
-      // @ts-expect-error
+      // @ts-expect-error - legacy browser fullscreen API
       document.msFullscreenEnabled;
 
     const fullscreenchange =
@@ -420,7 +430,7 @@ export const initializeCompatibility = (): void => {
   if (!BrowserFeatures.passiveEvents()) body.classList.add('no-passive-events');
 
   // Store compatibility report in development
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     const report = CompatibilityWarnings.getCompatibilityReport();
     console.group('Browser Compatibility Report');
     console.log('Browser:', `${report.browser} ${report.version}`);
@@ -430,7 +440,7 @@ export const initializeCompatibility = (): void => {
     console.groupEnd();
 
     // Store in window for debugging
-    (window as any).__BROWSER_COMPATIBILITY = report;
+    (window as { __BROWSER_COMPATIBILITY?: unknown }).__BROWSER_COMPATIBILITY = report;
   }
 };
 

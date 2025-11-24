@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HardDrive, Search, Filter, Trash2, Download, Upload, AlertTriangle, CheckCircle, Clock, Database, FileText, Music, Film, Tv, ImageIcon, Settings, RefreshCw, FolderOpen, Shield, Zap, TrendingUp } from 'lucide-react';
+import { HardDrive, Search, AlertTriangle, CheckCircle, Database, FileText, Music, Film, Tv, ImageIcon, RefreshCw, Shield, Zap } from 'lucide-react';
 
 interface StorageStats {
   totalSpace: number;
@@ -55,7 +55,7 @@ const SmartStorage: React.FC<{ windowId?: string }> = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState<StorageStats | null>(null);
   const [duplicates, setDuplicates] = useState<Duplicate[]>([]);
-  const [storagePools, setStoragePools] = useState<StoragePool[]>([]);
+  const [, setStoragePools] = useState<StoragePool[]>([]);
   const [selectedDuplicates, setSelectedDuplicates] = useState<string[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
@@ -109,10 +109,10 @@ const SmartStorage: React.FC<{ windowId?: string }> = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ path: process.env.HOME }),
+        body: JSON.stringify({ path: '/home/user' }),
       });
 
-      const result = await response.json();
+      await response.json();
 
       // Update progress
       for (let i = 0; i <= 100; i += 10) {

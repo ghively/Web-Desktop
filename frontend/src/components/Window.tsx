@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { Rnd } from 'react-rnd';
 import { X, Minus, Square, Monitor, Layers } from 'lucide-react';
 import { useWindowManager, useSettings, useVirtualDesktopManager, type WindowState } from '../context/exports';
@@ -222,7 +222,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
                     </div>
                     <div className="flex items-center gap-2">
                         {/* Window snapping controls */}
-                        {layoutMode !== ('tiling' as any) && (
+                        {layoutMode !== 'tiling' && (
                             <div className="flex items-center gap-1 mr-2">
                                 <button
                                     onClick={(e) => { e.stopPropagation();

@@ -161,7 +161,7 @@ export const accessibilityUtils = {
     trapFocus: (container: HTMLElement): (() => void) => {
       const focusableElements = container.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      ) as NodeListOf<HTMLElement>;
+      ) as HTMLElement[];
 
       const firstFocusable = focusableElements[0];
       const lastFocusable = focusableElements[focusableElements.length - 1];

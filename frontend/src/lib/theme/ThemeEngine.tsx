@@ -110,12 +110,12 @@ export interface ThemeComponent {
   id: string;
   type: 'button' | 'input' | 'card' | 'modal' | 'sidebar' | 'header' | 'window';
   name: string;
-  styles: Record<string, any>;
-  overrides: Record<string, any>;
+  styles: Record<string, unknown>;
+  overrides: Record<string, unknown>;
 }
 
 // Predefined themes
-export const defaultLightTheme: ThemeConfig = {
+const defaultLightTheme: ThemeConfig = {
   id: 'default-light',
   name: 'Default Light',
   colors: {
@@ -195,7 +195,7 @@ export const defaultLightTheme: ThemeConfig = {
   isDark: false
 };
 
-export const defaultDarkTheme: ThemeConfig = {
+const defaultDarkTheme: ThemeConfig = {
   ...defaultLightTheme,
   id: 'default-dark',
   name: 'Default Dark',
@@ -634,8 +634,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const engine = ThemeEngine.getInstance();
 
     // Load saved themes
-    setTheme(engine.getCurrentTheme());
-    setUIThemeState(engine.getUITheme());
+    setTimeout(() => {
+      setTheme(engine.getCurrentTheme());
+      setUIThemeState(engine.getUITheme());
+    }, 0);
 
     // Subscribe to theme changes
     const unsubscribe = engine.subscribe((newTheme) => {

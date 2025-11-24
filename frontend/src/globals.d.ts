@@ -1,6 +1,18 @@
 /// <reference types="vite/client" />
 /// <reference types="dom" />
 
+// Global DOM API types
+declare type DOMHighResTimeStamp = number;
+
+// Global Node.js types
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+declare const Buffer: {
+  from(data: string | ArrayBuffer, encoding?: string): ArrayBuffer;
+  alloc(size: number): ArrayBuffer;
+  isBuffer(obj: unknown): boolean;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface Window {
   process: {
     env: {
@@ -9,6 +21,7 @@ interface Window {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare const process: {
   env: {
     [key: string]: string | undefined;
@@ -17,6 +30,7 @@ declare const process: {
   };
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare const __dirname: string;
 
 declare global {
@@ -30,8 +44,10 @@ declare global {
 
   const __dirname: string;
 
-  const React: any;
-  const ReactDOM: any;
+   
+  const React: unknown;
+   
+  const ReactDOM: unknown;
 
   interface NodeJS {
     Timeout: number;

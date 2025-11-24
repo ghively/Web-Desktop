@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Server, Play, Square, Settings, Copy, Trash2, Plus, Activity, Clock, Users, Shield, Globe, Folder } from 'lucide-react';
+import { Server, Square, Settings, Plus, Activity, Clock, Users, Shield, Globe, Folder } from 'lucide-react';
+
+// Reference process from globals
+declare const process: { env: Record<string, string | undefined>; };
 
 interface FileServer {
   id: string;
@@ -80,7 +83,7 @@ const FileServers: React.FC = () => {
         const error = await response.json();
         alert(`Failed to create server: ${error.error}`);
       }
-    } catch (error) {
+    } catch {
       alert('Failed to create server');
     }
   };
@@ -94,7 +97,7 @@ const FileServers: React.FC = () => {
           setSelectedServer(null);
         }
       }
-    } catch (error) {
+    } catch {
       alert('Failed to stop server');
     }
   };
@@ -106,7 +109,7 @@ const FileServers: React.FC = () => {
         const result = await response.json();
         alert(`Server test result:\nListening: ${result.listening}\nPort: ${result.port}\nReachable: ${result.reachable}`);
       }
-    } catch (error) {
+    } catch {
       alert('Failed to test server');
     }
   };

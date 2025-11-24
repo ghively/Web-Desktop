@@ -1,24 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Search, Download, Star, Clock, Shield, Filter, Grid, List,
-    Package, ExternalLink, User, Tag, AlertCircle, CheckCircle, XCircle,
-    ArrowRight, ChevronDown, ChevronUp, RefreshCw, Trash2,
+    Search, Download, Star, Shield, Filter, Grid, List,
+    Package, ExternalLink, AlertCircle, CheckCircle, XCircle,
+    RefreshCw, Trash2,
     FileText, Code, Palette, Gamepad2, Briefcase, GraduationCap, Globe,
-    Settings, Wrench, Play, Monitor
+    Settings, Wrench, Play
 } from 'lucide-react';
 import {
-    MarketplaceApp, AppCategory, InstalledApp, InstallationProgress,
-    AppPermission, SecurityInfo, SandboxConfig
+    MarketplaceApp, AppCategory, InstalledApp, InstallationProgress
 } from '../types/applications';
 import { AppInstaller } from './AppInstaller';
-import { useWindowManager, useSettings } from '../context/exports';
+import { useSettings } from '../context/exports';
 
-interface MarketplaceProps {
-    windowId: string;
-}
-
-export const Marketplace = ({ windowId }: MarketplaceProps) => {
-    const { openWindow } = useWindowManager();
+export const Marketplace = () => {
     const { settings } = useSettings();
 
     // State management
@@ -37,10 +31,10 @@ export const Marketplace = ({ windowId }: MarketplaceProps) => {
     const [totalPages, setTotalPages] = useState(1);
     const [showFilters, setShowFilters] = useState(false);
     const [activeTab, setActiveTab] = useState<'browse' | 'installed' | 'updates'>('browse');
-    const [installations, setInstallations] = useState<Record<string, InstallationProgress>>({});
+    const [installations] = useState<Record<string, InstallationProgress>>({});
 
     // Category icons mapping
-    const categoryIcons: Record<string, any> = {
+    const categoryIcons: Record<string, unknown> = {
         productivity: Briefcase,
         development: Code,
         multimedia: Play,
@@ -54,7 +48,7 @@ export const Marketplace = ({ windowId }: MarketplaceProps) => {
     };
 
     // Fetch apps from marketplace
-    const fetchApps = async () => {
+    const fetchApps = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -82,10 +76,10 @@ export const Marketplace = ({ windowId }: MarketplaceProps) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentPage, selectedCategory, sortBy, searchQuery, settings.backend.apiUrl]);
 
     // Fetch installed apps
-    const fetchInstalledApps = async () => {
+    const fetchInstalledApps = useCallback(async () => {
         try {
             const response = await fetch(`${settings.backend.apiUrl}/api/marketplace/installed`);
             if (response.ok) {
@@ -95,10 +89,10 @@ export const Marketplace = ({ windowId }: MarketplaceProps) => {
         } catch (error) {
             console.error('Failed to fetch installed apps:', error);
         }
-    };
+    }, [settings.backend.apiUrl]);
 
     // Fetch categories
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         try {
             const response = await fetch(`${settings.backend.apiUrl}/api/marketplace/categories`);
             if (response.ok) {
@@ -108,7 +102,7 @@ export const Marketplace = ({ windowId }: MarketplaceProps) => {
         } catch (error) {
             console.error('Failed to fetch categories:', error);
         }
-    };
+    }, [settings.backend.apiUrl]);
 
     // Install app
     const handleInstallApp = (app: MarketplaceApp) => {
@@ -150,7 +144,7 @@ export const Marketplace = ({ windowId }: MarketplaceProps) => {
                     alert('App is up to date');
                 }
             }
-        } catch (error) {
+        } catch {
             alert('Failed to check for updates');
         }
     };
@@ -160,12 +154,12 @@ export const Marketplace = ({ windowId }: MarketplaceProps) => {
         fetchApps();
         fetchInstalledApps();
         fetchCategories();
-    }, [currentPage, selectedCategory, sortBy, searchQuery]);
+    }, [currentPage, selectedCategory, sortBy, searchQuery, fetchApps, fetchCategories, fetchInstalledApps]);
 
     // Auto-refresh installation progress
     useEffect(() => {
         const interval = setInterval(() => {
-            Object.keys(installations).forEach(sessionId => {
+            Object.keys(installations).forEach(() => {
                 // Check installation status
             });
         }, 2000);
@@ -602,7 +596,7 @@ export const Marketplace = ({ windowId }: MarketplaceProps) => {
                     {['browse', 'installed', 'updates'].map((tab) => (
                         <button
                             key={tab}
-                            onClick={() => setActiveTab(tab as any)}
+                            onClick={() => setActiveTab(tab as 'browse' | 'installed' | 'updates')}
                             className={`px-4 py-2 rounded-lg transition-colors capitalize ${
                                 activeTab === tab
                                     ? 'bg-blue-600 text-white'
@@ -641,7 +635,7 @@ export const Marketplace = ({ windowId }: MarketplaceProps) => {
                             <label className="block text-sm font-medium text-gray-400 mb-2">Sort By</label>
                             <select
                                 value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value as any)}
+                                onChange={(e) => setSortBy(e.target.value as 'name' | 'rating' | 'downloads' | 'updated')}
                                 className="w-full px-3 py-2 bg-gray-700 text-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
                             >
                                 <option value="name">Name</option>

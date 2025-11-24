@@ -1,6 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme, ThemeConfig } from '../lib/theme/ThemeEngine';
-import { Palette, Settings, Download, Upload, RefreshCw, Plus, X, Eye, EyeOff, Monitor, Sun, Moon, Zap, Layers } from 'lucide-react';
+import { Palette, Settings, Download, Upload, X, Eye, EyeOff, Monitor, Sun, Moon, Zap, Layers } from 'lucide-react';
+
+interface ColorPickerProps {
+  label: string;
+  colorKey: keyof ThemeConfig['colors'];
+  value: string;
+  onColorChange: (colorKey: keyof ThemeConfig['colors'], value: string) => void;
+}
+
+const ColorPicker = ({ label, colorKey, value, onColorChange }: ColorPickerProps) => (
+  <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+    <label className="text-sm font-medium">{label}</label>
+    <div className="flex items-center space-x-2">
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onColorChange(colorKey, e.target.value)}
+        className="w-8 h-8 border border-gray-600 rounded cursor-pointer"
+      />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onColorChange(colorKey, e.target.value)}
+        className="w-24 bg-gray-700 text-sm px-2 py-1 rounded border border-gray-600"
+      />
+    </div>
+  </div>
+);
 
 const ThemeCustomizer: React.FC<{ windowId?: string }> = () => {
   const { theme, uiTheme, setTheme, setUITheme, themeEngine } = useTheme();
@@ -12,6 +39,7 @@ const ThemeCustomizer: React.FC<{ windowId?: string }> = () => {
   const customThemes = themeEngine.getCustomThemes();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCustomTheme({ ...theme });
   }, [theme]);
 
@@ -64,7 +92,7 @@ const ThemeCustomizer: React.FC<{ windowId?: string }> = () => {
           const importedTheme = JSON.parse(e.target?.result as string);
           setCustomTheme(importedTheme);
           setTheme(importedTheme);
-        } catch (error) {
+        } catch {
           alert('Invalid theme file');
         }
       };
@@ -79,26 +107,6 @@ const ThemeCustomizer: React.FC<{ windowId?: string }> = () => {
       setTheme(randomTheme);
     }
   };
-
-  const ColorPicker = ({ label, colorKey, value }: { label: string; colorKey: keyof ThemeConfig['colors']; value: string }) => (
-    <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-      <label className="text-sm font-medium">{label}</label>
-      <div className="flex items-center space-x-2">
-        <input
-          type="color"
-          value={value}
-          onChange={(e) => handleColorChange(colorKey, e.target.value)}
-          className="w-8 h-8 border border-gray-600 rounded cursor-pointer"
-        />
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => handleColorChange(colorKey, e.target.value)}
-          className="w-24 bg-gray-700 text-sm px-2 py-1 rounded border border-gray-600"
-        />
-      </div>
-    </div>
-  );
 
   return (
     <div className="h-full bg-gray-900 text-white">
@@ -158,7 +166,7 @@ const ThemeCustomizer: React.FC<{ windowId?: string }> = () => {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as 'presets' | 'colors' | 'typography' | 'ui' | 'custom')}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
                 activeTab === tab.id
                   ? 'bg-purple-600 text-white'
@@ -291,29 +299,29 @@ const ThemeCustomizer: React.FC<{ windowId?: string }> = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <h3 className="font-medium text-purple-400">Primary Colors</h3>
-                <ColorPicker label="Primary" colorKey="primary" value={customTheme.colors.primary} />
-                <ColorPicker label="Secondary" colorKey="secondary" value={customTheme.colors.secondary} />
-                <ColorPicker label="Accent" colorKey="accent" value={customTheme.colors.accent} />
+                <ColorPicker label="Primary" colorKey="primary" value={customTheme.colors.primary} onColorChange={handleColorChange} />
+                <ColorPicker label="Secondary" colorKey="secondary" value={customTheme.colors.secondary} onColorChange={handleColorChange} />
+                <ColorPicker label="Accent" colorKey="accent" value={customTheme.colors.accent} onColorChange={handleColorChange} />
               </div>
 
               <div className="space-y-3">
                 <h3 className="font-medium text-purple-400">Surface Colors</h3>
-                <ColorPicker label="Background" colorKey="background" value={customTheme.colors.background} />
-                <ColorPicker label="Surface" colorKey="surface" value={customTheme.colors.surface} />
-                <ColorPicker label="Border" colorKey="border" value={customTheme.colors.border} />
+                <ColorPicker label="Background" colorKey="background" value={customTheme.colors.background} onColorChange={handleColorChange} />
+                <ColorPicker label="Surface" colorKey="surface" value={customTheme.colors.surface} onColorChange={handleColorChange} />
+                <ColorPicker label="Border" colorKey="border" value={customTheme.colors.border} onColorChange={handleColorChange} />
               </div>
 
               <div className="space-y-3">
                 <h3 className="font-medium text-purple-400">Text Colors</h3>
-                <ColorPicker label="Primary Text" colorKey="text" value={customTheme.colors.text} />
-                <ColorPicker label="Secondary Text" colorKey="textSecondary" value={customTheme.colors.textSecondary} />
+                <ColorPicker label="Primary Text" colorKey="text" value={customTheme.colors.text} onColorChange={handleColorChange} />
+                <ColorPicker label="Secondary Text" colorKey="textSecondary" value={customTheme.colors.textSecondary} onColorChange={handleColorChange} />
               </div>
 
               <div className="space-y-3">
                 <h3 className="font-medium text-purple-400">Status Colors</h3>
-                <ColorPicker label="Success" colorKey="success" value={customTheme.colors.success} />
-                <ColorPicker label="Warning" colorKey="warning" value={customTheme.colors.warning} />
-                <ColorPicker label="Error" colorKey="error" value={customTheme.colors.error} />
+                <ColorPicker label="Success" colorKey="success" value={customTheme.colors.success} onColorChange={handleColorChange} />
+                <ColorPicker label="Warning" colorKey="warning" value={customTheme.colors.warning} onColorChange={handleColorChange} />
+                <ColorPicker label="Error" colorKey="error" value={customTheme.colors.error} onColorChange={handleColorChange} />
               </div>
             </div>
 
@@ -606,7 +614,7 @@ const ThemeCustomizer: React.FC<{ windowId?: string }> = () => {
                           name="window-controls"
                           value={value}
                           checked={uiTheme.windowControls === value}
-                          onChange={(e) => setUITheme({ windowControls: e.target.value as any })}
+                          onChange={(e) => setUITheme({ windowControls: e.target.value as 'mac' | 'windows' | 'custom' })}
                           className="w-4 h-4 text-purple-600"
                         />
                         <span className="text-sm">{label}</span>

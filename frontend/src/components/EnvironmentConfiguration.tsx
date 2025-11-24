@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Settings as SettingsIcon,
   Globe,
@@ -120,24 +120,29 @@ export const EnvironmentConfiguration: React.FC<EnvironmentConfigurationProps> =
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [activeTab, setActiveTab] = useState('services');
-  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({}); // Used for toggling secret visibility
   const [connectionTests, setConnectionTests] = useState<Record<string, { status: 'idle' | 'testing' | 'success' | 'error'; message: string }>>({});
 
-  const loadConfiguration = async () => {
+  
+  const loadConfiguration = useCallback(async () => {
     try {
       const response = await fetch('/api/environment-config/config');
-      const data = await response.json();
-      setConfig(data);
-      setIsLoading(false);
+      if (response.ok) {
+        const data = await response.json();
+        setConfig(data);
+        setIsLoading(false);
+      }
     } catch (error) {
       console.error('Failed to load configuration:', error);
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadConfiguration();
-  }, []);
+    const timer = setTimeout(() => {
+      loadConfiguration();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadConfiguration]);
 
   const saveConfiguration = async (section: string, data: unknown) => {
     setSaveStatus('saving');
@@ -163,7 +168,7 @@ export const EnvironmentConfiguration: React.FC<EnvironmentConfigurationProps> =
     }
   };
 
-  const testConnection = async (service: string, serviceConfig: any) => {
+  const testConnection = async (service: string, serviceConfig: Record<string, unknown>) => {
     setConnectionTests(prev => ({
       ...prev,
       [service]: { status: 'testing', message: 'Testing connection...' }
@@ -186,7 +191,7 @@ export const EnvironmentConfiguration: React.FC<EnvironmentConfigurationProps> =
           message: result.message
         }
       }));
-    } catch (error) {
+    } catch {
       setConnectionTests(prev => ({
         ...prev,
         [service]: {
@@ -197,13 +202,7 @@ export const EnvironmentConfiguration: React.FC<EnvironmentConfigurationProps> =
     }
   };
 
-  const toggleSecret = (field: string) => {
-    setShowSecrets(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }));
-  };
-
+  
   if (isLoading || !config) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -492,8 +491,8 @@ interface ServiceConfigProps {
   service: string;
   title: string;
   description: string;
-  config: any;
-  onSave: (data: any) => void;
+  config: Record<string, unknown>;
+  onSave: (data: Record<string, unknown>) => void;
   onTest: () => void;
   testResult?: { status: 'idle' | 'testing' | 'success' | 'error'; message: string };
 }

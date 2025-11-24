@@ -78,11 +78,11 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
   }, []);
 
   // Track interactions within component
-  const trackInteraction = useCallback((type: string, target: string, metadata?: Record<string, any>) => {
+  const trackInteraction = useCallback((type: string, target: string, metadata?: Record<string, unknown>) => {
     if (trackInteractions) {
       monitoringService.recordInteraction({
         timestamp: Date.now(),
-        type: type as any,
+        type: type as 'click' | 'scroll' | 'hover' | 'keypress' | 'view',
         target,
         metadata: {
           component,
@@ -93,7 +93,7 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
   }, [trackInteractions, component]);
 
   // Track custom performance metrics
-  const trackMetric = useCallback((name: string, value: number, type: PerformanceMetric['type'] = 'interaction', unit: PerformanceMetric['unit'] = 'ms', metadata?: Record<string, any>) => {
+  const trackMetric = useCallback((name: string, value: number, type: PerformanceMetric['type'] = 'interaction', unit: PerformanceMetric['unit'] = 'ms', metadata?: Record<string, unknown>) => {
     if (trackPerformance) {
       monitoringService.recordMetric({
         timestamp: Date.now(),
@@ -110,7 +110,7 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
   }, [trackPerformance, component]);
 
   // Track errors specific to this component
-  const trackError = useCallback((error: Error | string, context?: Record<string, any>) => {
+  const trackError = useCallback((error: Error | string, context?: Record<string, unknown>) => {
     if (trackErrors) {
       const errorObj = typeof error === 'string' ? new Error(error) : error;
 
@@ -136,7 +136,7 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
   const trackApiCall = useCallback(async <T>(
     apiCall: () => Promise<T>,
     apiName: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<T> => {
     const startTime = performance.now();
 
@@ -175,7 +175,7 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
     const startTime = performance.now();
 
     return {
-      end: (metadata?: Record<string, any>) => {
+      end: (metadata?: Record<string, unknown>) => {
         const duration = performance.now() - startTime;
         trackMetric(name, duration, 'interaction', 'ms', metadata);
         return duration;
@@ -187,7 +187,7 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
   // Memory usage tracking
   const trackMemoryUsage = useCallback(() => {
     if ('memory' in performance) {
-      const memory = (performance as any).memory;
+      const memory = (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
 
       monitoringService.recordMetric({
         timestamp: Date.now(),
@@ -209,7 +209,7 @@ export function useMonitoring(options: UseMonitoringOptions = {}) {
     let lastCall = 0;
     const debounceMs = 100; // Debounce interactions within 100ms
 
-    return (type: string, target: string, metadata?: Record<string, any>) => {
+    return (type: string, target: string, metadata?: Record<string, unknown>) => {
       const now = Date.now();
       if (now - lastCall > debounceMs) {
         trackInteraction(type, target, metadata);
@@ -269,7 +269,7 @@ export function useApiMonitoring() {
   const trackApiCall = useCallback(async <T>(
     apiCall: () => Promise<T>,
     apiName: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<T> => {
     const startTime = performance.now();
 

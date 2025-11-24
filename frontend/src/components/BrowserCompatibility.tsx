@@ -75,7 +75,7 @@ export const BrowserCompatibilityProvider: React.FC<{ children: React.ReactNode 
       body.classList.toggle('low-compatibility', compatibilityScore < 75);
 
       // Log compatibility info in development
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.group('Component Compatibility Check');
         console.log('Browser:', `${browserInfo.name} ${browserInfo.version}`);
         console.log('Platform:', browserInfo.isMobile ? 'Mobile' : 'Desktop');

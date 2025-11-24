@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import type { ErrorBoundaryProps } from '../components/ErrorBoundary';
 
 interface ErrorLog {
@@ -66,9 +66,9 @@ export const useErrorHandler = (options: ErrorHandlerOptions = {}) => {
     }, [logError]);
 
     const handleAsyncError = useCallback(async (
-        asyncFn: () => Promise<any>,
+        asyncFn: () => Promise<unknown>,
         context?: string
-    ): Promise<any> => {
+    ): Promise<unknown> => {
         try {
             return await asyncFn();
         } catch (error) {
@@ -78,8 +78,8 @@ export const useErrorHandler = (options: ErrorHandlerOptions = {}) => {
         }
     }, [logError]);
 
-    const wrapAsyncCallback = useCallback(<T extends any[]>(
-        callback: (...args: T) => Promise<any>,
+    const wrapAsyncCallback = useCallback(<T extends unknown[]>(
+        callback: (...args: T) => Promise<unknown>,
         context?: string
     ) => {
         return async (...args: T) => {

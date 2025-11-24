@@ -24,6 +24,7 @@ interface AsyncErrorBoundaryProps {
 export const AsyncErrorBoundary: React.FC<AsyncErrorBoundaryProps> = ({
     children,
     fallback,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     loadingFallback,
     onError,
     onRetry,
@@ -58,6 +59,7 @@ export const AsyncErrorBoundary: React.FC<AsyncErrorBoundaryProps> = ({
         </div>
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const defaultLoadingFallback = (
         <div className="flex items-center justify-center h-full bg-gray-900">
             <div className="flex items-center gap-3 text-gray-400">

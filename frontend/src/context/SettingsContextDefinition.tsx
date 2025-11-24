@@ -1,5 +1,4 @@
 import { createContext } from 'react';
-import type { ReactNode } from 'react';
 import type { Settings } from './settingsTypes';
 
 export interface SettingsContextType {

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Wifi, WifiOff, Scan, Settings, Lock, Signal, AlertCircle, CheckCircle, RefreshCw, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Wifi, WifiOff, Scan, Settings, Lock, Signal, AlertCircle, CheckCircle, RefreshCw, Eye, EyeOff, Trash2 } from 'lucide-react';
 
 interface WiFiNetwork {
   ssid: string;
@@ -45,7 +45,7 @@ interface NetworkInterface {
   mac: string;
 }
 
-export default function WiFiManagement({ windowId }: { windowId?: string }) {
+export default function WiFiManagement() {
   const [activeTab, setActiveTab] = useState<'networks' | 'status' | 'configs'>('networks');
   const [networks, setNetworks] = useState<WiFiNetwork[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({ connected: false, interface: '' });
@@ -61,7 +61,7 @@ export default function WiFiManagement({ windowId }: { windowId?: string }) {
   const [isWiFiEnabled, setIsWiFiEnabled] = useState(true);
 
   // Fetch WiFi networks
-  const fetchNetworks = async () => {
+  const fetchNetworks = useCallback(async () => {
     setIsScanning(true);
     try {
       const response = await fetch(`/api/wifi-management/scan${selectedInterface ? `?interface=${selectedInterface}` : ''}`);
@@ -72,7 +72,7 @@ export default function WiFiManagement({ windowId }: { windowId?: string }) {
     } finally {
       setIsScanning(false);
     }
-  };
+  }, [selectedInterface]);
 
   // Fetch connection status
   const fetchStatus = async () => {
@@ -203,7 +203,7 @@ export default function WiFiManagement({ windowId }: { windowId?: string }) {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [selectedInterface]);
+  }, [selectedInterface, fetchNetworks]);
 
   const getSignalIcon = (signalStrength: number) => {
     if (signalStrength > -50) return Signal;

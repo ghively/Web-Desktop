@@ -157,7 +157,7 @@ const AIIntegration: React.FC<AIIntegrationProps> = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: searchQuery,
-          context: process.env.HOME || '/',
+          context: typeof window !== 'undefined' ? window.location.origin : '/',
           limit: 50
         })
       });

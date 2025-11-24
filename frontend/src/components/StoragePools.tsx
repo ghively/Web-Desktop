@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HardDrive, Plus, Settings, RefreshCw, Trash2, CheckCircle, XCircle, AlertTriangle, Server, Cloud, Wifi, Folder, Edit, Save, Eye, EyeOff, Upload, Download, Scan, Lock, Unlock } from 'lucide-react';
+import { HardDrive, Plus, RefreshCw, Trash2, CheckCircle, XCircle, AlertTriangle, Server, Cloud, Wifi, Folder, Edit, Save, Eye, EyeOff, Upload, Download, Scan, Lock, Unlock } from 'lucide-react';
 
 interface StoragePool {
   id: string;
@@ -67,8 +67,8 @@ const StoragePools: React.FC<{ windowId?: string }> = () => {
   const [pools, setPools] = useState<StoragePool[]>([]);
   const [stats, setStats] = useState<StorageStats | null>(null);
   const [localDisks, setLocalDisks] = useState<LocalDisk[]>([]);
-  const [selectedPool, setSelectedPool] = useState<StoragePool | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
+  const [, setSelectedPool] = useState<StoragePool | null>(null);
+  const [, setIsCreating] = useState(false);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
 

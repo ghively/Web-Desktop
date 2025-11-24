@@ -31,7 +31,6 @@ export const useDragDrop = (options: DragDropOptions = {}) => {
   const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   const dragPreviewRef = useRef<HTMLDivElement | null>(null);
-  const draggedFilesRef = useRef<File[]>([]);
 
   // Initialize drag preview
   const createDragPreview = useCallback(() => {
@@ -61,18 +60,21 @@ export const useDragDrop = (options: DragDropOptions = {}) => {
 
     let content = '';
     switch (item.type) {
-      case 'file':
+      case 'file': {
         const files = item.data as VFSNode[];
         content = files.length === 1 ? files[0].name : `${files.length} files`;
         break;
-      case 'files':
+      }
+      case 'files': {
         const fileList = item.data as File[];
         content = fileList.length === 1 ? fileList[0].name : `${fileList.length} files`;
         break;
-      case 'text':
+      }
+      case 'text': {
         const text = item.data as string;
         content = text.length > 30 ? text.substring(0, 30) + '...' : text;
         break;
+      }
       case 'url':
         content = 'URL';
         break;
@@ -147,6 +149,25 @@ export const useDragDrop = (options: DragDropOptions = {}) => {
     }
   }, [isDragging, activeDrag, dropZones, options.showVisualFeedback, updateDragPreview]);
 
+  // Unregister drop zone
+  const unregisterDropZone = useCallback((zoneId: string) => {
+    setDropZones(prev => {
+      const zone = prev.get(zoneId);
+      if (zone) {
+        const handlers = (zone.element as HTMLElement & { _dragDropHandlers?: { dragover: (e: Event) => void; dragleave: (e: Event) => void; drop: (e: Event) => void; } })._dragDropHandlers;
+        if (handlers) {
+          zone.element.removeEventListener('dragover', handlers.dragover);
+          zone.element.removeEventListener('dragleave', handlers.dragleave);
+          zone.element.removeEventListener('drop', handlers.drop);
+          delete (zone.element as HTMLElement & { _dragDropHandlers?: { dragover: (e: Event) => void; dragleave: (e: Event) => void; drop: (e: Event) => void; } })._dragDropHandlers;
+        }
+      }
+      const newMap = new Map(prev);
+      newMap.delete(zoneId);
+      return newMap;
+    });
+  }, []);
+
   // Register drop zone
   const registerDropZone = useCallback((zone: DropZone) => {
     setDropZones(prev => new Map(prev).set(zone.id, zone));
@@ -219,7 +240,7 @@ export const useDragDrop = (options: DragDropOptions = {}) => {
     };
 
     // Store event handlers for cleanup
-    (element as any)._dragDropHandlers = {
+    (element as { _dragDropHandlers?: Record<string, (e: Event) => void>; _draggableHandlers?: Record<string, (e: Event) => void> })._dragDropHandlers = {
       dragover: handleDragOver,
       dragleave: handleDragLeave,
       drop: handleDrop
@@ -230,26 +251,7 @@ export const useDragDrop = (options: DragDropOptions = {}) => {
     element.addEventListener('drop', handleDrop);
 
     return () => unregisterDropZone(zone.id);
-  }, [activeDrag, endDrag]);
-
-  // Unregister drop zone
-  const unregisterDropZone = useCallback((zoneId: string) => {
-    setDropZones(prev => {
-      const zone = prev.get(zoneId);
-      if (zone) {
-        const handlers = (zone.element as any)._dragDropHandlers;
-        if (handlers) {
-          zone.element.removeEventListener('dragover', handlers.dragover);
-          zone.element.removeEventListener('dragleave', handlers.dragleave);
-          zone.element.removeEventListener('drop', handlers.drop);
-          delete (zone.element as any)._dragDropHandlers;
-        }
-      }
-      const newMap = new Map(prev);
-      newMap.delete(zoneId);
-      return newMap;
-    });
-  }, []);
+  }, [activeDrag, endDrag, unregisterDropZone]);
 
   // Make element draggable
   const makeDraggable = useCallback((element: HTMLElement, item: DragItem) => {
@@ -278,7 +280,7 @@ export const useDragDrop = (options: DragDropOptions = {}) => {
     element.addEventListener('dragend', handleDragEnd);
 
     // Store handlers for cleanup
-    (element as any)._draggableHandlers = {
+    (element as { _dragDropHandlers?: Record<string, (e: Event) => void>; _draggableHandlers?: Record<string, (e: Event) => void> })._draggableHandlers = {
       dragstart: handleDragStart,
       dragend: handleDragEnd
     };
@@ -286,12 +288,12 @@ export const useDragDrop = (options: DragDropOptions = {}) => {
     return () => {
       element.removeEventListener('dragstart', handleDragStart);
       element.removeEventListener('dragend', handleDragEnd);
-      delete (element as any)._draggableHandlers;
+      delete (element as { _dragDropHandlers?: Record<string, (e: Event) => void>; _draggableHandlers?: Record<string, (e: Event) => void> })._draggableHandlers;
     };
   }, [startDrag, endDrag]);
 
   // Initialize global drag and drop
-  useState(() => {
+  useEffect(() => {
     createDragPreview();
 
     const handleGlobalMove = (e: Event) => handleMove(e as MouseEvent);
@@ -325,7 +327,7 @@ export const useDragDrop = (options: DragDropOptions = {}) => {
         unregisterDropZone(zone.id);
       });
     };
-  });
+  }, [createDragPreview, handleMove, endDrag, unregisterDropZone, dropZones]);
 
   return {
     // State
@@ -343,7 +345,7 @@ export const useDragDrop = (options: DragDropOptions = {}) => {
     makeDraggable,
 
     // Utilities
-    createDragItem: (type: DragItem['type'], data: any, source?: string): DragItem => ({
+    createDragItem: (type: DragItem['type'], data: Record<string, unknown>, source?: string): DragItem => ({
       type,
       data,
       source

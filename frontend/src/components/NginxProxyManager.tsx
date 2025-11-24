@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Globe, Plus, Trash2, RefreshCw, Lock, ArrowRight, Radio } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Globe, Trash2, RefreshCw, Lock, ArrowRight, Radio } from 'lucide-react';
 import { API_CONFIG } from '../config/api';
 
 interface NginxProxyManagerProps {
-  windowId: string;
+  // No props currently needed
 }
 
 interface ProxyHost {
@@ -19,7 +19,7 @@ interface Certificate {
   id: number;
   domain_names: string[];
   provider: string;
-  meta?: any;
+  meta?: Record<string, unknown>;
 }
 
 interface Redirect {
@@ -35,7 +35,8 @@ interface Stream {
   forwarding_port: number;
 }
 
-export const NginxProxyManager: React.FC<NginxProxyManagerProps> = ({ windowId }) => {
+export const NginxProxyManager: React.FC<NginxProxyManagerProps> = () => {
+   
   const [activeTab, setActiveTab] = useState<'hosts' | 'certificates' | 'redirects' | 'streams'>('hosts');
   const [hosts, setHosts] = useState<ProxyHost[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
@@ -46,7 +47,7 @@ export const NginxProxyManager: React.FC<NginxProxyManagerProps> = ({ windowId }
 
   const API_BASE = API_CONFIG.getEndpointUrl('nginxProxy');
 
-  const loadHosts = async () => {
+  const loadHosts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -59,9 +60,9 @@ export const NginxProxyManager: React.FC<NginxProxyManagerProps> = ({ windowId }
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
-  const loadCertificates = async () => {
+  const loadCertificates = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -74,9 +75,9 @@ export const NginxProxyManager: React.FC<NginxProxyManagerProps> = ({ windowId }
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
-  const loadRedirects = async () => {
+  const loadRedirects = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -89,9 +90,9 @@ export const NginxProxyManager: React.FC<NginxProxyManagerProps> = ({ windowId }
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
-  const loadStreams = async () => {
+  const loadStreams = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -104,7 +105,7 @@ export const NginxProxyManager: React.FC<NginxProxyManagerProps> = ({ windowId }
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
   const deleteHost = async (id: number) => {
     if (!confirm('Delete this proxy host?')) return;
@@ -155,7 +156,7 @@ export const NginxProxyManager: React.FC<NginxProxyManagerProps> = ({ windowId }
     else if (activeTab === 'certificates') loadCertificates();
     else if (activeTab === 'redirects') loadRedirects();
     else if (activeTab === 'streams') loadStreams();
-  }, [activeTab]);
+  }, [activeTab, loadCertificates, loadHosts, loadRedirects, loadStreams]);
 
   return (
     <div className="h-full flex flex-col bg-gray-900 text-white">
@@ -169,7 +170,7 @@ export const NginxProxyManager: React.FC<NginxProxyManagerProps> = ({ windowId }
           {['hosts', 'certificates', 'redirects', 'streams'].map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => setActiveTab(tab as 'hosts' | 'certificates' | 'redirects' | 'streams')}
               className={`px-3 py-1 rounded text-sm ${
                 activeTab === tab
                   ? 'bg-blue-600 text-white'

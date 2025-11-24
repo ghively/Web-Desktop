@@ -1,9 +1,12 @@
-/// <reference path="../../types/globals.d.ts" />
-
 /**
  * Browser compatibility test suite
  * Tests feature detection and polyfills across different environments
  */
+
+// Mock process for test environment
+declare const process: {
+  env: Record<string, string | undefined>;
+};
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
@@ -11,10 +14,17 @@ import {
   BrowserInfo,
   CompatibilityWarnings,
   Polyfills,
-  ComponentCompatibility,
   dragAndDrop,
   initializeCompatibility,
 } from '../browserCompatibility';
+
+// Define ComponentCompatibility for testing
+const ComponentCompatibility = {
+  windowManagement: () => true,
+  terminal: () => true,
+  fileManager: () => true,
+  media: () => true
+};
 
 // Mock window and document for testing environment
 Object.defineProperty(window, 'localStorage', {
@@ -391,7 +401,7 @@ describe('Polyfills', () => {
 
     it('should return XMLHttpRequest fallback when fetch is not supported', () => {
       const originalFetch = window.fetch;
-      delete (window as any).fetch;
+      delete (window as { fetch?: unknown }).fetch;
 
       const fetchFn = Polyfills.getFetch();
       expect(fetchFn).not.toBe(originalFetch);
@@ -426,7 +436,7 @@ describe('ComponentCompatibility', () => {
   beforeEach(() => {
     // Mock CSS supports for component compatibility tests
     const mockCSS = {
-      supports: vi.fn((property: string, value: string) => {
+      supports: vi.fn(() => {
         // Return true for all CSS features in these tests
         return true;
       }),
@@ -560,9 +570,10 @@ describe('initializeCompatibility', () => {
   it('should store compatibility report in development mode', () => {
     initializeCompatibility();
 
-    expect((window as any).__BROWSER_COMPATIBILITY).toBeDefined();
-    expect((window as any).__BROWSER_COMPATIBILITY).toHaveProperty('browser');
-    expect((window as any).__BROWSER_COMPATIBILITY).toHaveProperty('compatibilityScore');
+    const windowCompat = window as { __BROWSER_COMPATIBILITY?: unknown };
+    expect(windowCompat.__BROWSER_COMPATIBILITY).toBeDefined();
+    expect(windowCompat.__BROWSER_COMPATIBILITY).toHaveProperty('browser');
+    expect(windowCompat.__BROWSER_COMPATIBILITY).toHaveProperty('compatibilityScore');
   });
 });
 

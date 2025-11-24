@@ -2,25 +2,26 @@
  * Performance optimization utilities for enhanced UI smoothness
  */
 
-// Type definitions
-interface FrameRequestCallback {
-  (timestamp: number): void;
-}
+// Global type definitions
+type HeadersInit = string[][] | Record<string, string> | Headers;
+type BodyInit = string | ArrayBuffer | ArrayBufferView | FormData | URLSearchParams | ReadableStream | null;
+type RequestMode = 'cors' | 'no-cors' | 'same-origin';
+type RequestCredentials = 'omit' | 'same-origin' | 'include';
+type RequestCache = 'default' | 'no-store' | 'reload' | 'no-cache' | 'force-cache' | 'only-if-cached';
+type RequestRedirect = 'follow' | 'manual' | 'error';
+
+type FrameRequestCallback = (timestamp: number) => void;
 
 interface RequestInit {
   method?: string;
   headers?: HeadersInit;
-  body?: BodyInit | null;
+  body?: BodyInit;
   mode?: RequestMode;
   credentials?: RequestCredentials;
   cache?: RequestCache;
   redirect?: RequestRedirect;
   referrer?: string;
-  referrerPolicy?: ReferrerPolicy;
-  integrity?: string;
-  keepalive?: boolean;
-  signal?: AbortSignal | null;
-  window?: null;
+  referrerPolicy?: string;
 }
 
 /**
@@ -311,7 +312,10 @@ export class AnimationFrame {
     static throttle(callback: FrameRequestCallback): FrameRequestCallback {
         let rafId: number | null = null;
 
-        return (_timestamp: number) => {
+        return (
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            _timestamp: number
+        ) => {
             if (!rafId) {
                 rafId = requestAnimationFrame((frameTimestamp) => {
                     callback(frameTimestamp);

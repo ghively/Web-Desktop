@@ -1,22 +1,44 @@
 import '@testing-library/jest-dom';
 import { vi, expect, afterEach } from 'vitest';
 
+// Type definitions for mock globals
+interface IntersectionObserverCallback {
+  (entries: any[], observer: any): void;
+}
+
+interface IntersectionObserverInit {
+  root?: Element | null;
+  rootMargin?: string;
+  threshold?: number | number[];
+}
+
+interface ResizeObserverCallback {
+  (entries: any[], observer: any): void;
+}
+
+declare global {
+  const IntersectionObserver: any;
+  const ResizeObserver: any;
+  const WebSocket: any;
+  const fetch: any;
+}
+
 // Mock IntersectionObserver
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+(global as any).IntersectionObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
 
 // Mock ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
+(global as any).ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
 
 // Mock WebSocket
-global.WebSocket = vi.fn().mockImplementation(() => ({
+(global as any).WebSocket = vi.fn().mockImplementation(() => ({
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
   send: vi.fn(),
@@ -40,7 +62,7 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock fetch
-global.fetch = vi.fn();
+(global as any).fetch = vi.fn();
 
 // Cleanup after each test
 afterEach(() => {

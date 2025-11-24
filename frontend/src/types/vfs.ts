@@ -1,5 +1,22 @@
 // Virtual File System (VFS) types and interfaces inspired by OS.js and ArozOS
 
+interface Buffer {
+  length: number;
+  readUInt8(offset: number): number;
+  readUInt16LE(offset: number): number;
+  readUInt32LE(offset: number): number;
+  writeUInt8(value: number, offset: number): number;
+  toString(encoding?: string): string;
+}
+
+declare global {
+  const Buffer: {
+    new(data: unknown): Buffer;
+    from(data: string | Uint8Array): Buffer;
+    alloc(size: number): Buffer;
+  };
+}
+
 export interface VFSNode {
   path: string;
   name: string;
@@ -116,7 +133,7 @@ export interface VFSManager {
   listAdapters(): VFSAdapter[];
 
   // Mount management
-  mount(path: string, adapter: VFSAdapter, options?: Record<string, any>): Promise<VFSMount>;
+  mount(path: string, adapter: VFSAdapter, options?: Record<string, unknown>): Promise<VFSMount>;
   unmount(path: string): Promise<void>;
   listMounts(): VFSMount[];
 

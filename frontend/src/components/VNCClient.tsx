@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Play, Square, Trash2, RefreshCw, Monitor, Copy, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Square, RefreshCw, Monitor, Copy } from 'lucide-react';
 import { API_CONFIG } from '../config/api';
 
 interface VNCClientProps {
@@ -17,13 +17,15 @@ interface VNCSession {
   lastAccess: number;
 }
 
-export const VNCClient: React.FC<VNCClientProps> = ({ windowId }) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const VNCClient: React.FC<VNCClientProps> = ({ windowId: _windowId }) => {
   const [sessions, setSessions] = useState<VNCSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [newSessionResolution, setNewSessionResolution] = useState('1280x720');
-  const [showPassword, setShowPassword] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [, _setShowPassword] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
   const API_BASE = API_CONFIG.getEndpointUrl('vnc');
@@ -93,7 +95,7 @@ export const VNCClient: React.FC<VNCClientProps> = ({ windowId }) => {
       await navigator.clipboard.writeText(text);
       setCopyFeedback(`${type} copied!`);
       setTimeout(() => setCopyFeedback(null), 2000);
-    } catch (err) {
+    } catch {
       setError('Failed to copy to clipboard');
     }
   };
@@ -102,7 +104,7 @@ export const VNCClient: React.FC<VNCClientProps> = ({ windowId }) => {
     loadSessions();
     const interval = setInterval(loadSessions, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadSessions]);
 
   const currentSession = sessions.find(s => s.id === selectedSession);
 

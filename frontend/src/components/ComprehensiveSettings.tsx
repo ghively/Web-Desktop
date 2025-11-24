@@ -501,7 +501,7 @@ interface SettingsComponentProps {
 }
 
 // Placeholder components for each subcategory
-const DesktopAppearanceSettings: React.FC<SettingsComponentProps> = ({ onSettingsChange }) => (
+const DesktopAppearanceSettings: React.FC<Omit<SettingsComponentProps, 'onSettingsChange'>> = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Desktop Appearance</h3>
     <div className="space-y-6">
@@ -537,7 +537,7 @@ const DesktopAppearanceSettings: React.FC<SettingsComponentProps> = ({ onSetting
   </div>
 );
 
-const SoundsSettings: React.FC<SettingsComponentProps> = ({ onSettingsChange }) => (
+const SoundsSettings: React.FC<Omit<SettingsComponentProps, 'onSettingsChange'>> = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Sounds & Notifications</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -546,7 +546,7 @@ const SoundsSettings: React.FC<SettingsComponentProps> = ({ onSettingsChange }) 
   </div>
 );
 
-const DateTimeSettings: React.FC<SettingsComponentProps> = ({ onSettingsChange }) => (
+const DateTimeSettings: React.FC<Omit<SettingsComponentProps, 'onSettingsChange'>> = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Date & Time</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -735,7 +735,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
   );
 };
 
-const SystemUpdatesSettings: React.FC<SettingsComponentProps> = ({ onSettingsChange }) => (
+const SystemUpdatesSettings: React.FC<Omit<SettingsComponentProps, 'onSettingsChange'>> = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">System Updates</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -744,7 +744,7 @@ const SystemUpdatesSettings: React.FC<SettingsComponentProps> = ({ onSettingsCha
   </div>
 );
 
-const SystemInfoSettings: React.FC<SettingsComponentProps> = ({ onSettingsChange }) => (
+const SystemInfoSettings: React.FC<Omit<SettingsComponentProps, 'onSettingsChange'>> = () => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">System Information</h3>
     <div className="bg-gray-800 rounded-lg p-6">

@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useVirtualDesktopManager, useWindowManager } from '../context/exports';
 import { LayoutTemplate, DEFAULT_LAYOUT_TEMPLATES } from '../types/virtualDesktops';
-import { Grid, Layers, Columns, Rows, Copy, Save, Trash2, Plus, Settings, Eye, EyeOff } from 'lucide-react';
+import { Grid, Layers, Rows, Trash2, Plus, Settings } from 'lucide-react';
 
 interface LayoutPreviewProps {
     template: LayoutTemplate;
@@ -20,7 +20,7 @@ const LayoutPreview: React.FC<LayoutPreviewProps> = ({
 }) => {
     const renderPreview = () => {
         switch (template.type) {
-            case 'grid':
+            case 'grid': {
                 const { rows = 2, cols = 2 } = template.config as { rows?: number; cols?: number };
                 return (
                     <div
@@ -35,6 +35,7 @@ const LayoutPreview: React.FC<LayoutPreviewProps> = ({
                         ))}
                     </div>
                 );
+            }
 
             case 'cascade':
                 return (
@@ -77,7 +78,7 @@ const LayoutPreview: React.FC<LayoutPreviewProps> = ({
                     </div>
                 );
 
-            case 'master-stack':
+            case 'master-stack': {
                 const { masterRatio = 0.6, stackDirection = 'right' } = template.config as { masterRatio?: number; stackDirection?: string };
                 return (
                     <div className={`flex gap-1 h-full w-full ${stackDirection === 'bottom' ? 'flex-col' : ''}`}>
@@ -96,6 +97,7 @@ const LayoutPreview: React.FC<LayoutPreviewProps> = ({
                         </div>
                     </div>
                 );
+            }
 
             default:
                 return <div className="bg-blue-500/20 border border-blue-400/30 rounded h-full w-full" />;
@@ -166,8 +168,7 @@ export const WindowLayoutTools: React.FC = () => {
         getLayoutTemplates,
         applyLayoutTemplate,
         saveLayoutTemplate,
-        currentDesktopId,
-        settings
+        currentDesktopId
     } = useVirtualDesktopManager();
 
     const { windows, toggleLayoutMode, layoutMode } = useWindowManager();
@@ -186,13 +187,15 @@ export const WindowLayoutTools: React.FC = () => {
 
     // Auto-select current desktop's template
     useEffect(() => {
-        // This would ideally get the current desktop's layout template
-        // For now, we'll select based on layout mode
-        if (layoutMode === 'tiling') {
-            setSelectedTemplate('grid-2x2');
-        } else {
-            setSelectedTemplate(null);
-        }
+        setTimeout(() => {
+            // This would ideally get the current desktop's layout template
+            // For now, we'll select based on layout mode
+            if (layoutMode === 'tiling') {
+                setSelectedTemplate('grid-2x2');
+            } else {
+                setSelectedTemplate(null);
+            }
+        }, 0);
     }, [layoutMode, currentDesktopId]);
 
     const handleApplyTemplate = (templateId: string) => {
@@ -212,7 +215,7 @@ export const WindowLayoutTools: React.FC = () => {
             id: `custom-${Date.now()}`,
             name: customTemplate.name,
             description: customTemplate.description || '',
-            type: customTemplate.type as any,
+            type: customTemplate.type as 'cascade' | 'grid' | 'vertical' | 'horizontal',
             config: customTemplate.config || {}
         };
 
@@ -367,7 +370,7 @@ export const WindowLayoutTools: React.FC = () => {
 
                             <select
                                 value={customTemplate.type}
-                                onChange={(e) => setCustomTemplate(prev => ({ ...prev, type: e.target.value as any }))}
+                                onChange={(e) => setCustomTemplate(prev => ({ ...prev, type: e.target.value as 'cascade' | 'grid' | 'vertical' | 'horizontal' }))}
                                 className="w-full bg-gray-800 text-white rounded px-3 py-2 text-sm"
                             >
                                 <option value="grid">Grid</option>

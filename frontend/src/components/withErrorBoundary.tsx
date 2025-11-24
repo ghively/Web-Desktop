@@ -2,9 +2,7 @@ import React from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
 import type { Props as ErrorBoundaryProps } from './ErrorBoundary';
 
-interface WithErrorBoundaryOptions extends Omit<ErrorBoundaryProps, 'children'> {
-    // Additional options specific to HOC can be added here
-}
+type WithErrorBoundaryOptions = Omit<ErrorBoundaryProps, 'children'>;
 
 export const withErrorBoundary = <P extends object>(
     Component: React.ComponentType<P>,

@@ -23,15 +23,13 @@ const MAX_CONTENT_LENGTH = 1000000;
 const MAX_SEARCH_QUERY_LENGTH = 1000;
 const AUTO_SAVE_DELAY = 1500;
 const DEBOUNCE_DELAY = 300;
-const VIRTUAL_ITEM_HEIGHT = 80;
-const VISIBLE_ITEMS_COUNT = 10;
 
 // Input validation utilities
 const sanitizeSearchQuery = (query: string): string => {
     if (typeof query !== 'string') return '';
     return query
         .slice(0, MAX_SEARCH_QUERY_LENGTH)
-        .replace(/[<>\"'&]/g, '') // Remove potentially dangerous characters
+        .replace(/[<>"'&]/g, '') // Remove potentially dangerous characters
         .trim();
 };
 
@@ -383,11 +381,11 @@ export const Notes: React.FC<NotesProps> = () => {
                 '<code class="bg-gray-800 text-gray-100 px-1 py-0.5 rounded text-sm">$1</code>');
 
             // Bold text - prevent nested patterns
-            result = result.replace(/\*\*([^\*\n]{0,200})\*\*/g,
+            result = result.replace(/\*\*([^*\n]{0,200})\*\*/g,
                 '<strong class="font-bold text-gray-100">$1</strong>');
 
             // Italic text - prevent conflicts with bold
-            result = result.replace(/(?<!\*)\*([^\*\n]{0,200})\*(?!\*)/g,
+            result = result.replace(/(?<!\*)\*([^*\n]{0,200})\*(?!\*)/g,
                 '<em class="italic text-gray-200">$1</em>');
 
             // Links - validate URL format
@@ -510,7 +508,7 @@ export const Notes: React.FC<NotesProps> = () => {
             if (days === 1) return 'Yesterday';
             if (days < 7) return `${days} days ago`;
             return date.toLocaleDateString();
-        } catch (error) {
+        } catch {
             return 'Invalid date';
         }
     }, []);

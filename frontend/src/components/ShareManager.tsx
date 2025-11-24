@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Share2, Trash2, RefreshCw, HardDrive, Users } from 'lucide-react';
 import { API_CONFIG } from '../config/api';
 
-interface ShareManagerProps {
-  windowId: string;
-}
 
 interface NFSShare {
   id: string;
@@ -27,7 +24,7 @@ interface SMBUser {
   uid: string;
 }
 
-export const ShareManager: React.FC<ShareManagerProps> = ({ windowId }) => {
+export const ShareManager = () => {
   const [activeTab, setActiveTab] = useState<'nfs' | 'smb' | 'smbusers'>('nfs');
   const [nfsShares, setNfsShares] = useState<NFSShare[]>([]);
   const [smbShares, setSmbShares] = useState<SMBShare[]>([]);
@@ -37,7 +34,7 @@ export const ShareManager: React.FC<ShareManagerProps> = ({ windowId }) => {
 
   const API_BASE = API_CONFIG.getEndpointUrl('shares');
 
-  const loadNfsShares = async () => {
+  const loadNfsShares = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -50,9 +47,9 @@ export const ShareManager: React.FC<ShareManagerProps> = ({ windowId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
-  const loadSmbShares = async () => {
+  const loadSmbShares = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -65,9 +62,9 @@ export const ShareManager: React.FC<ShareManagerProps> = ({ windowId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
-  const loadSmbUsers = async () => {
+  const loadSmbUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -80,7 +77,7 @@ export const ShareManager: React.FC<ShareManagerProps> = ({ windowId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
 
   const deleteNfsShare = async (id: string) => {
     if (!confirm('Delete this NFS share?')) return;
@@ -108,7 +105,7 @@ export const ShareManager: React.FC<ShareManagerProps> = ({ windowId }) => {
     if (activeTab === 'nfs') loadNfsShares();
     else if (activeTab === 'smb') loadSmbShares();
     else if (activeTab === 'smbusers') loadSmbUsers();
-  }, [activeTab]);
+  }, [activeTab, loadNfsShares, loadSmbShares, loadSmbUsers]);
 
   return (
     <div className="h-full flex flex-col bg-gray-900 text-white">
@@ -122,7 +119,7 @@ export const ShareManager: React.FC<ShareManagerProps> = ({ windowId }) => {
           {['nfs', 'smb', 'smbusers'].map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => setActiveTab(tab as 'nfs' | 'smb' | 'smbusers')}
               className={`px-3 py-1 rounded text-sm ${
                 activeTab === tab
                   ? 'bg-blue-600 text-white'

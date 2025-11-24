@@ -32,8 +32,8 @@ export const TerminalComponent: React.FC<TerminalProps> = ({ windowId }) => {
     const termRef = useRef<XTerm | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
     const resizeObserverRef = useRef<ResizeObserver | null>(null);
-    const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const heartbeatIntervalRef = useRef<number | null>(null);
+    const reconnectTimeoutRef = useRef<number | null>(null);
     const isDisposedRef = useRef(false);
     const retryAttemptRef = useRef(0);
 
@@ -308,7 +308,7 @@ export const TerminalComponent: React.FC<TerminalProps> = ({ windowId }) => {
                 termRef.current.write('\x1b[31m\r\nFailed to establish connection.\x1b[0m\r\n');
             }
         }
-    }, [settings.backend.wsUrl, getRetryDelay, startHeartbeat, stopHeartbeat]);
+    }, [settings.backend.wsUrl, getRetryDelay, startHeartbeat, stopHeartbeat, createAsyncTracker, trackError, trackInteraction, trackMetric]);
 
     // Initialize terminal and connect
     useEffect(() => {

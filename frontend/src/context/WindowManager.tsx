@@ -306,7 +306,7 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                         };
                     });
 
-                case 'vertical':
+                case 'vertical': {
                     const ratio = (template.config.ratio as number) || 0.5;
                     return prev.map((window, index) => {
                         if (window.isMinimized) return window;
@@ -321,8 +321,9 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                             height: globalThis.window.innerHeight - 56
                         };
                     });
+                }
 
-                case 'horizontal':
+                case 'horizontal': {
                     const hRatio = (template.config.ratio as number) || 0.5;
                     return prev.map((window, index) => {
                         if (window.isMinimized) return window;

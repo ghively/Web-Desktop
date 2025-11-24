@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Play, Square, Trash2, RefreshCw, Monitor, Copy, Eye, EyeOff, Server, User, Lock, Globe, Save, TestTube } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Square, RefreshCw, Monitor, Copy, Eye, EyeOff, Server, User, Lock, Globe, Save, TestTube } from 'lucide-react';
 import { API_CONFIG } from '../config/api';
 
 interface RDPClientProps {
@@ -22,18 +22,11 @@ interface RDPSession {
   lastAccess: number;
 }
 
-interface RDPProfile {
-  name: string;
-  host: string;
-  port: number;
-  username?: string;
-  domain?: string;
-  profile: string;
-}
 
-export const RDPClient: React.FC<RDPClientProps> = ({ windowId }) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const RDPClient: React.FC<RDPClientProps> = ({ windowId: _windowId }) => {
   const [sessions, setSessions] = useState<RDPSession[]>([]);
-  const [profiles, setProfiles] = useState<Record<string, any>>({});
+  const [profiles, setProfiles] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
@@ -243,7 +236,7 @@ export const RDPClient: React.FC<RDPClientProps> = ({ windowId }) => {
       await navigator.clipboard.writeText(text);
       setCopyFeedback(`${type} copied!`);
       setTimeout(() => setCopyFeedback(null), 2000);
-    } catch (err) {
+    } catch {
       setError('Failed to copy to clipboard');
     }
   };
@@ -253,7 +246,7 @@ export const RDPClient: React.FC<RDPClientProps> = ({ windowId }) => {
     loadProfiles();
     const interval = setInterval(loadSessions, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadProfiles, loadSessions]);
 
   const currentSession = sessions.find(s => s.id === selectedSession);
 

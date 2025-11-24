@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Database, File, Hash, Play, Music, Image, FileText, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Database, File, Hash, Music, Image, FileText, RefreshCw, Play } from 'lucide-react';
 import { useSettings } from '../context/exports';
 
-interface FileMetadataManagerProps {
-  windowId?: string;
-}
 
 interface FileMetadata {
   id: string;
@@ -37,14 +34,19 @@ interface DuplicateGroup {
   files: FileMetadata[];
 }
 
-export const FileMetadataManager: React.FC<FileMetadataManagerProps> = ({ windowId }) => {
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface FileMetadataManagerProps {
+  // Props can be added later if needed
+}
+
+export const FileMetadataManager: React.FC<FileMetadataManagerProps> = () => {
   const [activeTab, setActiveTab] = useState<'search' | 'duplicates' | 'indexing'>('search');
   const [files, setFiles] = useState<FileMetadata[]>([]);
   const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileMetadata | null>(null);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
-  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+  // const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
 
   // Search state
   const [searchQuery, setSearchQuery] = useState<SearchQuery>({
@@ -69,40 +71,7 @@ export const FileMetadataManager: React.FC<FileMetadataManagerProps> = ({ window
 
   const { settings } = useSettings();
 
-  useEffect(() => {
-    if (activeTab === 'search') {
-      handleSearch();
-    } else if (activeTab === 'duplicates') {
-      loadDuplicates();
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    // Apply quick filters to search query
-    const extensions: string[] = [];
-    const mimeTypes: string[] = [];
-
-    if (quickFilters.videos) {
-      mimeTypes.push('video/');
-    }
-    if (quickFilters.images) {
-      mimeTypes.push('image/');
-    }
-    if (quickFilters.audio) {
-      mimeTypes.push('audio/');
-    }
-    if (quickFilters.documents) {
-      extensions.push('pdf', 'doc', 'docx', 'txt', 'rtf');
-    }
-
-    setSearchQuery(prev => ({
-      ...prev,
-      extensions: extensions.length > 0 ? extensions : undefined,
-      mimeTypes: mimeTypes.length > 0 ? mimeTypes : undefined
-    }));
-  }, [quickFilters]);
-
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${settings.backend.apiUrl}/api/file-metadata/search`, {
@@ -120,9 +89,9 @@ export const FileMetadataManager: React.FC<FileMetadataManagerProps> = ({ window
       console.error('Search error:', error);
     }
     setLoading(false);
-  };
+  }, [searchQuery, settings.backend.apiUrl]);
 
-  const loadDuplicates = async () => {
+  const loadDuplicates = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${settings.backend.apiUrl}/api/file-metadata/duplicates`);
@@ -134,7 +103,46 @@ export const FileMetadataManager: React.FC<FileMetadataManagerProps> = ({ window
       console.error('Load duplicates error:', error);
     }
     setLoading(false);
-  };
+  }, [settings.backend.apiUrl]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (activeTab === 'search') {
+        handleSearch();
+      } else if (activeTab === 'duplicates') {
+        loadDuplicates();
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [activeTab, handleSearch, loadDuplicates]);
+
+  useEffect(() => {
+    // Apply quick filters to search query
+    const timer = setTimeout(() => {
+      const extensions: string[] = [];
+      const mimeTypes: string[] = [];
+
+      if (quickFilters.videos) {
+        mimeTypes.push('video/');
+      }
+      if (quickFilters.images) {
+        mimeTypes.push('image/');
+      }
+      if (quickFilters.audio) {
+        mimeTypes.push('audio/');
+      }
+      if (quickFilters.documents) {
+        extensions.push('pdf', 'doc', 'docx', 'txt', 'rtf');
+      }
+
+      setSearchQuery(prev => ({
+        ...prev,
+        extensions: extensions.length > 0 ? extensions : undefined,
+        mimeTypes: mimeTypes.length > 0 ? mimeTypes : undefined
+      }));
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [quickFilters]);
 
   const startIndexing = async () => {
     if (!indexingPath) return;
@@ -203,16 +211,7 @@ export const FileMetadataManager: React.FC<FileMetadataManagerProps> = ({ window
     return colors[ext.toLowerCase()] || 'bg-gray-100 text-gray-800';
   };
 
-  const toggleDirectoryExpand = (dirPath: string) => {
-    const newExpanded = new Set(expandedDirs);
-    if (newExpanded.has(dirPath)) {
-      newExpanded.delete(dirPath);
-    } else {
-      newExpanded.add(dirPath);
-    }
-    setExpandedDirs(newExpanded);
-  };
-
+  
   const renderFileMetadata = (file: FileMetadata) => {
     if (!file.metadata) return null;
 
@@ -222,18 +221,18 @@ export const FileMetadataManager: React.FC<FileMetadataManagerProps> = ({ window
 
         {file.metadata.video && (
           <div className="space-y-1 text-xs">
-            <div><span className="font-medium">Codec:</span> {(file.metadata.video as any).codec}</div>
-            <div><span className="font-medium">Resolution:</span> {(file.metadata.video as any).width}x{(file.metadata.video as any).height}</div>
-            <div><span className="font-medium">FPS:</span> {(file.metadata.video as any).fps}</div>
-            <div><span className="font-medium">Pixel Format:</span> {(file.metadata.video as any).pixelFormat}</div>
+            <div><span className="font-medium">Codec:</span> {(file.metadata.video as Record<string, unknown>).codec}</div>
+            <div><span className="font-medium">Resolution:</span> {(file.metadata.video as Record<string, unknown>).width}x{(file.metadata.video as Record<string, unknown>).height}</div>
+            <div><span className="font-medium">FPS:</span> {(file.metadata.video as Record<string, unknown>).fps}</div>
+            <div><span className="font-medium">Pixel Format:</span> {(file.metadata.video as Record<string, unknown>).pixelFormat}</div>
           </div>
         )}
 
         {file.metadata.audio && (
           <div className="space-y-1 text-xs mt-2">
-            <div><span className="font-medium">Audio Codec:</span> {(file.metadata.audio as any).codec}</div>
-            <div><span className="font-medium">Sample Rate:</span> {(file.metadata.audio as any).sampleRate} Hz</div>
-            <div><span className="font-medium">Channels:</span> {(file.metadata.audio as any).channels}</div>
+            <div><span className="font-medium">Audio Codec:</span> {(file.metadata.audio as Record<string, unknown>).codec}</div>
+            <div><span className="font-medium">Sample Rate:</span> {(file.metadata.audio as Record<string, unknown>).sampleRate} Hz</div>
+            <div><span className="font-medium">Channels:</span> {(file.metadata.audio as Record<string, unknown>).channels}</div>
           </div>
         )}
 
@@ -245,12 +244,12 @@ export const FileMetadataManager: React.FC<FileMetadataManagerProps> = ({ window
 
         {file.metadata.exif && (
           <div className="space-y-1 text-xs mt-2">
-            <div><span className="font-medium">Camera:</span> {(file.metadata.exif as any).make} {(file.metadata.exif as any).model}</div>
-            <div><span className="font-medium">Date:</span> {(file.metadata.exif as any).dateTime}</div>
-            <div><span className="font-medium">ISO:</span> {(file.metadata.exif as any).iso}</div>
-            <div><span className="font-medium">Focal Length:</span> {(file.metadata.exif as any).focalLength}mm</div>
-            {(file.metadata.exif as any).gpsLat && (
-              <div><span className="font-medium">GPS:</span> {(file.metadata.exif as any).gpsLat}, {(file.metadata.exif as any).gpsLng}</div>
+            <div><span className="font-medium">Camera:</span> {(file.metadata.exif as Record<string, unknown>).make} {(file.metadata.exif as Record<string, unknown>).model}</div>
+            <div><span className="font-medium">Date:</span> {(file.metadata.exif as Record<string, unknown>).dateTime}</div>
+            <div><span className="font-medium">ISO:</span> {(file.metadata.exif as Record<string, unknown>).iso}</div>
+            <div><span className="font-medium">Focal Length:</span> {(file.metadata.exif as Record<string, unknown>).focalLength}mm</div>
+            {(file.metadata.exif as Record<string, unknown>).gpsLat && (
+              <div><span className="font-medium">GPS:</span> {(file.metadata.exif as Record<string, unknown>).gpsLat}, {(file.metadata.exif as Record<string, unknown>).gpsLng}</div>
             )}
           </div>
         )}

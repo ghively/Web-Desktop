@@ -9,10 +9,6 @@ import { useMonitoringContext } from '../context/MonitoringContext';
 import {
   LineChart,
   Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -28,18 +24,11 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Clock,
   Cpu,
-  HardDrive,
-  Wifi,
-  Zap,
   TrendingUp,
   TrendingDown,
   RefreshCw,
-  Settings,
   Download,
-  Filter,
-  Search,
 } from 'lucide-react';
 
 interface MonitoringDashboardProps {
@@ -54,7 +43,6 @@ export function MonitoringDashboard({
   refreshInterval = 5000
 }: MonitoringDashboardProps) {
   const {
-    metrics,
     errors,
     healthChecks,
     alerts,
@@ -68,7 +56,7 @@ export function MonitoringDashboard({
   } = useMonitoringContext();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTimeRange, setSelectedTimeRange] = useState(3600000); // 1 hour
+  const [selectedTimeRange] = useState(3600000); // 1 hour
   const [selectedSeverity, setSelectedSeverity] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -76,7 +64,7 @@ export function MonitoringDashboard({
   const filteredErrors = useMemo(() => {
     const filtered = selectedSeverity ? filterErrors(selectedSeverity, selectedTimeRange) : filterErrors(undefined, selectedTimeRange);
     return searchQuery ? searchErrors(searchQuery) : filtered;
-  }, [filterErrors, filterMetrics, searchErrors, searchQuery, selectedSeverity, selectedTimeRange]);
+  }, [filterErrors, searchErrors, searchQuery, selectedSeverity, selectedTimeRange]);
 
   const recentMetrics = useMemo(() => filterMetrics(undefined, selectedTimeRange), [filterMetrics, selectedTimeRange]);
 
