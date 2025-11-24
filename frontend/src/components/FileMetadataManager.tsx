@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Search, Database, File, Hash, Play, Music, Image, FileText, RefreshCw } from 'lucide-react';
 import { useSettings } from '../context/exports';
 
+interface FileMetadataManagerProps {
+  windowId?: string;
+}
+
 interface FileMetadata {
   id: string;
   path: string;
@@ -33,7 +37,7 @@ interface DuplicateGroup {
   files: FileMetadata[];
 }
 
-export const FileMetadataManager: React.FC = () => {
+export const FileMetadataManager: React.FC<FileMetadataManagerProps> = ({ windowId }) => {
   const [activeTab, setActiveTab] = useState<'search' | 'duplicates' | 'indexing'>('search');
   const [files, setFiles] = useState<FileMetadata[]>([]);
   const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([]);
@@ -218,45 +222,45 @@ export const FileMetadataManager: React.FC = () => {
 
         {file.metadata.video && (
           <div className="space-y-1 text-xs">
-            <div><span className="font-medium">Codec:</span> {file.metadata.video.codec}</div>
-            <div><span className="font-medium">Resolution:</span> {file.metadata.video.width}x{file.metadata.video.height}</div>
-            <div><span className="font-medium">FPS:</span> {file.metadata.video.fps}</div>
-            <div><span className="font-medium">Pixel Format:</span> {file.metadata.video.pixelFormat}</div>
+            <div><span className="font-medium">Codec:</span> {(file.metadata.video as any).codec}</div>
+            <div><span className="font-medium">Resolution:</span> {(file.metadata.video as any).width}x{(file.metadata.video as any).height}</div>
+            <div><span className="font-medium">FPS:</span> {(file.metadata.video as any).fps}</div>
+            <div><span className="font-medium">Pixel Format:</span> {(file.metadata.video as any).pixelFormat}</div>
           </div>
         )}
 
         {file.metadata.audio && (
           <div className="space-y-1 text-xs mt-2">
-            <div><span className="font-medium">Audio Codec:</span> {file.metadata.audio.codec}</div>
-            <div><span className="font-medium">Sample Rate:</span> {file.metadata.audio.sampleRate} Hz</div>
-            <div><span className="font-medium">Channels:</span> {file.metadata.audio.channels}</div>
+            <div><span className="font-medium">Audio Codec:</span> {(file.metadata.audio as any).codec}</div>
+            <div><span className="font-medium">Sample Rate:</span> {(file.metadata.audio as any).sampleRate} Hz</div>
+            <div><span className="font-medium">Channels:</span> {(file.metadata.audio as any).channels}</div>
           </div>
         )}
 
         {file.metadata.duration && (
           <div className="text-xs mt-2">
-            <span className="font-medium">Duration:</span> {Math.floor(file.metadata.duration / 60)}:{(file.metadata.duration % 60).toFixed(0).padStart(2, '0')}
+            <span className="font-medium">Duration:</span> {Math.floor((file.metadata.duration as number) / 60)}:{((file.metadata.duration as number) % 60).toFixed(0).padStart(2, '0')}
           </div>
         )}
 
         {file.metadata.exif && (
           <div className="space-y-1 text-xs mt-2">
-            <div><span className="font-medium">Camera:</span> {file.metadata.exif.make} {file.metadata.exif.model}</div>
-            <div><span className="font-medium">Date:</span> {file.metadata.exif.dateTime}</div>
-            <div><span className="font-medium">ISO:</span> {file.metadata.exif.iso}</div>
-            <div><span className="font-medium">Focal Length:</span> {file.metadata.exif.focalLength}mm</div>
-            {file.metadata.exif.gpsLat && (
-              <div><span className="font-medium">GPS:</span> {file.metadata.exif.gpsLat}, {file.metadata.exif.gpsLng}</div>
+            <div><span className="font-medium">Camera:</span> {(file.metadata.exif as any).make} {(file.metadata.exif as any).model}</div>
+            <div><span className="font-medium">Date:</span> {(file.metadata.exif as any).dateTime}</div>
+            <div><span className="font-medium">ISO:</span> {(file.metadata.exif as any).iso}</div>
+            <div><span className="font-medium">Focal Length:</span> {(file.metadata.exif as any).focalLength}mm</div>
+            {(file.metadata.exif as any).gpsLat && (
+              <div><span className="font-medium">GPS:</span> {(file.metadata.exif as any).gpsLat}, {(file.metadata.exif as any).gpsLng}</div>
             )}
           </div>
         )}
 
         {file.metadata.artist && (
           <div className="space-y-1 text-xs mt-2">
-            <div><span className="font-medium">Artist:</span> {file.metadata.artist}</div>
-            {file.metadata.album && <div><span className="font-medium">Album:</span> {file.metadata.album}</div>}
-            {file.metadata.title && <div><span className="font-medium">Title:</span> {file.metadata.title}</div>}
-            {file.metadata.genre && <div><span className="font-medium">Genre:</span> {file.metadata.genre}</div>}
+            <div><span className="font-medium">Artist:</span> {file.metadata.artist as string}</div>
+            {file.metadata.album && <div><span className="font-medium">Album:</span> {file.metadata.album as string}</div>}
+            {file.metadata.title && <div><span className="font-medium">Title:</span> {file.metadata.title as string}</div>}
+            {file.metadata.genre && <div><span className="font-medium">Genre:</span> {file.metadata.genre as string}</div>}
           </div>
         )}
       </div>

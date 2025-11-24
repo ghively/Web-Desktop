@@ -21,7 +21,7 @@ const LayoutPreview: React.FC<LayoutPreviewProps> = ({
     const renderPreview = () => {
         switch (template.type) {
             case 'grid':
-                const { rows = 2, cols = 2 } = template.config;
+                const { rows = 2, cols = 2 } = template.config as { rows?: number; cols?: number };
                 return (
                     <div
                         className="grid gap-1 h-full w-full"
@@ -60,7 +60,7 @@ const LayoutPreview: React.FC<LayoutPreviewProps> = ({
                     <div className="flex gap-1 h-full w-full">
                         <div
                             className="bg-blue-500/20 border border-blue-400/30 rounded"
-                            style={{ width: `${(template.config.ratio || 0.5) * 100}%` }}
+                            style={{ width: `${((template.config.ratio as number) || 0.5) * 100}%` }}
                         />
                         <div className="flex-1 bg-blue-500/20 border border-blue-400/30 rounded" />
                     </div>
@@ -71,14 +71,14 @@ const LayoutPreview: React.FC<LayoutPreviewProps> = ({
                     <div className="flex flex-col gap-1 h-full w-full">
                         <div
                             className="bg-blue-500/20 border border-blue-400/30 rounded"
-                            style={{ height: `${(template.config.ratio || 0.5) * 100}%` }}
+                            style={{ height: `${((template.config.ratio as number) || 0.5) * 100}%` }}
                         />
                         <div className="flex-1 bg-blue-500/20 border border-blue-400/30 rounded" />
                     </div>
                 );
 
             case 'master-stack':
-                const { masterRatio = 0.6, stackDirection = 'right' } = template.config;
+                const { masterRatio = 0.6, stackDirection = 'right' } = template.config as { masterRatio?: number; stackDirection?: string };
                 return (
                     <div className={`flex gap-1 h-full w-full ${stackDirection === 'bottom' ? 'flex-col' : ''}`}>
                         <div

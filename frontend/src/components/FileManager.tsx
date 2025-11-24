@@ -16,7 +16,7 @@ interface FileItem {
 }
 
 interface FileManagerProps {
-    // windowId: string; // Removed unused parameter
+    windowId?: string;
 }
 
 interface ContextMenu {

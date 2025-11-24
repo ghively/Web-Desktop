@@ -18,7 +18,7 @@ import {
 import { clsx } from 'clsx';
 
 interface EnvironmentConfigurationProps {
-  // windowId?: string; // Removed unused parameter
+  windowId?: string;
 }
 
 interface AIModel {
@@ -120,7 +120,7 @@ export const EnvironmentConfiguration: React.FC<EnvironmentConfigurationProps> =
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [activeTab, setActiveTab] = useState('services');
-  // const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({}); // Unused but available for future implementation
+  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({}); // Used for toggling secret visibility
   const [connectionTests, setConnectionTests] = useState<Record<string, { status: 'idle' | 'testing' | 'success' | 'error'; message: string }>>({});
 
   const loadConfiguration = async () => {

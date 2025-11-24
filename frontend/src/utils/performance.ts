@@ -30,7 +30,7 @@ export const throttle = <T extends (...args: unknown[]) => unknown>(
     func: T,
     delay: number
 ): ((...args: Parameters<T>) => void) => {
-    let timeoutId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let lastExecTime = 0;
 
     return (...args: Parameters<T>) => {
@@ -58,7 +58,7 @@ export const debounce = <T extends (...args: unknown[]) => unknown>(
     func: T,
     delay: number
 ): ((...args: Parameters<T>) => void) => {
-    let timeoutId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     return (...args: Parameters<T>) => {
         if (timeoutId) {
@@ -84,7 +84,7 @@ export const memoize = <T extends (...args: unknown[]) => unknown>(
             return cache.get(key)!;
         }
 
-        const result = func(...args);
+        const result = func(...args) as ReturnType<T>;
         cache.set(key, result);
         return result;
     }) as T;
@@ -493,16 +493,11 @@ export const networkOptimization = {
     /**
      * Cache API responses
      */
-    createCache: (ttl: number = 5 * 60 * 1000): Map<string, { data: unknown; timestamp: number }> & {
-        get: (key: string) => unknown | null;
-        set: (key: string, data: unknown) => void;
-        clear: () => void;
-        delete: (key: string) => boolean;
-    } => {
+    createCache: (ttl: number = 5 * 60 * 1000) => {
         const cache = new Map<string, { data: unknown; timestamp: number }>();
 
         return {
-            get: (key: string): unknown | null => {
+            get: (key: string) => {
                 const entry = cache.get(key);
                 if (!entry) return null;
 
@@ -514,7 +509,7 @@ export const networkOptimization = {
                 return entry.data;
             },
 
-            set: (key: string, data: unknown): void => {
+            set: (key: string, data: unknown) => {
                 cache.set(key, { data, timestamp: Date.now() });
             },
 

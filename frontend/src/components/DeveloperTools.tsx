@@ -7,6 +7,7 @@ import {
 import { AppManifest, AppModule } from '../types/applications';
 
 interface DeveloperToolsProps {
+    windowId?: string;
     appId?: string;
     manifest?: AppManifest;
 }

@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useCallback, useRef, useContext } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useRef, useContext } from 'react';
 import type { ReactNode } from 'react';
 import type {
     VirtualDesktop,

@@ -495,8 +495,13 @@ export const ComprehensiveSettings: React.FC<ComprehensiveSettingsProps> = () =>
   );
 };
 
+// Interface for settings components
+interface SettingsComponentProps {
+  onSettingsChange: (category: string, field: string, value: unknown) => void;
+}
+
 // Placeholder components for each subcategory
-const DesktopAppearanceSettings: React.FC = () => (
+const DesktopAppearanceSettings: React.FC<SettingsComponentProps> = ({ onSettingsChange }) => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Desktop Appearance</h3>
     <div className="space-y-6">
@@ -532,7 +537,7 @@ const DesktopAppearanceSettings: React.FC = () => (
   </div>
 );
 
-const SoundsSettings: React.FC = () => (
+const SoundsSettings: React.FC<SettingsComponentProps> = ({ onSettingsChange }) => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Sounds & Notifications</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -541,7 +546,7 @@ const SoundsSettings: React.FC = () => (
   </div>
 );
 
-const DateTimeSettings: React.FC = () => (
+const DateTimeSettings: React.FC<SettingsComponentProps> = ({ onSettingsChange }) => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">Date & Time</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -563,7 +568,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
   validationErrors = {},
   isLoading = false
 }) => {
-  const systemData = settingsData.system || {};
+  const systemData = (settingsData.system as Record<string, unknown>) || {};
 
   return (
     <div className="p-6 space-y-6">
@@ -577,7 +582,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
             </label>
             <input
               type="text"
-              value={systemData.hostname || ''}
+              value={(systemData.hostname as string) || ''}
               onChange={(e) => handleSettingsChange && handleSettingsChange('system', 'hostname', e.target.value)}
               className={clsx(
                 "w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100",
@@ -597,7 +602,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
               Timezone
             </label>
             <select
-              value={systemData.timezone || 'UTC'}
+              value={(systemData.timezone as string) || 'UTC'}
               onChange={(e) => handleSettingsChange && handleSettingsChange('system', 'timezone', e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={isLoading}
@@ -619,7 +624,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
               Language
             </label>
             <select
-              value={systemData.language || 'en'}
+              value={(systemData.language as string) || 'en'}
               onChange={(e) => handleSettingsChange && handleSettingsChange('system', 'language', e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={isLoading}
@@ -638,7 +643,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
               Region
             </label>
             <select
-              value={systemData.region || 'US'}
+              value={(systemData.region as string) || 'US'}
               onChange={(e) => handleSettingsChange && handleSettingsChange('system', 'region', e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={isLoading}
@@ -662,7 +667,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
             <label className="flex items-center space-x-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={systemData.autoUpdates || false}
+                checked={!!(systemData.autoUpdates as boolean)}
                 onChange={(e) => handleSettingsChange && handleSettingsChange('system', 'autoUpdates', e.target.checked)}
                 className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
                 disabled={isLoading}
@@ -673,7 +678,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
             <label className="flex items-center space-x-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={systemData.systemSounds || false}
+                checked={!!(systemData.systemSounds as boolean)}
                 onChange={(e) => handleSettingsChange && handleSettingsChange('system', 'systemSounds', e.target.checked)}
                 className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
                 disabled={isLoading}
@@ -684,7 +689,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
             <label className="flex items-center space-x-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={systemData.animations || true}
+                checked={(systemData.animations as boolean) !== false}
                 onChange={(e) => handleSettingsChange && handleSettingsChange('system', 'animations', e.target.checked)}
                 className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
                 disabled={isLoading}
@@ -708,7 +713,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
                   type="radio"
                   name="updateChannel"
                   value={channel.value}
-                  checked={systemData.updateChannel === channel.value}
+                  checked={(systemData.updateChannel as string) === channel.value}
                   onChange={(e) => handleSettingsChange && handleSettingsChange('system', 'updateChannel', e.target.value)}
                   className="sr-only peer"
                   disabled={isLoading}
@@ -730,7 +735,7 @@ const SystemGeneralSettings: React.FC<SystemGeneralSettingsProps> = ({
   );
 };
 
-const SystemUpdatesSettings: React.FC = () => (
+const SystemUpdatesSettings: React.FC<SettingsComponentProps> = ({ onSettingsChange }) => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">System Updates</h3>
     <div className="bg-gray-800 rounded-lg p-6">
@@ -739,7 +744,7 @@ const SystemUpdatesSettings: React.FC = () => (
   </div>
 );
 
-const SystemInfoSettings: React.FC = () => (
+const SystemInfoSettings: React.FC<SettingsComponentProps> = ({ onSettingsChange }) => (
   <div className="p-6">
     <h3 className="text-lg font-semibold mb-4">System Information</h3>
     <div className="bg-gray-800 rounded-lg p-6">

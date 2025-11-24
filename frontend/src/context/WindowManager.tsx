@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { WindowManagerContext, type WindowState } from './types';
 import type { LayoutTemplate } from '../types/virtualDesktops';
@@ -296,7 +296,7 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                 case 'cascade':
                     return prev.map((window, index) => {
                         if (window.isMinimized) return window;
-                        const offset = (template.config.offset || 30) * (index % 10);
+                        const offset = ((template.config.offset as number) || 30) * (index % 10);
                         return {
                             ...window,
                             x: 100 + offset,
@@ -307,7 +307,7 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                     });
 
                 case 'vertical':
-                    const ratio = template.config.ratio || 0.5;
+                    const ratio = (template.config.ratio as number) || 0.5;
                     return prev.map((window, index) => {
                         if (window.isMinimized) return window;
                         const isLeft = index % 2 === 0;
@@ -323,7 +323,7 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                     });
 
                 case 'horizontal':
-                    const hRatio = template.config.ratio || 0.5;
+                    const hRatio = (template.config.ratio as number) || 0.5;
                     return prev.map((window, index) => {
                         if (window.isMinimized) return window;
                         const isTop = index % 2 === 0;
@@ -339,7 +339,7 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                     });
 
                 case 'grid':
-                    const { rows = 2, cols = 2 } = template.config;
+                    const { rows = 2, cols = 2 } = template.config as { rows?: number; cols?: number };
                     const gap = 8;
                     const startX = gap;
                     const startY = 48 + gap;
@@ -363,7 +363,7 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
                     });
 
                 case 'master-stack':
-                    const { masterRatio = 0.6, stackDirection = 'right' } = template.config;
+                    const { masterRatio = 0.6, stackDirection = 'right' } = template.config as { masterRatio?: number; stackDirection?: string };
                     return prev.map((window, index) => {
                         if (window.isMinimized) return window;
 
