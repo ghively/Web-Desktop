@@ -43,7 +43,14 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
 }
 
-# Progress bar functions
+# Print functions
+print_header() {
+    echo -e "${PURPLE}========================================${NC}"
+    echo -e "${PURPLE}  $APP_NAME v$APP_VERSION Installer${NC}"
+    echo -e "${PURPLE}========================================${NC}"
+    echo
+}
+
 print_progress_bar() {
     local current=$1
     local total=$2
@@ -53,7 +60,7 @@ print_progress_bar() {
     local empty=$((width - filled))
 
     echo -ne "\r${BLUE}[PROGRESS]${NC} ["
-    printf "%*s" "$filled" | tr ' ' ' '='
+    printf "%*s" "$filled" | tr ' ' '='
     printf "%*s" "$empty" | tr ' ' '-'
     echo -n "] "
     printf "%3d%% (%d/%d)" "$percentage" "$current" "$total"
@@ -63,96 +70,45 @@ print_progress_bar() {
     fi
 }
 
-# Enhanced print functions with more verbose output
-print_header() {
-    echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${PURPLE}║                $APP_NAME v$APP_VERSION Installer                ║${NC}"
-    echo -e "${PURPLE}║                      Automated Deployment Script                      ║${NC}"
-    echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════╝${NC}"
-    echo
-    echo -e "${CYAN}Installation will begin in 3 seconds...${NC}"
-    echo -e "${CYAN}Press Ctrl+C to cancel${NC}"
-    echo
-    sleep 3
-}
-
 print_step() {
-    echo -e "\n${BLUE}┌─────────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${BLUE}│ STEP: $1${NC}"
-    echo -e "${BLUE}├─────────────────────────────────────────────────────────────────┤${NC}"
-    echo -e "${BLUE}│${NC}"
+    echo -e "${BLUE}[STEP]${NC} $1"
     log "STEP: $1"
 }
 
-print_substep() {
-    echo -e "${CYAN}  → $1${NC}"
-    log "SUBSTEP: $1"
+print_status() {
+    echo -e "${BLUE}[STATUS]${NC} $1"
+    log "STATUS: $1"
 }
 
 print_info() {
-    echo -e "${CYAN}  ℹ️ $1${NC}"
+    echo -e "${CYAN}[INFO]${NC} $1"
     log "INFO: $1"
 }
 
 print_success() {
-    echo -e "${GREEN}  ✅ $1${NC}"
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
     log "SUCCESS: $1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}  ⚠️ $1${NC}"
+    echo -e "${YELLOW}[WARNING]${NC} $1"
     log "WARNING: $1"
 }
 
 print_error() {
-    echo -e "${RED}  ❌ $1${NC}"
+    echo -e "${RED}[ERROR]${NC} $1"
     log "ERROR: $1"
 }
 
-print_step_complete() {
-    echo -e "${GREEN}  └─> STEP COMPLETED SUCCESSFULLY${NC}\n"
-    log "STEP COMPLETED: $1"
-}
-
-print_section_start() {
-    echo -e "\n${YELLOW}📂 PROCESSING: $1${NC}"
-    echo -e "${YELLOW}┌─────────────────────────────────────────────────────────────────┐${NC}"
-}
-
-print_section_end() {
-    echo -e "${YELLOW}└─────────────────────────────────────────────────────────────────┘${NC}"
-    echo -e "${GREEN}✅ SECTION COMPLETE: $1${NC}\n"
-}
-
-# Verbose package installation with progress
-install_package_with_progress() {
-    local package_name=$1
-    local description=$2
-
-    echo -e "${CYAN}  📦 Installing $package_name${NC}"
-    echo -e "${CYAN}     → $description${NC}"
-
-    # Simulate progress for package installation
-    for i in {1..10}; do
-        print_progress_bar $i 10
-        sleep 0.1
-    done
-    echo
-}
-
-# Enhanced system requirements check with progress
+# System requirements check
 check_system_requirements() {
-    print_step "System Requirements Analysis"
-
-    echo -e "${CYAN}  🔍 Checking installation prerequisites...${NC}"
+    print_step "Checking System Requirements"
 
     # Check if running as root
     if [[ $EUID -ne 0 ]]; then
         print_error "This script must be run as root or with sudo"
-        echo -e "${RED}    Please run: sudo bash install.sh${NC}"
         exit 1
     fi
-    print_success "Running as root user: ✓"
 
     # Check operating system
     if [[ ! -f /etc/os-release ]]; then
@@ -161,62 +117,39 @@ check_system_requirements() {
     fi
 
     source /etc/os-release
-    print_info "Operating System: $PRETTY_NAME"
+    print_info "Detected OS: $PRETTY_NAME"
 
     # Check architecture
     ARCH=$(uname -m)
     if [[ "$ARCH" != "x86_64" && "$ARCH" != "aarch64" && "$ARCH" != "arm64" ]]; then
         print_error "Unsupported architecture: $ARCH"
-        echo -e "${RED}    Supported: x86_64, aarch64, arm64${NC}"
         exit 1
     fi
-    print_success "Architecture compatibility: $ARCH ✓"
+    print_info "Architecture: $ARCH"
 
-    # Check RAM with detailed analysis
-    print_substep "Analyzing system memory..."
+    # Check RAM
     RAM_MB=$(free -m | awk 'NR==2{printf "%.0f", $2}')
-    RAM_GB=$((RAM_MB / 1024))
-
     if [[ $RAM_MB -lt $REQUIRED_RAM_MB ]]; then
-        print_warning "Low RAM detected: ${RAM_MB}MB (${RAM_GB}GB)"
-        echo -e "${YELLOW}    Recommended: ${REQUIRED_RAM_MB}MB (${REQUIRED_DISK_GB}GB)${NC}"
-        echo -e "${YELLOW}    Installation may be slow${NC}"
-        sleep 2
+        print_warning "Low RAM detected: ${RAM_MB}MB (Recommended: ${REQUIRED_RAM_MB}MB)"
     else
-        print_success "Memory check: ${RAM_MB}MB (${RAM_GB}GB) ✓"
+        print_success "RAM check passed: ${RAM_MB}MB"
     fi
 
-    # Check disk space with detailed analysis
-    print_substep "Analyzing disk space availability..."
+    # Check disk space
     DISK_GB=$(df -BG / | awk 'NR==2{print $4}' | sed 's/G//')
-
-    echo -e "${CYAN}  📊 Disk Analysis:${NC}"
-    echo -e "${CYAN}     Available: ${DISK_GB}GB${NC}"
-    echo -e "${CYAN}     Required: ${REQUIRED_DISK_GB}GB${NC}"
-
     if [[ $DISK_GB -lt $REQUIRED_DISK_GB ]]; then
-        print_error "Insufficient disk space: ${DISK_GB}GB"
-        echo -e "${RED}    Need at least ${REQUIRED_DISK_GB}GB free disk space${NC}"
+        print_error "Insufficient disk space: ${DISK_GB}GB (Required: ${REQUIRED_DISK_GB}GB)"
         exit 1
     else
-        print_success "Disk space check: ${DISK_GB}GB available ✓"
+        print_success "Disk space check passed: ${DISK_GB}GB available"
     fi
-
-    # Display system summary
-    echo
-    echo -e "${GREEN}📋 System Requirements Summary:${NC}"
-    echo -e "${GREEN}   ├─ OS: $PRETTY_NAME${NC}"
-    echo -e "${GREEN}   ├─ Architecture: $ARCH${NC}"
-    echo -e "${GREEN}   ├─ RAM: ${RAM_MB}MB (${RAM_GB}GB)${NC}"
-    echo -e "${GREEN}   └─ Disk: ${DISKGB}GB available${NC}"
-    echo
-
-    print_step_complete "System Requirements Verified"
 }
 
 # Install system packages
 install_system_packages() {
     print_step "Installing System Packages"
+    print_status "Step 1: Updating package lists..."
+    print_progress_bar 1 4
 
     # Detect package manager
     if command -v apt-get >/dev/null 2>&1; then
@@ -224,20 +157,9 @@ install_system_packages() {
         UPDATE_CMD="apt-get update"
         INSTALL_CMD="apt-get install -y"
 
-        # Update package lists with progress
-        print_status "Step 1: Updating package lists..."
-        print_progress_bar 1 4
-        if $UPDATE_CMD > /dev/null 2>&1; then
-            print_success "Package lists updated successfully"
-            print_progress_bar 2 4
-        else
-            print_error "Failed to update package lists"
-            exit 1
-        fi
-
-        # Install essential packages with progress tracking
-        print_status "Step 2: Installing core system packages..."
-        print_progress_bar 2 4
+        # Update package lists
+        print_info "Updating package lists..."
+        $UPDATE_CMD
 
         # Install essential packages for full Web Desktop functionality
         PACKAGES=(
@@ -372,264 +294,116 @@ install_system_packages() {
         exit 1
     fi
 
-    # Install essential packages with detailed progress
-    local package_count=${#PACKAGES[@]}
-    print_status "Step 3: Installing ${package_count} essential packages..."
-    print_progress_bar 3 4
+    # Install essential packages
+    print_info "Installing essential packages..."
+    $INSTALL_CMD "${PACKAGES[@]}"
 
-    local current=0
-    for package in "${PACKAGES[@]}"; do
-        ((current++))
-        printf "\r${BLUE}Installing package ${current}/${package_count}:${NC} ${YELLOW}${package}${NC} %-20s" ""
-
-        if $INSTALL_CMD "$package" > /dev/null 2>&1; then
-            printf " ${GREEN}✓${NC}\n"
+    # Install optional packages (with error handling)
+    print_info "Installing optional packages for advanced features..."
+    for package in "${OPTIONAL_PACKAGES[@]}"; do
+        if $INSTALL_CMD "$package" 2>/dev/null; then
+            print_success "Installed: $package"
         else
-            printf " ${RED}✗${NC}\n"
-            print_warning "Failed to install essential package: $package"
+            print_warning "Failed to install: $package (optional)"
         fi
     done
 
-    print_success "Essential packages installation completed"
-    print_progress_bar 4 4
-
-    # Install optional packages with progress tracking
-    if [[ ${#OPTIONAL_PACKAGES[@]} -gt 0 ]]; then
-        print_status "Step 4: Installing ${#OPTIONAL_PACKAGES[@]} optional packages for enhanced features..."
-        local optional_success=0
-        local optional_total=${#OPTIONAL_PACKAGES[@]}
-
-        for package in "${OPTIONAL_PACKAGES[@]}"; do
-            printf "\r${BLUE}Installing optional package:${NC} ${YELLOW}${package}${NC} %-20s" ""
-
-            if $INSTALL_CMD "$package" > /dev/null 2>&1; then
-                printf " ${GREEN}✓${NC}\n"
-                ((optional_success++))
-            else
-                printf " ${YELLOW}○${NC} (optional)\n"
-            fi
-        done
-
-        print_success "Optional packages completed: ${optional_success}/${optional_total} installed"
-    fi
-
-    # Start and enable essential services with detailed progress
-    print_status "Step 5: Starting and enabling essential services..."
-
-    local services_enabled=0
-    local services_total=6
+    # Start and enable essential services
+    print_info "Starting and enabling essential services..."
 
     # Enable and start nginx
-    print_status "Service 1/${services_total}: Configuring Nginx web server..."
     if command -v nginx >/dev/null 2>&1; then
-        print_info "  → Enabling nginx service..."
-        systemctl enable nginx > /dev/null 2>&1
-        print_info "  → Starting nginx service..."
-        if systemctl start nginx > /dev/null 2>&1; then
-            print_success "  ✓ Nginx service started and enabled successfully"
-            ((services_enabled++))
-        else
-            print_warning "  ⚠ Nginx enabled but failed to start"
-        fi
-    else
-        print_warning "  ○ Nginx not found"
+        systemctl enable nginx
+        systemctl start nginx
+        print_success "Nginx service started and enabled"
     fi
 
     # Start and enable Docker if installed
-    print_status "Service 2/${services_total}: Configuring Docker container engine..."
     if command -v docker >/dev/null 2>&1; then
-        print_info "  → Starting docker service..."
-        systemctl start docker > /dev/null 2>&1
-        print_info "  → Enabling docker service..."
-        systemctl enable docker > /dev/null 2>&1
-        print_success "  ✓ Docker service started and enabled"
+        systemctl start docker
+        systemctl enable docker
+        print_success "Docker service started and enabled"
 
         # Add webdesktop user to docker group
-        print_info "  → Adding $APP_USER to docker group..."
-        if usermod -aG docker "$APP_USER" 2>/dev/null; then
-            print_success "  ✓ User $APP_USER added to docker group"
-        else
-            print_warning "  ⚠ Failed to add user to docker group"
-        fi
-        ((services_enabled++))
-    else
-        print_warning "  ○ Docker not found (optional)"
+        usermod -aG docker "$APP_USER"
+        print_success "Added $APP_USER to docker group"
     fi
 
     # Enable and start CUPS (printing)
-    print_status "Service 3/${services_total}: Configuring CUPS printing service..."
     if command -v cups >/dev/null 2>&1; then
-        print_info "  → Enabling cups service..."
-        systemctl enable cups > /dev/null 2>&1
-        print_info "  → Starting cups service..."
-        systemctl start cups > /dev/null 2>&1
-        print_success "  ✓ CUPS printing service started and enabled"
-        ((services_enabled++))
-    else
-        print_warning "  ○ CUPS not found"
+        systemctl enable cups
+        systemctl start cups
+        print_success "CUPS printing service started and enabled"
     fi
 
     # Enable and start Avahi (network discovery)
-    print_status "Service 4/${services_total}: Configuring Avahi network discovery..."
     if command -v avahi-daemon >/dev/null 2>&1; then
-        print_info "  → Enabling avahi-daemon service..."
-        systemctl enable avahi-daemon > /dev/null 2>&1
-        print_info "  → Starting avahi-daemon service..."
-        systemctl start avahi-daemon > /dev/null 2>&1
-        print_success "  ✓ Avahi network discovery started and enabled"
-        ((services_enabled++))
-    else
-        print_warning "  ○ Avahi not found"
+        systemctl enable avahi-daemon
+        systemctl start avahi-daemon
+        print_success "Avahi network discovery started and enabled"
     fi
 
     # Enable and start Bluetooth
-    print_status "Service 5/${services_total}: Configuring Bluetooth service..."
     if command -v bluetooth >/dev/null 2>&1; then
-        print_info "  → Enabling bluetooth service..."
-        systemctl enable bluetooth > /dev/null 2>&1
-        print_info "  → Starting bluetooth service..."
-        systemctl start bluetooth > /dev/null 2>&1
-        print_success "  ✓ Bluetooth service started and enabled"
-        ((services_enabled++))
-    else
-        print_warning "  ○ Bluetooth not found"
+        systemctl enable bluetooth
+        systemctl start bluetooth
+        print_success "Bluetooth service started and enabled"
     fi
 
     # Configure sensors for hardware monitoring
-    print_status "Service 6/${services_total}: Configuring hardware monitoring sensors..."
     if command -v sensors >/dev/null 2>&1; then
-        print_info "  → Running sensors-detect..."
-        if sensors-detect --auto > /dev/null 2>&1; then
-            print_success "  ✓ Hardware sensors configured successfully"
-            ((services_enabled++))
-        else
-            print_warning "  ⚠ Hardware sensors configuration completed with warnings"
-        fi
-    else
-        print_warning "  ○ Sensors utility not found"
+        print_info "Configuring hardware sensors..."
+        sensors-detect --auto || true
+        print_success "Hardware sensors configured"
     fi
-
-    print_success "Services configuration completed: ${services_enabled}/${services_total} services configured"
 }
 
 # Install Node.js
 install_nodejs() {
     print_step "Installing Node.js"
 
-    # Check if Node.js is already installed with detailed version check
-    print_status "Step 1: Checking for existing Node.js installation..."
+    # Check if Node.js is already installed
     if command -v node >/dev/null 2>&1; then
-        NODE_VERSION_FULL=$(node --version)
-        NODE_VERSION=$(echo $NODE_VERSION_FULL | cut -d'v' -f2 | cut -d'.' -f1)
-        print_status "Found Node.js ${NODE_VERSION_FULL}"
-
+        NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
         if [[ $NODE_VERSION -ge $MIN_NODE_VERSION ]]; then
-            print_success "Node.js ${NODE_VERSION_FULL} meets minimum requirements (v${MIN_NODE_VERSION}+)"
+            print_success "Node.js $(node --version) already installed"
             return 0
         else
-            print_warning "Node.js v${NODE_VERSION} is below minimum v${MIN_NODE_VERSION}, updating..."
+            print_warning "Node.js version $NODE_VERSION is too old. Updating..."
         fi
-    else
-        print_status "No existing Node.js installation found"
     fi
 
-    # Install Node.js using NodeSource repository with detailed progress
-    print_status "Step 2: Adding NodeSource repository..."
-    NODE_VERSION_LTS="20"
-
+    # Install Node.js using NodeSource repository
     if [[ "$PKG_MANAGER" == "apt-get" ]]; then
-        print_status "  → Downloading NodeSource setup script for Node.js v${NODE_VERSION_LTS}..."
-        print_progress_bar 1 3
-
-        if curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION_LTS}.x -o /tmp/nodesource.sh > /dev/null 2>&1; then
-            print_success "  ✓ NodeSource setup script downloaded"
-            print_progress_bar 2 3
-
-            print_status "  → Executing NodeSource setup script..."
-            if bash /tmp/nodesource.sh > /dev/null 2>&1; then
-                print_success "  ✓ NodeSource repository added"
-                print_progress_bar 3 3
-
-                print_status "  → Installing Node.js package..."
-                if $INSTALL_CMD nodejs > /dev/null 2>&1; then
-                    print_success "  ✓ Node.js package installed"
-                else
-                    print_error "  ✗ Failed to install Node.js package"
-                    exit 1
-                fi
-            else
-                print_error "  ✗ Failed to execute NodeSource setup script"
-                exit 1
-            fi
-            rm -f /tmp/nodesource.sh
-        else
-            print_error "  ✗ Failed to download NodeSource setup script"
-            exit 1
-        fi
-
+        # Add NodeSource repository
+        NODE_VERSION_LTS="20"
+        curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION_LTS}.x | bash -
+        $INSTALL_CMD nodejs
     elif [[ "$PKG_MANAGER" == "yum" ]]; then
-        print_status "  → Configuring NodeSource YUM repository..."
-        print_progress_bar 1 3
-
-        if curl -fsSL https://rpm.nodesource.com/setup_${NODE_VERSION_LTS}.x -o /tmp/nodesource.sh > /dev/null 2>&1; then
-            print_success "  ✓ NodeSource setup script downloaded"
-            print_progress_bar 2 3
-
-            print_status "  → Executing NodeSource setup script..."
-            if bash /tmp/nodesource.sh > /dev/null 2>&1; then
-                print_success "  ✓ NodeSource repository configured"
-                print_progress_bar 3 3
-
-                print_status "  → Installing Node.js and npm packages..."
-                if $INSTALL_CMD nodejs npm > /dev/null 2>&1; then
-                    print_success "  ✓ Node.js and npm packages installed"
-                else
-                    print_error "  ✗ Failed to install Node.js packages"
-                    exit 1
-                fi
-            else
-                print_error "  ✗ Failed to configure NodeSource repository"
-                exit 1
-            fi
-            rm -f /tmp/nodesource.sh
-        else
-            print_error "  ✗ Failed to download NodeSource setup script"
-            exit 1
-        fi
+        # Add NodeSource repository
+        NODE_VERSION_LTS="20"
+        curl -fsSL https://rpm.nodesource.com/setup_${NODE_VERSION_LTS}.x | bash -
+        $INSTALL_CMD nodejs npm
     fi
 
-    # Verify installation with detailed check
-    print_status "Step 3: Verifying Node.js installation..."
+    # Verify installation
     if command -v node >/dev/null 2>&1; then
         NODE_VERSION_FULL=$(node --version)
-        NODE_VERSION=$(echo $NODE_VERSION_FULL | cut -d'v' -f2 | cut -d'.' -f1)
-        NPM_VERSION=$(npm --version 2>/dev/null || echo "not found")
-
-        print_success "  ✓ Node.js ${NODE_VERSION_FULL} installed successfully"
-        print_info "  → Node.js version: ${NODE_VERSION_FULL}"
-        print_info "  → npm version: v${NPM_VERSION}"
-
-        if [[ $NODE_VERSION -ge $MIN_NODE_VERSION ]]; then
-            print_success "  ✓ Version meets minimum requirements (v${MIN_NODE_VERSION}+)"
-        else
-            print_error "  ✗ Version ${NODE_VERSION} is below minimum v${MIN_NODE_VERSION}"
-            exit 1
-        fi
+        print_success "Node.js $NODE_VERSION_FULL installed"
     else
-        print_error "  ✗ Node.js installation verification failed"
+        print_error "Node.js installation failed"
         exit 1
     fi
 
-    # Install pm2 globally for process management with progress
-    print_status "Step 4: Installing PM2 process manager..."
-    print_status "  → Installing PM2 globally via npm..."
-
-    if npm install -g pm2 > /dev/null 2>&1; then
-        PM2_VERSION=$(pm2 --version 2>/dev/null || echo "unknown")
-        print_success "  ✓ PM2 process manager installed (v${PM2_VERSION})"
-    else
-        print_warning "  ⚠ PM2 installation failed, but Node.js is functional"
+    # Install npm if not included
+    if ! command -v npm >/dev/null 2>&1; then
+        print_info "Installing npm..."
+        $INSTALL_CMD npm
     fi
+
+    # Install pm2 globally for process management
+    npm install -g pm2
+    print_success "PM2 process manager installed"
 }
 
 # Create application user
@@ -673,136 +447,49 @@ create_directories() {
 clone_repository() {
     print_step "Cloning Repository"
 
-    # Backup existing installation if present with detailed progress
-    print_status "Step 1: Checking for existing installation..."
+    # Backup existing installation if present
     if [[ -d "$APP_DIR/.git" ]]; then
-        print_status "  → Existing Git repository found, creating backup..."
+        print_info "Backing up existing installation..."
         BACKUP_NAME="web-desktop-backup-$(date +%Y%m%d-%H%M%S)"
-        print_progress_bar 1 4
-
-        print_status "  → Creating backup in $BACKUP_DIR/$BACKUP_NAME..."
-        if cp -r "$APP_DIR" "$BACKUP_DIR/$BACKUP_NAME" 2>/dev/null; then
-            print_success "  ✓ Backup created successfully: $BACKUP_DIR/$BACKUP_NAME"
-            print_progress_bar 2 4
-        else
-            print_warning "  ⚠ Backup creation failed, proceeding anyway"
-        fi
-    else
-        print_status "  → No existing installation found"
-        print_progress_bar 2 4
+        cp -r "$APP_DIR" "$BACKUP_DIR/$BACKUP_NAME"
+        print_success "Backup created: $BACKUP_DIR/$BACKUP_NAME"
     fi
 
     # Remove old installation (except .git to preserve local changes)
     if [[ -d "$APP_DIR" ]]; then
-        print_status "Step 2: Cleaning up old installation files..."
-        print_progress_bar 3 4
-
-        if find "$APP_DIR" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} + > /dev/null 2>&1; then
-            print_success "  ✓ Old installation files removed"
-        else
-            print_warning "  ⚠ Some files could not be removed"
-        fi
-    else
-        print_status "Step 2: No cleanup required"
-        print_progress_bar 3 4
+        find "$APP_DIR" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} \;
     fi
 
-    # Clone repository with detailed progress
-    print_status "Step 3: Cloning repository from $REPO_URL..."
+    # Clone repository
     cd "$APP_DIR"
+    sudo -u "$APP_USER" git clone "$REPO_URL" .
+    sudo -u "$APP_USER" git checkout "$REPO_BRANCH"
+    sudo -u "$APP_USER" git pull origin "$REPO_BRANCH"
 
-    print_status "  → Initializing Git clone..."
-    print_progress_bar 4 4
-
-    if sudo -u "$APP_USER" git clone "$REPO_URL" . > /dev/null 2>&1; then
-        print_success "  ✓ Repository cloned successfully"
-    else
-        print_error "  ✗ Failed to clone repository"
-        exit 1
-    fi
-
-    print_status "Step 4: Checking out branch $REPO_BRANCH..."
-    if sudo -u "$APP_USER" git checkout "$REPO_BRANCH" > /dev/null 2>&1; then
-        print_success "  ✓ Checked out branch: $REPO_BRANCH"
-    else
-        print_warning "  ⚠ Branch checkout failed, using default branch"
-    fi
-
-    print_status "Step 5: Pulling latest changes..."
-    if sudo -u "$APP_USER" git pull origin "$REPO_BRANCH" > /dev/null 2>&1; then
-        print_success "  ✓ Latest changes pulled"
-    else
-        print_warning "  ⚠ Pull completed with warnings"
-    fi
-
-    print_success "Repository setup completed at $APP_DIR"
+    print_success "Repository cloned to $APP_DIR"
 }
 
-# Install dependencies with verbose progress
+# Install dependencies
 install_dependencies() {
     print_step "Installing Application Dependencies"
 
     cd "$APP_DIR"
 
-    # Install backend dependencies with detailed progress
-    print_status "Step 1: Installing backend dependencies..."
-    print_progress_bar 1 4
-
+    # Install backend dependencies
+    print_info "Installing backend dependencies..."
     cd backend
-    print_status "  → Running npm ci (clean install)..."
-    if sudo -u "$APP_USER" npm ci --production=false > /dev/null 2>&1; then
-        print_success "  ✓ Backend dependencies installed via npm ci"
-        print_progress_bar 2 4
-    else
-        print_status "  → npm ci failed, trying npm install..."
-        if sudo -u "$APP_USER" npm install > /dev/null 2>&1; then
-            print_success "  ✓ Backend dependencies installed via npm install"
-            print_progress_bar 2 4
-        else
-            print_error "  ✗ Backend dependency installation failed"
-            exit 1
-        fi
-    fi
+    sudo -u "$APP_USER" npm ci --production=false
+    sudo -u "$APP_USER" npm run build
+    print_success "Backend dependencies installed"
 
-    print_status "Step 2: Building backend..."
-    print_status "  → Running TypeScript compilation..."
-    if sudo -u "$APP_USER" npm run build > /dev/null 2>&1; then
-        print_success "  ✓ Backend compiled successfully"
-        print_progress_bar 3 4
-    else
-        print_error "  ✗ Backend compilation failed"
-        exit 1
-    fi
-
-    # Install frontend dependencies and build with detailed progress
-    print_status "Step 3: Installing frontend dependencies..."
+    # Install frontend dependencies and build
+    print_info "Installing and building frontend..."
     cd ../frontend
-
-    print_status "  → Running npm ci for frontend..."
-    if sudo -u "$APP_USER" npm ci > /dev/null 2>&1; then
-        print_success "  ✓ Frontend dependencies installed"
-        print_progress_bar 4 4
-    else
-        print_status "  → npm ci failed, trying npm install..."
-        if sudo -u "$APP_USER" npm install > /dev/null 2>&1; then
-            print_success "  ✓ Frontend dependencies installed via npm install"
-        else
-            print_error "  ✗ Frontend dependency installation failed"
-            exit 1
-        fi
-    fi
-
-    print_status "Step 4: Building frontend..."
-    print_status "  → Running frontend build process..."
-    if sudo -u "$APP_USER" npm run build > /dev/null 2>&1; then
-        print_success "  ✓ Frontend built successfully"
-    else
-        print_error "  ✗ Frontend build failed"
-        exit 1
-    fi
+    sudo -u "$APP_USER" npm ci
+    sudo -u "$APP_USER" npm run build
+    print_success "Frontend built successfully"
 
     cd "$APP_DIR"
-    print_success "All application dependencies installed and built successfully"
 }
 
 # Create environment configuration
