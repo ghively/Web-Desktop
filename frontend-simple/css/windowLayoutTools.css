@@ -1,0 +1,649 @@
+/* Window Layout Tools CSS */
+.layout-tools-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    max-width: 90vw;
+    height: 600px;
+    max-height: 80vh;
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: slideIn 0.3s ease-out;
+}
+
+.layout-tools-panel.hidden {
+    display: none;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -45%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-10px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Header */
+.layout-tools-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px 12px 0 0;
+}
+
+.layout-tools-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.close-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.close-button:hover {
+    background: rgba(255, 67, 54, 0.8);
+    transform: scale(1.1);
+}
+
+/* Tabs */
+.layout-tools-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab-button {
+    flex: 1;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    position: relative;
+}
+
+.tab-button::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #007acc;
+    transform: scaleX(0);
+    transition: transform 0.2s;
+}
+
+.tab-button:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-button.active {
+    color: #fff;
+    background: rgba(0, 122, 204, 0.2);
+}
+
+.tab-button.active::after {
+    transform: scaleX(1);
+}
+
+/* Content Area */
+.layout-tools-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Templates Tab */
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.template-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.template-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.template-card:active {
+    transform: translateY(0);
+}
+
+.template-icon {
+    font-size: 32px;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 122, 204, 0.2);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.template-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.template-info h4 {
+    margin: 0 0 4px 0;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.template-info p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.apply-template-button {
+    background: #007acc;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.apply-template-button:hover {
+    background: #005a9e;
+    transform: scale(1.05);
+}
+
+/* Custom Layout Tab */
+.custom-layout-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.create-layout-button,
+.save-current-button {
+    background: rgba(0, 200, 0, 0.8);
+    border: none;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.create-layout-button:hover,
+.save-current-button:hover {
+    background: rgba(0, 200, 0, 0.9);
+    transform: translateY(-1px);
+}
+
+.custom-layouts-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.custom-layout-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.layout-info h4 {
+    margin: 0 0 4px 0;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.layout-info p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+}
+
+.layout-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.layout-actions button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.layout-actions button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.layout-actions button.delete:hover {
+    background: rgba(255, 67, 54, 0.8);
+}
+
+.no-custom-layouts {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+    margin: 40px 0;
+}
+
+/* Snapping Tab */
+.snap-settings {
+    max-width: 500px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-item label {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.setting-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #007acc;
+}
+
+.setting-item input[type="range"] {
+    width: 150px;
+    accent-color: #007acc;
+}
+
+.setting-item span {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    min-width: 50px;
+    text-align: right;
+}
+
+/* Shortcuts Tab */
+.shortcuts-list {
+    display: grid;
+    gap: 12px;
+}
+
+.shortcut-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.shortcut-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+kbd {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #fff;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 4px 8px;
+    white-space: nowrap;
+}
+
+.shortcut-item span {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+}
+
+/* Footer */
+.layout-tools-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0 0 12px 12px;
+}
+
+.quick-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.quick-actions button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.quick-actions button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Snap Indicators */
+.snap-indicator {
+    position: absolute;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.2s;
+    border: 2px solid #007acc;
+    background: rgba(0, 122, 204, 0.1);
+}
+
+.snap-indicator.active {
+    opacity: 1;
+}
+
+.snap-indicator.edge {
+    border-radius: 4px;
+}
+
+.snap-indicator.corner {
+    border-radius: 8px;
+    background: rgba(0, 122, 204, 0.2);
+}
+
+.snap-indicator.edge.left {
+    border-left-width: 4px;
+    border-right: none;
+}
+
+.snap-indicator.edge.right {
+    border-right-width: 4px;
+    border-left: none;
+}
+
+.snap-indicator.edge.top {
+    border-top-width: 4px;
+    border-bottom: none;
+}
+
+.snap-indicator.edge.bottom {
+    border-bottom-width: 4px;
+    border-top: none;
+}
+
+/* Notification */
+.layout-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10001;
+    animation: slideInRight 0.3s ease-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    border-left: 4px solid #007acc;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Window enhancements for layout tools */
+.window.preview-mode {
+    opacity: 0.8;
+    border: 2px dashed rgba(0, 122, 204, 0.5);
+}
+
+.window.background-window {
+    opacity: 0.6;
+    transform: scale(0.8);
+    filter: blur(1px);
+}
+
+.window.focus-window {
+    z-index: 1001;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.5), 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .layout-tools-panel {
+        width: 95vw;
+        height: 90vh;
+    }
+
+    .template-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .quick-actions button {
+        flex: 1;
+        min-width: 0;
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    .custom-layout-controls {
+        flex-direction: column;
+    }
+
+    .create-layout-button,
+    .save-current-button {
+        width: 100%;
+    }
+
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .setting-item input[type="range"] {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .layout-tools-header {
+        padding: 15px;
+    }
+
+    .layout-tools-header h3 {
+        font-size: 16px;
+    }
+
+    .tab-button {
+        font-size: 12px;
+        padding: 10px;
+    }
+
+    .template-card {
+        padding: 12px;
+    }
+
+    .template-icon {
+        font-size: 24px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .template-info h4 {
+        font-size: 13px;
+    }
+
+    .template-info p {
+        font-size: 11px;
+    }
+
+    .apply-template-button {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .layout-tools-panel {
+        border: 2px solid #fff;
+    }
+
+    .template-card {
+        border-width: 2px;
+    }
+
+    .snap-indicator {
+        border-width: 4px;
+        background: rgba(0, 122, 204, 0.3);
+    }
+
+    kbd {
+        border-width: 2px;
+        font-weight: bold;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .layout-tools-panel,
+    .template-card,
+    .apply-template-button,
+    .tab-button,
+    .layout-notification,
+    .snap-indicator,
+    .quick-actions button {
+        animation: none;
+        transition: none;
+    }
+
+    .template-card:hover,
+    .apply-template-button:hover {
+        transform: none;
+    }
+}
+
+/* Dark theme enhancements */
+@media (prefers-color-scheme: dark) {
+    .layout-tools-panel {
+        background: rgba(20, 20, 20, 0.98);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .template-card {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .template-card:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    kbd {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+}

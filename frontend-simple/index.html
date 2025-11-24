@@ -9,6 +9,13 @@
     <link rel="stylesheet" href="/css/window.css">
     <link rel="stylesheet" href="/css/notes.css">
     <link rel="stylesheet" href="/css/monitor.css">
+    <link rel="stylesheet" href="/css/aiModelManager.css">
+    <link rel="stylesheet" href="/css/themeCustomizer.css">
+    <link rel="stylesheet" href="/css/controlPanel.css">
+    <link rel="stylesheet" href="/css/monitoringDashboard.css">
+    <link rel="stylesheet" href="/css/vnc.css">
+    <link rel="stylesheet" href="/css/marketplace.css">
+    <link rel="stylesheet" href="/css/windowLayoutTools.css">
 
     <!-- Markdown parser -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js"></script>
@@ -48,6 +55,18 @@
         <div id="desktop-area"></div>
 
         <div class="floating-buttons">
+            <button id="marketplace-button" class="floating-button">
+                <span class="icon">🛒</span>
+                <span>Marketplace</span>
+            </button>
+            <button id="vnc-button" class="floating-button">
+                <span class="icon">💻</span>
+                <span>VNC</span>
+            </button>
+            <button id="window-layout-tools-button" class="floating-button">
+                <span class="icon">📐</span>
+                <span>Layout</span>
+            </button>
             <button id="virtual-desktops-button" class="floating-button">
                 <span class="icon">🖥️</span>
                 <span>Desktops</span>
@@ -55,6 +74,10 @@
             <button id="ai-integration-button" class="floating-button">
                 <span class="icon">🤖</span>
                 <span>AI</span>
+            </button>
+            <button id="ai-model-manager-button" class="floating-button">
+                <span class="icon">🧠</span>
+                <span>Models</span>
             </button>
             <button id="storage-pools-button" class="floating-button">
                 <span class="icon">💾</span>
@@ -79,6 +102,18 @@
             <button id="home-assistant-button" class="floating-button">
                 <span class="icon">🏠</span>
                 <span>HA</span>
+            </button>
+            <button id="monitoring-dashboard-button" class="floating-button">
+                <span class="icon">📊</span>
+                <span>Monitor</span>
+            </button>
+            <button id="control-panel-button" class="floating-button">
+                <span class="icon">🎛️</span>
+                <span>Control Panel</span>
+            </button>
+            <button id="theme-customizer-button" class="floating-button">
+                <span class="icon">🎨</span>
+                <span>Theme</span>
             </button>
             <button id="settings-button" class="floating-button">
                 <span class="icon">⚙️</span>
@@ -142,13 +177,153 @@
                 </div>
             </div>
         </div>
+
+        <!-- Marketplace Modal -->
+        <div id="marketplace-modal" class="hidden">
+            <div class="marketplace-container">
+                <div class="marketplace-header">
+                    <span class="icon">🛒</span>
+                    <h1>App Marketplace</h1>
+                    <button class="close-marketplace">×</button>
+                </div>
+                <div class="marketplace-body">
+                    <div class="marketplace-sidebar">
+                        <div class="marketplace-search">
+                            <input type="text" id="marketplace-search" class="search-input" placeholder="Search for apps...">
+                        </div>
+
+                        <div class="nav-section">
+                            <div class="nav-section-title">Browse</div>
+                            <button class="nav-item active" data-view="browse">
+                                <span class="icon">🔍</span>
+                                <span>Discover</span>
+                                <span class="badge" id="total-apps-count">0</span>
+                            </button>
+                            <button class="nav-item" data-view="installed">
+                                <span class="icon">📱</span>
+                                <span>My Apps</span>
+                                <span class="badge" id="installed-apps-count">0</span>
+                            </button>
+                            <button class="nav-item" data-view="updates">
+                                <span class="icon">🔄</span>
+                                <span>Updates</span>
+                                <span class="badge">0</span>
+                            </button>
+                            <button class="nav-item" data-view="recent">
+                                <span class="icon">🕒</span>
+                                <span>Recent</span>
+                                <span class="badge">0</span>
+                            </button>
+                        </div>
+
+                        <div class="nav-section">
+                            <div class="nav-section-title">Categories</div>
+                            <button class="nav-item" data-category="all">
+                                <span class="icon">📂</span>
+                                <span>All Apps</span>
+                            </button>
+                            <button class="nav-item" data-category="productivity">
+                                <span class="icon">📋</span>
+                                <span>Productivity</span>
+                            </button>
+                            <button class="nav-item" data-category="development">
+                                <span class="icon">💻</span>
+                                <span>Development</span>
+                            </button>
+                            <button class="nav-item" data-category="multimedia">
+                                <span class="icon">🎵</span>
+                                <span>Multimedia</span>
+                            </button>
+                            <button class="nav-item" data-category="games">
+                                <span class="icon">🎮</span>
+                                <span>Games</span>
+                            </button>
+                            <button class="nav-item" data-category="education">
+                                <span class="icon">📚</span>
+                                <span>Education</span>
+                            </button>
+                            <button class="nav-item" data-category="utilities">
+                                <span class="icon">🔧</span>
+                                <span>Utilities</span>
+                            </button>
+                            <button class="nav-item" data-category="system">
+                                <span class="icon">⚙️</span>
+                                <span>System</span>
+                            </button>
+                            <button class="nav-item" data-category="graphics">
+                                <span class="icon">🎨</span>
+                                <span>Graphics</span>
+                            </button>
+                            <button class="nav-item" data-category="network">
+                                <span class="icon">🌐</span>
+                                <span>Network</span>
+                            </button>
+                            <button class="nav-item" data-category="office">
+                                <span class="icon">📄</span>
+                                <span>Office</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="marketplace-content">
+                        <div class="content-header">
+                            <h2>Discover Apps</h2>
+                            <p>Browse our collection of applications</p>
+                            <div class="content-actions">
+                                <button class="filter-btn active" data-sort="name">
+                                    <span class="icon">🔤</span>
+                                    Name
+                                </button>
+                                <button class="filter-btn" data-sort="rating">
+                                    <span class="icon">⭐</span>
+                                    Rating
+                                </button>
+                                <button class="filter-btn" data-sort="downloads">
+                                    <span class="icon">⬇️</span>
+                                    Downloads
+                                </button>
+                                <button class="filter-btn" data-sort="updated">
+                                    <span class="icon">🕒</span>
+                                    Recent
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="category-pills">
+                            <button class="category-pill active" data-category="all">All</button>
+                            <button class="category-pill" data-category="productivity">Productivity</button>
+                            <button class="category-pill" data-category="development">Development</button>
+                            <button class="category-pill" data-category="multimedia">Multimedia</button>
+                            <button class="category-pill" data-category="games">Games</button>
+                            <button class="category-pill" data-category="education">Education</button>
+                            <button class="category-pill" data-category="utilities">Utilities</button>
+                            <button class="category-pill" data-category="system">System</button>
+                            <button class="category-pill" data-category="graphics">Graphics</button>
+                            <button class="category-pill" data-category="network">Network</button>
+                            <button class="category-pill" data-category="office">Office</button>
+                        </div>
+
+                        <div class="marketplace-apps">
+                            <!-- Apps will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="/js/windowManager.js"></script>
+    <script src="/js/windowLayoutTools.js"></script>
     <script src="/js/notes.js"></script>
     <script src="/js/systemMonitor.js"></script>
+    <script src="/js/monitoringDashboard.js"></script>
     <script src="/js/fileManager.js"></script>
     <script src="/js/containerManager.js"></script>
+    <script src="/js/vncClient.js"></script>
+    <script src="/js/marketplace.js"></script>
+    <script src="/js/controlPanel.js"></script>
+    <script src="/js/aiModelManager.js"></script>
+    <script src="/js/themeCustomizer.js"></script>
     <script src="/js/desktop.js"></script>
 </body>
 

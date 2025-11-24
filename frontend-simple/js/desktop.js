@@ -34,11 +34,19 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsButton.addEventListener('click', () => openSettings());
     }
 
+    const vncButton = document.getElementById('vnc-button');
+    if (vncButton) {
+        vncButton.addEventListener('click', openVNCClient);
+    }
+
     const virtualBtn = document.getElementById('virtual-desktops-button');
     if (virtualBtn) virtualBtn.addEventListener('click', openVirtualDesktops);
 
     const aiBtn = document.getElementById('ai-integration-button');
     if (aiBtn) aiBtn.addEventListener('click', openAIIntegration);
+
+    const aiModelManagerBtn = document.getElementById('ai-model-manager-button');
+    if (aiModelManagerBtn) aiModelManagerBtn.addEventListener('click', openAIModelManager);
 
     const poolsBtn = document.getElementById('storage-pools-button');
     if (poolsBtn) poolsBtn.addEventListener('click', openStoragePools);
@@ -52,11 +60,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const wifiBtn = document.getElementById('wifi-button');
     if (wifiBtn) wifiBtn.addEventListener('click', openWiFiManager);
 
+    const marketplaceBtn = document.getElementById('marketplace-button');
+    if (marketplaceBtn) marketplaceBtn.addEventListener('click', openMarketplace);
+
     const mediaBtn = document.getElementById('media-server-button');
     if (mediaBtn) mediaBtn.addEventListener('click', openMediaServer);
 
     const haBtn = document.getElementById('home-assistant-button');
     if (haBtn) haBtn.addEventListener('click', openHomeAssistant);
+
+    const monitoringBtn = document.getElementById('monitoring-dashboard-button');
+    if (monitoringBtn) monitoringBtn.addEventListener('click', openMonitoringDashboard);
+
+    const controlPanelBtn = document.getElementById('control-panel-button');
+    if (controlPanelBtn) controlPanelBtn.addEventListener('click', openControlPanel);
+
+    // Theme Customizer button
+    const themeCustomizerBtn = document.getElementById('theme-customizer-button');
+    if (themeCustomizerBtn) themeCustomizerBtn.addEventListener('click', () => {
+        if (typeof themeCustomizer !== 'undefined') {
+            themeCustomizer.open();
+        } else {
+            console.error('Theme customizer not loaded');
+        }
+    });
+
+    // Window Layout Tools button
+    const layoutToolsBtn = document.getElementById('window-layout-tools-button');
+    if (layoutToolsBtn) layoutToolsBtn.addEventListener('click', openWindowLayoutTools);
 
     // Optional: power management quick launcher if added to UI later
     const powerBtn = document.getElementById('power-management-button');
@@ -82,16 +113,65 @@ async function updateSystemInfo() {
 }
 
 function loadSettings() {
+    // Load theme-related settings
     const opacity = localStorage.getItem('windowOpacity') || '0.95';
-    const wallpaper = localStorage.getItem('wallpaper') || 'https://cdn.mos.cms.futurecdn.net/AoWXgnHSxAAPxqymPQMQYL-1200-80.jpg';
+    const wallpaper = localStorage.getItem('currentWallpaper') || 'https://cdn.mos.cms.futurecdn.net/AoWXgnHSxAAPxqymPQMQYL-1200-80.jpg';
     const useGradient = localStorage.getItem('useGradient') === 'true';
+    const selectedTheme = localStorage.getItem('selectedTheme');
 
+    // Load typography settings
+    const fontFamily = localStorage.getItem('fontFamily');
+    const fontSize = localStorage.getItem('fontSize');
+    const fontWeight = localStorage.getItem('fontWeight');
+
+    // Load appearance settings
+    const borderRadius = localStorage.getItem('borderRadius');
+    const borderWidth = localStorage.getItem('borderWidth');
+    const animationSpeed = localStorage.getItem('animationSpeed');
+    const enableAnimations = localStorage.getItem('enableAnimations');
+
+    // Apply basic settings
     document.documentElement.style.setProperty('--window-opacity', opacity);
 
-    if (!useGradient && wallpaper) {
+    // Apply theme if selected
+    if (selectedTheme && typeof themeCustomizer !== 'undefined') {
+        themeCustomizer.applyTheme(selectedTheme);
+    }
+
+    // Apply typography settings
+    if (fontFamily) {
+        document.documentElement.style.setProperty('--font-family', fontFamily);
+        document.body.style.fontFamily = fontFamily;
+    }
+    if (fontSize) {
+        document.documentElement.style.setProperty('--font-size', fontSize + 'px');
+        document.body.style.fontSize = fontSize + 'px';
+    }
+    if (fontWeight) {
+        document.documentElement.style.setProperty('--font-weight', fontWeight);
+        document.body.style.fontWeight = fontWeight;
+    }
+
+    // Apply appearance settings
+    if (borderRadius) {
+        document.documentElement.style.setProperty('--border-radius', borderRadius + 'px');
+    }
+    if (borderWidth) {
+        document.documentElement.style.setProperty('--border-width', borderWidth + 'px');
+    }
+    if (animationSpeed) {
+        document.documentElement.style.setProperty('--animation-speed', animationSpeed + 's');
+    }
+
+    // Handle wallpaper
+    if (useGradient) {
+        if (typeof themeCustomizer !== 'undefined') {
+            themeCustomizer.useGradient();
+        }
+    } else if (wallpaper) {
         document.documentElement.style.setProperty('--wallpaper', `url(${wallpaper})`);
-        if (!localStorage.getItem('wallpaper')) {
-            localStorage.setItem('wallpaper', wallpaper);
+        if (!localStorage.getItem('currentWallpaper')) {
+            localStorage.setItem('currentWallpaper', wallpaper);
             localStorage.setItem('useGradient', 'false');
         }
     }
@@ -1072,6 +1152,15 @@ function openAIModels() {
     win.element.querySelector('#aimodel-test-openrouter').addEventListener('click', async () => {
         try { await fetch('/api/ai-model-manager/test/openrouter', { method: 'POST' }); alert('OpenRouter test sent'); } catch { alert('OpenRouter test failed'); }
     });
+}
+
+function openAIModelManager() {
+    const windowId = Date.now();
+    const content = aiModelManager.render(windowId);
+    const win = windowManager.createWindow('🧠 AI Model Manager', content, { width: 1200, height: 800 });
+
+    // Initialize the AI Model Manager for this window
+    setTimeout(() => aiModelManager.init(windowId), 100);
 }
 
 function openPowerManagement() {
@@ -2609,6 +2698,7 @@ async function fetchInstalledApps() {
             { name: 'Home Assistant', icon: '🏠', id: 'home-assistant', description: 'Smart home status' },
             { name: 'Power', icon: '🔋', id: 'power', description: 'Power controls and status' },
             { name: 'Monitoring', icon: '📊', id: 'monitoring', description: 'System monitoring dashboard' },
+            { name: 'VNC Client', icon: '💻', id: 'vnc', description: 'Remote desktop connections' },
             ...data.apps.map(app => ({
                 name: app.name,
                 icon: app.icon || '🖥️',
@@ -2635,7 +2725,8 @@ async function fetchInstalledApps() {
             { name: 'WiFi', icon: '📶', id: 'wifi', description: 'WiFi interfaces and networks' },
             { name: 'Media Server', icon: '🎬', id: 'media', description: 'Libraries and transcoding' },
             { name: 'Home Assistant', icon: '🏠', id: 'home-assistant', description: 'Smart home status' },
-            { name: 'Power', icon: '🔋', id: 'power', description: 'Power controls and status' }
+            { name: 'Power', icon: '🔋', id: 'power', description: 'Power controls and status' },
+            { name: 'VNC Client', icon: '💻', id: 'vnc', description: 'Remote desktop connections' }
         ];
     }
 }
@@ -2771,6 +2862,9 @@ function launchApp(appId) {
         case 'monitoring':
             openMonitoring();
             return;
+        case 'vnc':
+            openVNCClient();
+            return;
         default:
             title = appId;
             content = `<div>📦 ${appId}<br><small>Native app integration coming soon</small></div>`;
@@ -2882,6 +2976,16 @@ function launchTerminal() {
     }
 }
 
+function openVNCClient() {
+    // Initialize VNC client if not already done
+    if (!window.vncClient) {
+        window.vncClient = new VNCClient();
+    }
+
+    // Open the VNC modal
+    window.vncClient.open();
+}
+
 const style = document.createElement('style');
 style.textContent = `
     @keyframes blink {
@@ -2890,3 +2994,73 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+
+function openMarketplace() {
+    if (window.marketplaceApp) {
+        window.marketplaceApp.openMarketplace();
+    } else {
+        console.error('Marketplace app not initialized');
+    }
+}
+
+function openWindowLayoutTools() {
+    if (typeof windowLayoutTools !== 'undefined') {
+        windowLayoutTools.showLayoutToolsPanel();
+    } else {
+        console.error('Window Layout Tools not initialized');
+        // Try to initialize it
+        setTimeout(() => {
+            if (typeof windowLayoutTools !== 'undefined') {
+                windowLayoutTools.showLayoutToolsPanel();
+            } else {
+                console.error('Window Layout Tools still not available');
+            }
+        }, 500);
+    }
+}
+
+function openMonitoringDashboard() {
+    if (window.monitoringDashboard) {
+        if (!window.monitoringDashboard.isVisible) {
+            window.monitoringDashboard.init();
+            window.monitoringDashboard.show();
+        } else {
+            window.monitoringDashboard.hide();
+        }
+    } else {
+        console.error('Monitoring Dashboard not initialized');
+        // Try to initialize it
+        setTimeout(() => {
+            if (window.monitoringDashboard) {
+                window.monitoringDashboard.init();
+                window.monitoringDashboard.show();
+            } else {
+                console.error('Monitoring Dashboard still not available');
+            }
+        }, 500);
+    }
+}
+
+function openControlPanel() {
+    if (window.ControlPanel) {
+        // Initialize control panel if not already created
+        if (!window.controlPanel) {
+            window.controlPanel = new window.ControlPanel();
+        }
+        window.controlPanel.show();
+    } else {
+        console.error('Control Panel class not available');
+        // Try to initialize it
+        setTimeout(() => {
+            if (window.ControlPanel) {
+                if (!window.controlPanel) {
+                    window.controlPanel = new window.ControlPanel();
+                }
+                window.controlPanel.show();
+            } else {
+                console.error('Control Panel still not available');
+            }
+        }, 500);
+    }
+}

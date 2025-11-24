@@ -1083,4 +1083,561 @@ setInterval(() => {
     });
 }, 60000); // Clean up every minute
 
+// Settings management endpoints
+router.get('/settings', async (req, res) => {
+    try {
+        const configPath = '/tmp/control-panel-settings.json';
+        let settings = {
+            theme: 'light',
+            wallpaper: '',
+            opacity: 0.95,
+            enableSounds: false,
+            soundVolume: 50,
+            timezone: 'UTC',
+            useNtp: true,
+            hostname: os.hostname(),
+            domain: '',
+            language: 'en-US',
+            autoUpdates: true,
+            updateSchedule: 'weekly',
+            useProxy: false,
+            proxyUrl: '',
+            proxyBypass: 'localhost,127.0.0.1,*.local',
+            dnsPrimary: '8.8.8.8',
+            dnsSecondary: '8.8.4.4',
+            sshAuth: true,
+            passwordComplexity: true,
+            sessionTimeout: 30,
+            autoCleanup: true,
+            cleanupThreshold: 85,
+            retainDays: 30,
+            firewallEnabled: true,
+            sudoPassword: true,
+            fail2banEnabled: true,
+            auditLog: true,
+            gitUserName: '',
+            gitUserEmail: '',
+            gitEditor: 'nano'
+        };
+
+        try {
+            const fileContent = await fs.readFile(configPath, 'utf-8');
+            settings = { ...settings, ...JSON.parse(fileContent) };
+        } catch (error) {
+            // File doesn't exist, use defaults
+        }
+
+        res.json(settings);
+    } catch (error: any) {
+        console.error('Error loading settings:', error);
+        res.status(500).json({
+            error: 'Failed to load settings',
+            details: error.message
+        });
+    }
+});
+
+router.post('/settings', async (req, res) => {
+    try {
+        const { settings } = req.body;
+        const configPath = '/tmp/control-panel-settings.json';
+
+        await fs.writeFile(configPath, JSON.stringify(settings, null, 2));
+
+        res.json({ success: true, message: 'Settings saved successfully' });
+    } catch (error: any) {
+        console.error('Error saving settings:', error);
+        res.status(500).json({
+            error: 'Failed to save settings',
+            details: error.message
+        });
+    }
+});
+
+// Backup and restore endpoints
+router.get('/backups', async (req, res) => {
+    try {
+        const backupDir = '/tmp/control-panel-backups';
+        const backups = [];
+
+        try {
+            await fs.mkdir(backupDir, { recursive: true });
+            const files = await fs.readdir(backupDir);
+
+            for (const file of files) {
+                if (file.endsWith('.json')) {
+                    const filePath = `${backupDir}/${file}`;
+                    const stats = await fs.stat(filePath);
+                    backups.push({
+                        id: file.replace('.json', ''),
+                        name: file.replace('.json', '').replace(/-/g, ' '),
+                        date: stats.mtime.toISOString(),
+                        size: stats.size
+                    });
+                }
+            }
+        } catch (error) {
+            // Directory doesn't exist, return empty list
+        }
+
+        backups.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        res.json(backups);
+    } catch (error: any) {
+        console.error('Error loading backups:', error);
+        res.status(500).json({
+            error: 'Failed to load backups',
+            details: error.message
+        });
+    }
+});
+
+router.post('/backup', async (req, res) => {
+    try {
+        const { name, include } = req.body;
+        const backupId = name.toLowerCase().replace(/\s+/g, '-');
+        const backupDir = '/tmp/control-panel-backups';
+        const backupPath = `${backupDir}/${backupId}.json`;
+
+        await fs.mkdir(backupDir, { recursive: true });
+
+        const backupData: any = {
+            id: backupId,
+            name,
+            date: new Date().toISOString(),
+            include,
+            settings: {},
+            services: {},
+            network: {},
+            security: {}
+        };
+
+        if (include.system) {
+            const configPath = '/tmp/control-panel-settings.json';
+            try {
+                const fileContent = await fs.readFile(configPath, 'utf-8');
+                backupData.settings = JSON.parse(fileContent);
+            } catch (error) {
+                // Settings file doesn't exist
+            }
+        }
+
+        if (include.users || include.network || include.security) {
+            // In a real implementation, these would gather actual system data
+            backupData.services = { example: { status: 'running' } };
+            backupData.network = { interfaces: [] };
+            backupData.security = { firewall: { enabled: true } };
+        }
+
+        await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2));
+
+        res.json({ success: true, message: 'Backup created successfully', backupId });
+    } catch (error: any) {
+        console.error('Error creating backup:', error);
+        res.status(500).json({
+            error: 'Failed to create backup',
+            details: error.message
+        });
+    }
+});
+
+router.post('/restore', async (req, res) => {
+    try {
+        const { backupId } = req.body;
+        const backupPath = `/tmp/control-panel-backups/${backupId}.json`;
+
+        const backupData = JSON.parse(await fs.readFile(backupPath, 'utf-8'));
+
+        if (backupData.settings) {
+            const configPath = '/tmp/control-panel-settings.json';
+            await fs.writeFile(configPath, JSON.stringify(backupData.settings, null, 2));
+        }
+
+        // In a real implementation, this would restore services, network, and security settings
+
+        res.json({ success: true, message: 'Settings restored successfully' });
+    } catch (error: any) {
+        console.error('Error restoring backup:', error);
+        res.status(500).json({
+            error: 'Failed to restore backup',
+            details: error.message
+        });
+    }
+});
+
+// Diagnostic endpoints
+router.get('/diagnostic/system/health', async (req, res) => {
+    try {
+        const loadAvg = os.loadavg();
+        const totalMem = os.totalmem();
+        const freeMem = os.freemem();
+        const memUsage = ((totalMem - freeMem) / totalMem) * 100;
+
+        let status = 'good';
+        if (memUsage > 90 || loadAvg[0] > os.cpus().length * 2) {
+            status = 'critical';
+        } else if (memUsage > 80 || loadAvg[0] > os.cpus().length) {
+            status = 'warning';
+        }
+
+        res.json({
+            status,
+            message: `System health: ${status}`,
+            details: {
+                memoryUsage: memUsage.toFixed(2),
+                loadAverage: loadAvg[0].toFixed(2),
+                uptime: os.uptime()
+            }
+        });
+    } catch (error: any) {
+        res.json({
+            status: 'error',
+            message: 'Failed to check system health',
+            details: { error: error.message }
+        });
+    }
+});
+
+router.get('/diagnostic/services/status', async (req, res) => {
+    try {
+        const services = ['ssh', 'nginx', 'docker', 'ufw'];
+        const results = [];
+
+        for (const service of services) {
+            try {
+                const { stdout } = await execAsync(`systemctl is-active ${service}`);
+                results.push({ service, status: stdout.trim() });
+            } catch (error) {
+                results.push({ service, status: 'inactive' });
+            }
+        }
+
+        const runningCount = results.filter(r => r.status === 'active').length;
+        let status = 'good';
+        if (runningCount < services.length * 0.5) {
+            status = 'warning';
+        }
+
+        res.json({
+            status,
+            message: `${runningCount}/${services.length} services running`,
+            details: { services: results }
+        });
+    } catch (error: any) {
+        res.json({
+            status: 'error',
+            message: 'Failed to check service status',
+            details: { error: error.message }
+        });
+    }
+});
+
+router.get('/diagnostic/storage/disk-health', async (req, res) => {
+    try {
+        const disks = await si.diskLayout();
+        const fsData = await si.fsSize();
+        let status = 'good';
+        let issues = [];
+
+        // Check file system usage
+        for (const fs of fsData) {
+            const usagePercent = (fs.used / fs.size) * 100;
+            if (usagePercent > 95) {
+                status = 'critical';
+                issues.push(`${fs.fs} is ${usagePercent.toFixed(1)}% full`);
+            } else if (usagePercent > 90) {
+                status = status === 'critical' ? 'critical' : 'warning';
+                issues.push(`${fs.fs} is ${usagePercent.toFixed(1)}% full`);
+            }
+        }
+
+        // Check disk information
+        for (const disk of disks) {
+            if (disk.temperature && disk.temperature > 60) {
+                status = status === 'critical' ? 'critical' : 'warning';
+                issues.push(`Disk ${disk.device} temperature is ${disk.temperature}°C`);
+            }
+        }
+
+        const message = issues.length > 0 ? issues.join('; ') : `Disk health: ${status}`;
+
+        res.json({
+            status,
+            message,
+            details: { disks, filesystems: fsData, issues }
+        });
+    } catch (error: any) {
+        res.json({
+            status: 'warning',
+            message: 'Unable to check disk health',
+            details: { error: error.message }
+        });
+    }
+});
+
+router.get('/diagnostic/network/health', async (req, res) => {
+    try {
+        const interfaces = await si.networkInterfaces();
+        const activeInterfaces = interfaces.filter(iface => iface.operstate === 'up');
+
+        let status = 'good';
+        if (activeInterfaces.length === 0) {
+            status = 'critical';
+        } else if (activeInterfaces.length === 1 && activeInterfaces[0].type === 'wired' && !activeInterfaces[0].ip4) {
+            status = 'warning';
+        }
+
+        res.json({
+            status,
+            message: `${activeInterfaces.length} network interfaces active`,
+            details: { interfaces: activeInterfaces }
+        });
+    } catch (error: any) {
+        res.json({
+            status: 'error',
+            message: 'Failed to check network health',
+            details: { error: error.message }
+        });
+    }
+});
+
+router.get('/diagnostic/security/audit', async (req, res) => {
+    try {
+        const checks = [];
+        let status = 'good';
+
+        // Check if firewall is enabled
+        try {
+            const { stdout } = await execAsync('sudo ufw status');
+            if (stdout.includes('Status: inactive')) {
+                checks.push({ check: 'Firewall', status: 'fail', message: 'Firewall is disabled' });
+                status = 'warning';
+            } else {
+                checks.push({ check: 'Firewall', status: 'pass', message: 'Firewall is enabled' });
+            }
+        } catch (error) {
+            checks.push({ check: 'Firewall', status: 'unknown', message: 'Unable to check firewall status' });
+        }
+
+        // Check for failed login attempts
+        try {
+            const { stdout } = await execAsync('sudo journalctl -u ssh --since "1 day ago" | grep "Failed password" | wc -l');
+            const failedAttempts = parseInt(stdout.trim());
+            if (failedAttempts > 10) {
+                checks.push({ check: 'Failed Logins', status: 'warning', message: `${failedAttempts} failed login attempts in last day` });
+                status = status === 'good' ? 'warning' : status;
+            } else {
+                checks.push({ check: 'Failed Logins', status: 'pass', message: `${failedAttempts} failed login attempts in last day` });
+            }
+        } catch (error) {
+            checks.push({ check: 'Failed Logins', status: 'unknown', message: 'Unable to check failed login attempts' });
+        }
+
+        res.json({
+            status,
+            message: `Security audit: ${status}`,
+            details: { checks }
+        });
+    } catch (error: any) {
+        res.json({
+            status: 'error',
+            message: 'Failed to run security audit',
+            details: { error: error.message }
+        });
+    }
+});
+
+router.get('/diagnostic/system/performance', async (req, res) => {
+    try {
+        const cpu = await si.currentLoad();
+        const mem = await si.mem();
+        const disk = await si.fsSize();
+
+        const cpuUsage = cpu.currentLoad;
+        const memUsage = (mem.used / mem.total) * 100;
+        const diskUsage = (disk[0]?.used / disk[0]?.size) * 100 || 0;
+
+        let status = 'good';
+        if (cpuUsage > 90 || memUsage > 90 || diskUsage > 95) {
+            status = 'critical';
+        } else if (cpuUsage > 75 || memUsage > 80 || diskUsage > 85) {
+            status = 'warning';
+        }
+
+        res.json({
+            status,
+            message: `Performance: ${status}`,
+            details: {
+                cpu: cpuUsage.toFixed(2),
+                memory: memUsage.toFixed(2),
+                disk: diskUsage.toFixed(2)
+            }
+        });
+    } catch (error: any) {
+        res.json({
+            status: 'error',
+            message: 'Failed to check system performance',
+            details: { error: error.message }
+        });
+    }
+});
+
+// Extended service management endpoints
+router.post('/services/start-all', async (req, res) => {
+    try {
+        const services = ['ssh', 'nginx'];
+        const results = [];
+
+        for (const service of services) {
+            try {
+                await execAsync(`sudo systemctl start ${service}`);
+                results.push({ service, status: 'success', message: 'Started successfully' });
+            } catch (error: any) {
+                results.push({ service, status: 'error', message: error.message });
+            }
+        }
+
+        res.json({ success: true, results });
+    } catch (error: any) {
+        res.status(500).json({
+            error: 'Failed to start services',
+            details: error.message
+        });
+    }
+});
+
+router.post('/services/stop-all', async (req, res) => {
+    try {
+        const services = ['nginx', 'ssh'];
+        const results = [];
+
+        for (const service of services) {
+            try {
+                await execAsync(`sudo systemctl stop ${service}`);
+                results.push({ service, status: 'success', message: 'Stopped successfully' });
+            } catch (error: any) {
+                results.push({ service, status: 'error', message: error.message });
+            }
+        }
+
+        res.json({ success: true, results });
+    } catch (error: any) {
+        res.status(500).json({
+            error: 'Failed to stop services',
+            details: error.message
+        });
+    }
+});
+
+router.post('/services/:name/restart', async (req, res) => {
+    try {
+        const serviceName = req.params.name;
+        await execAsync(`sudo systemctl restart ${serviceName}`);
+        res.json({ success: true, message: `Service ${serviceName} restarted successfully` });
+    } catch (error: any) {
+        res.status(500).json({
+            error: `Failed to restart service ${req.params.name}`,
+            details: error.message
+        });
+    }
+});
+
+router.get('/services/:name/logs', async (req, res) => {
+    try {
+        const serviceName = req.params.name;
+        const { stdout } = await execAsync(`sudo journalctl -u ${serviceName} --no-pager -n 100`);
+        res.json({ logs: stdout });
+    } catch (error: any) {
+        res.status(500).json({
+            error: `Failed to get logs for service ${req.params.name}`,
+            details: error.message
+        });
+    }
+});
+
+router.post('/services/:name/logs/clear', async (req, res) => {
+    try {
+        const serviceName = req.params.name;
+        await execAsync(`sudo journalctl -u ${serviceName} --vacuum-files=1`);
+        res.json({ success: true, message: `Logs cleared for service ${serviceName}` });
+    } catch (error: any) {
+        res.status(500).json({
+            error: `Failed to clear logs for service ${req.params.name}`,
+            details: error.message
+        });
+    }
+});
+
+router.get('/services/:name/logs/download', async (req, res) => {
+    try {
+        const serviceName = req.params.name;
+        const { stdout } = await execAsync(`sudo journalctl -u ${serviceName} --no-pager`);
+
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Disposition', `attachment; filename="${serviceName}-logs.txt"`);
+        res.send(stdout);
+    } catch (error: any) {
+        res.status(500).json({
+            error: `Failed to download logs for service ${req.params.name}`,
+            details: error.message
+        });
+    }
+});
+
+router.get('/services/:name/config', async (req, res) => {
+    try {
+        const serviceName = req.params.name;
+        let configPath = '';
+
+        switch (serviceName) {
+            case 'ssh':
+                configPath = '/etc/ssh/sshd_config';
+                break;
+            case 'nginx':
+                configPath = '/etc/nginx/nginx.conf';
+                break;
+            default:
+                throw new Error(`Unknown service: ${serviceName}`);
+        }
+
+        const content = await fs.readFile(configPath, 'utf-8');
+        res.json({ content });
+    } catch (error: any) {
+        res.status(500).json({
+            error: `Failed to get config for service ${req.params.name}`,
+            details: error.message
+        });
+    }
+});
+
+router.post('/services/:name/config', async (req, res) => {
+    try {
+        const serviceName = req.params.name;
+        const { content } = req.body;
+        let configPath = '';
+
+        switch (serviceName) {
+            case 'ssh':
+                configPath = '/tmp/sshd_config_backup';
+                break;
+            case 'nginx':
+                configPath = '/tmp/nginx_config_backup';
+                break;
+            default:
+                throw new Error(`Unknown service: ${serviceName}`);
+        }
+
+        await fs.writeFile(configPath, content);
+
+        res.json({
+            success: true,
+            message: `Configuration saved for service ${serviceName}. Note: This is a backup file, not the active configuration.`
+        });
+    } catch (error: any) {
+        res.status(500).json({
+            error: `Failed to save config for service ${req.params.name}`,
+            details: error.message
+        });
+    }
+});
+
 export default router;

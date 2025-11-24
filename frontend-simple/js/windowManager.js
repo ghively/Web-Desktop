@@ -8,6 +8,16 @@ class WindowManager {
         this.mode = 'tiling'; // 'tiling' or 'floating'
         this.desktopArea = document.getElementById('desktop-area');
         this.runningAppsContainer = document.getElementById('running-apps');
+
+        // Enhanced layout capabilities
+        this.layoutTools = null;
+        this.snapEnabled = true;
+        this.snapThreshold = 20;
+        this.windowGroups = new Map(); // For window grouping/tabbing
+        this.layoutState = this.loadLayoutState();
+
+        // Initialize layout tools when available
+        this.initializeLayoutTools();
     }
 
     createWindow(title, content) {
@@ -23,7 +33,12 @@ class WindowManager {
             zIndex: this.nextZIndex++,
             isMinimized: false,
             isMaximized: false,
-            element: null
+            element: null,
+            groupId: null,
+            tabPosition: null,
+            isSnapped: false,
+            snapEdge: null,
+            isGrouped: false
         };
 
         this.windows.push(window);
@@ -341,6 +356,344 @@ class WindowManager {
                 this.updateWindowSize(window);
             });
         }
+    }
+
+    // Enhanced layout methods
+    initializeLayoutTools() {
+        // Wait for layout tools to load
+        setTimeout(() => {
+            if (typeof windowLayoutTools !== 'undefined') {
+                this.layoutTools = windowLayoutTools;
+                this.snapEnabled = this.layoutTools.snapEnabled !== false;
+                this.snapThreshold = this.layoutTools.snapThreshold || 20;
+            }
+        }, 100);
+    }
+
+    loadLayoutState() {
+        const saved = localStorage.getItem('windowManagerLayoutState');
+        return saved ? JSON.parse(saved) : {
+            windowGroups: {},
+            lastLayout: 'grid',
+            snapSettings: {
+                enabled: true,
+                threshold: 20
+            }
+        };
+    }
+
+    saveLayoutState() {
+        const state = {
+            windowGroups: this.serializeWindowGroups(),
+            lastLayout: this.activeLayout || 'grid',
+            snapSettings: {
+                enabled: this.snapEnabled,
+                threshold: this.snapThreshold
+            }
+        };
+        localStorage.setItem('windowManagerLayoutState', JSON.stringify(state));
+    }
+
+    serializeWindowGroups() {
+        const groups = {};
+        this.windowGroups.forEach((windows, groupId) => {
+            groups[groupId] = {
+                id: groupId,
+                windowIds: windows.map(w => w.id),
+                layout: 'tabs' // Could be 'tiles', 'stack', etc.
+            };
+        });
+        return groups;
+    }
+
+    // Enhanced drag with snapping
+    startDrag(e, windowId) {
+        if (this.mode === 'tiling') return;
+
+        const window = this.windows.find(w => w.id === windowId);
+        if (!window || window.isMaximized) return;
+
+        this.focusWindow(windowId);
+        window.isSnapped = false;
+        window.snapEdge = null;
+
+        const startX = e.clientX - window.x;
+        const startY = e.clientY - window.y;
+        let lastSnapCheck = 0;
+
+        const onMouseMove = (e) => {
+            const currentX = e.clientX - startX;
+            const currentY = e.clientY - startY;
+
+            // Check for snapping every few pixels to avoid performance issues
+            const now = Date.now();
+            if (this.snapEnabled && now - lastSnapCheck > 50) {
+                const snappedPosition = this.checkSnapPosition(window, currentX, currentY);
+                if (snappedPosition) {
+                    window.x = snappedPosition.x;
+                    window.y = snappedPosition.y;
+                    window.width = snappedPosition.width;
+                    window.height = snappedPosition.height;
+                    window.isSnapped = true;
+                    window.snapEdge = snappedPosition.edge;
+                    this.updateWindowSize(window);
+                    lastSnapCheck = now;
+                    return;
+                }
+            }
+
+            window.x = currentX;
+            window.y = currentY;
+            window.element.style.left = window.x + 'px';
+            window.element.style.top = window.y + 'px';
+
+            // Update snap indicators if layout tools are available
+            if (this.layoutTools && this.layoutTools.snappingWindow === windowId) {
+                this.layoutTools.showSnapIndicators();
+            }
+
+            lastSnapCheck = now;
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+
+            // Disable snapping indicators
+            if (this.layoutTools) {
+                this.layoutTools.disableSnappingMode();
+            }
+
+            // Save layout state after repositioning
+            this.saveLayoutState();
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }
+
+    checkSnapPosition(window, targetX, targetY) {
+        if (!this.snapEnabled) return null;
+
+        const desktopArea = this.desktopArea.getBoundingClientRect();
+        const threshold = this.snapThreshold;
+        const gap = 8;
+
+        // Check screen edges
+        if (targetX <= gap + threshold) {
+            // Left edge snap
+            return {
+                x: gap,
+                y: gap,
+                width: desktopArea.width / 2 - gap * 1.5,
+                height: desktopArea.height - gap * 2,
+                edge: 'left'
+            };
+        }
+
+        if (targetX + window.width >= desktopArea.width - gap - threshold) {
+            // Right edge snap
+            return {
+                x: desktopArea.width / 2 + gap / 2,
+                y: gap,
+                width: desktopArea.width / 2 - gap * 1.5,
+                height: desktopArea.height - gap * 2,
+                edge: 'right'
+            };
+        }
+
+        if (targetY <= gap + threshold) {
+            // Top edge snap
+            return {
+                x: gap,
+                y: gap,
+                width: desktopArea.width - gap * 2,
+                height: desktopArea.height / 2 - gap * 1.5,
+                edge: 'top'
+            };
+        }
+
+        if (targetY + window.height >= desktopArea.height - gap - threshold) {
+            // Bottom edge snap
+            return {
+                x: gap,
+                y: desktopArea.height / 2 + gap / 2,
+                width: desktopArea.width - gap * 2,
+                height: desktopArea.height / 2 - gap * 1.5,
+                edge: 'bottom'
+            };
+        }
+
+        // Check corners
+        if (targetX <= gap + threshold && targetY <= gap + threshold) {
+            // Top-left corner - maximize
+            return {
+                x: gap,
+                y: gap,
+                width: desktopArea.width - gap * 2,
+                height: desktopArea.height - gap * 2,
+                edge: 'top-left'
+            };
+        }
+
+        if (targetX + window.width >= desktopArea.width - gap - threshold &&
+            targetY + window.height >= desktopArea.height - gap - threshold) {
+            // Bottom-right corner - minimize to corner
+            return {
+                x: desktopArea.width - window.width - gap,
+                y: desktopArea.height - window.height - gap,
+                width: window.width,
+                height: window.height,
+                edge: 'bottom-right'
+            };
+        }
+
+        return null;
+    }
+
+    // Window grouping and tabbing
+    createWindowGroup(windowIds, layout = 'tabs') {
+        const groupId = 'group_' + Date.now();
+        const groupWindows = windowIds.map(id => this.windows.find(w => w.id === id)).filter(w => w);
+
+        groupWindows.forEach((window, index) => {
+            window.groupId = groupId;
+            window.tabPosition = index;
+            window.isGrouped = true;
+        });
+
+        this.windowGroups.set(groupId, groupWindows);
+        this.saveLayoutState();
+        this.arrangeWindowGroup(groupId, layout);
+
+        return groupId;
+    }
+
+    arrangeWindowGroup(groupId, layout = 'tabs') {
+        const groupWindows = this.windowGroups.get(groupId);
+        if (!groupWindows || groupWindows.length === 0) return;
+
+        const desktopArea = this.desktopArea.getBoundingClientRect();
+        const gap = 8;
+
+        switch (layout) {
+            case 'tabs':
+                // Tabbed layout - windows stacked on top of each other
+                groupWindows.forEach((window, index) => {
+                    window.x = gap;
+                    window.y = gap;
+                    window.width = desktopArea.width - gap * 2;
+                    window.height = desktopArea.height - gap * 2 - 30; // Space for tab bar
+
+                    if (index === 0) {
+                        // Only show the first window, hide others
+                        if (window.element) {
+                            window.element.style.zIndex = this.nextZIndex++;
+                            window.element.classList.add('group-active');
+                        }
+                    } else {
+                        if (window.element) {
+                            window.element.style.display = 'none';
+                        }
+                    }
+
+                    this.updateWindowSize(window);
+                });
+                break;
+
+            case 'tiles':
+                // Tiled layout within group
+                const cols = Math.ceil(Math.sqrt(groupWindows.length));
+                const rows = Math.ceil(groupWindows.length / cols);
+                const cellWidth = (desktopArea.width - gap * (cols + 1)) / cols;
+                const cellHeight = (desktopArea.height - gap * (rows + 1)) / rows;
+
+                groupWindows.forEach((window, index) => {
+                    const col = index % cols;
+                    const row = Math.floor(index / cols);
+
+                    window.x = gap + col * (cellWidth + gap);
+                    window.y = gap + row * (cellHeight + gap);
+                    window.width = cellWidth;
+                    window.height = cellHeight;
+
+                    if (window.element) {
+                        window.element.style.display = 'block';
+                        window.element.classList.add('group-tile');
+                    }
+
+                    this.updateWindowSize(window);
+                });
+                break;
+
+            case 'stack':
+                // Cascaded stack
+                groupWindows.forEach((window, index) => {
+                    const offset = 20;
+                    window.x = gap + (index * offset);
+                    window.y = gap + (index * offset);
+                    window.width = desktopArea.width - gap * 2 - (groupWindows.length * offset);
+                    window.height = desktopArea.height - gap * 2 - (groupWindows.length * offset);
+
+                    if (window.element) {
+                        window.element.style.display = 'block';
+                        window.element.style.zIndex = this.nextZIndex - (groupWindows.length - index);
+                    }
+
+                    this.updateWindowSize(window);
+                });
+                break;
+        }
+    }
+
+    // Quick layout actions
+    centerWindow(windowId) {
+        const window = this.windows.find(w => w.id === windowId);
+        if (!window) return;
+
+        const bounds = this.getDesktopAreaBounds();
+        window.x = (bounds.width - window.width) / 2;
+        window.y = (bounds.height - window.height) / 2;
+
+        if (window.element) {
+            window.element.style.left = window.x + 'px';
+            window.element.style.top = window.y + 'px';
+        }
+    }
+
+    getDesktopAreaBounds() {
+        const rect = this.desktopArea.getBoundingClientRect();
+        return {
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height
+        };
+    }
+
+    // Keyboard navigation
+    focusNextWindow() {
+        const visibleWindows = this.windows.filter(w => !w.isMinimized);
+        if (visibleWindows.length <= 1) return;
+
+        const currentIndex = visibleWindows.findIndex(w =>
+            this.activeWindow && w.id === this.activeWindow.id
+        );
+
+        const nextIndex = (currentIndex + 1) % visibleWindows.length;
+        this.focusWindow(visibleWindows[nextIndex].id);
+    }
+
+    focusPreviousWindow() {
+        const visibleWindows = this.windows.filter(w => !w.isMinimized);
+        if (visibleWindows.length <= 1) return;
+
+        const currentIndex = visibleWindows.findIndex(w =>
+            this.activeWindow && w.id === this.activeWindow.id
+        );
+
+        const prevIndex = currentIndex === 0 ? visibleWindows.length - 1 : currentIndex - 1;
+        this.focusWindow(visibleWindows[prevIndex].id);
     }
 }
 
