@@ -1,0 +1,1148 @@
+[
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763957520187,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763957520187-fwgn0w45z",
+        "timestamp": 1763957520187,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31591679,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32482151,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763957520289
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763957640187,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763957640187-dza7gz3s8",
+        "timestamp": 1763957640187,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32490227,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763957640292
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763957640192,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763957640191-ui6ow9efz",
+        "timestamp": 1763957640191,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31669179,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32482151,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763957640296
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763957760180,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763957760180-1nwdb3dgu",
+        "timestamp": 1763957760180,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32501639,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763957760285
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763957760184,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763957760183-rnm5aalrk",
+        "timestamp": 1763957760183,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31745479,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32482151,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763957760290
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763957820183,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763957820183-zq6qbllua",
+        "timestamp": 1763957820183,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31781831,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32482151,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763957820308
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763957880187,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763957880186-yx67d9gi0",
+        "timestamp": 1763957880186,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31825175,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32482151,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763957880293
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763957880184,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763957880184-61u9g7zre",
+        "timestamp": 1763957880184,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32513051,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763957880320
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763957940188,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763957940188-c24x4digq",
+        "timestamp": 1763957940188,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32521583,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763957940295
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763958000178,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958000178-7ak0ksrfk",
+        "timestamp": 1763958000178,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32529067,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958000299
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763958060182,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958060181-dgo9k9f9e",
+        "timestamp": 1763958060181,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31929755,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32744295,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958060299
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763958180191,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958180191-4acrmf7vt",
+        "timestamp": 1763958180191,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31996163,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32744295,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958180310
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763958240181,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958240181-egk8awnud",
+        "timestamp": 1763958240181,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32548667,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958240303
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763958300176,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958300176-nd0fclj94",
+        "timestamp": 1763958300176,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32556151,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958300287
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763958360186,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958360185-0bzfz1p7i",
+        "timestamp": 1763958360185,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32096755,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32744295,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958360298
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763958420178,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958420178-s5wnnax9g",
+        "timestamp": 1763958420178,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32567559,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958420290
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763958540189,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958540189-5r9gqik0u",
+        "timestamp": 1763958540189,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32578971,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958540301
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763958600184,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958600184-30m5c9w0z",
+        "timestamp": 1763958600184,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32586455,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958600309
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763958660180,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958660180-130b924za",
+        "timestamp": 1763958660180,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32593939,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958660294
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763958660184,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958660183-n42w7jhe4",
+        "timestamp": 1763958660183,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32266967,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33006439,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958660310
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763958720194,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958720193-3ayyc2kcf",
+        "timestamp": 1763958720193,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32308187,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33006439,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958720308
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763958780183,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958780182-z04nw58r5",
+        "timestamp": 1763958780182,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32344927,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33006439,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958780308
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763958840186,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958840185-4gcmouapr",
+        "timestamp": 1763958840185,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32381491,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33006439,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958840302
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763958840180,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958840180-x5896tciv",
+        "timestamp": 1763958840180,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32609275,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33594367,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958840308
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763958900195,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958900194-n7yqnrjeu",
+        "timestamp": 1763958900194,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32415363,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33006439,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958900326
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763958960179,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763958960179-fsti0asq4",
+        "timestamp": 1763958960179,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32620691,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33856511,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763958960308
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763959020182,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959020182-gdn4zb2x0",
+        "timestamp": 1763959020182,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32628175,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33856511,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959020297
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763959080180,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959080180-5rdwyqpy5",
+        "timestamp": 1763959080180,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32635659,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33856511,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959080309
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763959138180,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959138180-2gsck49eu",
+        "timestamp": 1763959138180,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31868231,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33530727,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959138309
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763959140177,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959140177-k38h5r8ao",
+        "timestamp": 1763959140177,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32643143,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33856511,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959140308
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763959260183,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959260182-yt8z2fc0c",
+        "timestamp": 1763959260182,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31283389,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32481749,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959260302
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763959320178,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959320178-ltqhi6sl7",
+        "timestamp": 1763959320178,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31318803,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32481795,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959320308
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763959380191,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959380190-yye248rf9",
+        "timestamp": 1763959380190,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31352231,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32481795,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959380309
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763959440179,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959440178-yszewm35t",
+        "timestamp": 1763959440178,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31387931,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32481795,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959440297
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763959498183,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959498183-9s5jek9l2",
+        "timestamp": 1763959498183,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31421535,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32481795,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959498319
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763959528189,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959528189-qpx0tgjyy",
+        "timestamp": 1763959528189,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31472415,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32481795,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959528321
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763959558178,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959558178-p3q4nvpm2",
+        "timestamp": 1763959558178,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31518467,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32481795,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959558296
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763959680189,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959680188-29k35nyqt",
+        "timestamp": 1763959680188,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31577415,
+        "unit": "bytes",
+        "metadata": {
+          "total": 32481795,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959680321
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763959800191,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959800190-306dl8gff",
+        "timestamp": 1763959800190,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31650471,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33006083,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959800325
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763957157456-fqminlhqu",
+    "timestamp": 1763959827542,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959827542-5sfxfmbvw",
+        "timestamp": 1763959827542,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31826143,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33006083,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959827664
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763959851433-fg8zgnuwy",
+    "timestamp": 1763959912179,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959912178-1xgy64bi6",
+        "timestamp": 1763959912178,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32623734,
+        "unit": "bytes",
+        "metadata": {
+          "total": 35066970,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959912309
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763959851433-fg8zgnuwy",
+    "timestamp": 1763959942182,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959942182-m2df0tvjm",
+        "timestamp": 1763959942182,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32747573,
+        "unit": "bytes",
+        "metadata": {
+          "total": 35329129,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959942302
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763959851433-fg8zgnuwy",
+    "timestamp": 1763959972188,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763959972188-d0aiykdjt",
+        "timestamp": 1763959972188,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32660731,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33494059,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763959972310
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763959851433-fg8zgnuwy",
+    "timestamp": 1763960002191,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763960002191-dquocfvri",
+        "timestamp": 1763960002191,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32708669,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33494105,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763960002310
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763959851433-fg8zgnuwy",
+    "timestamp": 1763960032188,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763960032188-ncakfgken",
+        "timestamp": 1763960032188,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32726845,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33494105,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763960032309
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763959851433-fg8zgnuwy",
+    "timestamp": 1763960100183,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763960100183-fhk2iywlc",
+        "timestamp": 1763960100183,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32767805,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33494105,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763960100317
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763959851433-fg8zgnuwy",
+    "timestamp": 1763960152186,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763960152186-3y0loh13m",
+        "timestamp": 1763960152186,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32850217,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33756249,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763960152307
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763959851433-fg8zgnuwy",
+    "timestamp": 1763960182258,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763960182258-p0tt051mr",
+        "timestamp": 1763960182258,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32894537,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33756249,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763960182398
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763959851433-fg8zgnuwy",
+    "timestamp": 1763960220184,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763960220184-wwq6nnqoa",
+        "timestamp": 1763960220184,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32933137,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33756249,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763960220308
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763959851433-fg8zgnuwy",
+    "timestamp": 1763960340317,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763960340316-cviuw59lm",
+        "timestamp": 1763960340316,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 32992081,
+        "unit": "bytes",
+        "metadata": {
+          "total": 34018393,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763960340467
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763960460593-gfyo42546",
+    "timestamp": 1763960491181,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763960491181-ucenx5dq0",
+        "timestamp": 1763960491181,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 29380473,
+        "unit": "bytes",
+        "metadata": {
+          "total": 31696093,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763960491318
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763960460593-gfyo42546",
+    "timestamp": 1763960551217,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763960551217-6fxh7qscj",
+        "timestamp": 1763960551217,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 29717175,
+        "unit": "bytes",
+        "metadata": {
+          "total": 31696171,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763960551352
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763960460593-gfyo42546",
+    "timestamp": 1763960581178,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763960580285-nht7kbkk8",
+        "timestamp": 1763960580285,
+        "type": "render",
+        "name": "longTask",
+        "value": 61,
+        "unit": "ms",
+        "metadata": {
+          "startTime": 120950.79999999702
+        },
+        "serverTimestamp": 1763960581303
+      },
+      {
+        "id": "1763960581178-6xpf1y4ip",
+        "timestamp": 1763960581178,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 29500344,
+        "unit": "bytes",
+        "metadata": {
+          "total": 30385436,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763960581303
+      }
+    ]
+  },
+  {
+    "sessionId": "session-1763955574362-uki8pvccx",
+    "timestamp": 1763960618162,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "ip": "127.0.0.1",
+    "metrics": [
+      {
+        "id": "1763960618161-8hxflnlb6",
+        "timestamp": 1763960618161,
+        "type": "memory",
+        "name": "heapUsed",
+        "value": 31635291,
+        "unit": "bytes",
+        "metadata": {
+          "total": 33591607,
+          "limit": 4294705152
+        },
+        "serverTimestamp": 1763960618331
+      }
+    ]
+  }
+]
