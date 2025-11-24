@@ -353,7 +353,6 @@ export const Window: React.FC<WindowProps> = ({ window, windowGroup }) => {
                     </div>
                     {renderWindowControls()}
                 </div>
-                </div>
 
                 {/* Window Content */}
                 <div
@@ -433,7 +432,6 @@ export const Window: React.FC<WindowProps> = ({ window, windowGroup }) => {
                         )}
                     </div>
                     {renderWindowControls()}
-                </div>
                 </div>
 
                 {/* Window Content */}
