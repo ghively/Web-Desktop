@@ -1006,8 +1006,8 @@ class ControlPanel {
             const sshKeysResponse = await fetch('/api/development/ssh-keys');
             const sshKeys = await sshKeysResponse.json();
 
-            const sshKeys = document.getElementById('ssh-keys');
-            sshKeys.innerHTML = sshKeys.map(key => `
+            const sshKeysContainer = document.getElementById('ssh-keys');
+            sshKeysContainer.innerHTML = sshKeys.map(key => `
                 <div class="cp-ssh-key">
                     <div class="cp-ssh-key-header">
                         <h4>${key.name || 'Unnamed Key'}</h4>

@@ -29,6 +29,7 @@ import powerManagementRoutes from './routes/power-management';
 import mediaServerRoutes from './routes/media-server';
 import fileMetadataRoutes from './routes/file-metadata';
 import monitoringRoutes from './routes/monitoring';
+import rdpRoutes from './routes/rdp';
 
 const app = express();
 const server = http.createServer(app);
@@ -84,6 +85,7 @@ app.use('/api/power-management', powerManagementRoutes);
 app.use('/api/media-server', mediaServerRoutes);
 app.use('/api/file-metadata', fileMetadataRoutes);
 app.use('/api/monitoring', monitoringRoutes);
+app.use('/api/rdp', rdpRoutes);
 
 // Serve installed marketplace apps
 app.use('/apps', express.static(path.join(process.env.HOME || '', '.web-desktop', 'marketplace', 'apps')));

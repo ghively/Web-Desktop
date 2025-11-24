@@ -1529,13 +1529,38 @@ router.post('/services/stop-all', async (req, res) => {
 });
 
 router.post('/services/:name/restart', async (req, res) => {
+    const serviceName = req.params.name;
+
+    // Validate service name to prevent command injection
+    if (!isValidServiceName(serviceName)) {
+        return res.status(400).json({ error: 'Invalid service name' });
+    }
+
     try {
-        const serviceName = req.params.name;
-        await execAsync(`sudo systemctl restart ${serviceName}`);
+        // SECURITY: Use spawn with proper argument separation instead of exec
+        await new Promise<void>((resolve, reject) => {
+            const systemctlProcess = spawn('sudo', ['systemctl', 'restart', `${serviceName}.service`], {
+                stdio: 'pipe',
+                timeout: 15000
+            });
+
+            systemctlProcess.on('close', (code) => {
+                if (code === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`systemctl restart failed with exit code ${code}`));
+                }
+            });
+
+            systemctlProcess.on('error', (error) => {
+                reject(new Error(`Failed to spawn systemctl: ${error.message}`));
+            });
+        });
+
         res.json({ success: true, message: `Service ${serviceName} restarted successfully` });
     } catch (error: any) {
         res.status(500).json({
-            error: `Failed to restart service ${req.params.name}`,
+            error: `Failed to restart service ${serviceName}`,
             details: error.message
         });
     }
