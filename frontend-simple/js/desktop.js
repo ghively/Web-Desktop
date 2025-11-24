@@ -2699,6 +2699,7 @@ async function fetchInstalledApps() {
             { name: 'Power', icon: '🔋', id: 'power', description: 'Power controls and status' },
             { name: 'Monitoring', icon: '📊', id: 'monitoring', description: 'System monitoring dashboard' },
             { name: 'VNC Client', icon: '💻', id: 'vnc', description: 'Remote desktop connections' },
+            { name: 'RDP Client', icon: '🖥️', id: 'rdp', description: 'Windows/Linux remote desktop' },
             ...data.apps.map(app => ({
                 name: app.name,
                 icon: app.icon || '🖥️',
@@ -2726,7 +2727,8 @@ async function fetchInstalledApps() {
             { name: 'Media Server', icon: '🎬', id: 'media', description: 'Libraries and transcoding' },
             { name: 'Home Assistant', icon: '🏠', id: 'home-assistant', description: 'Smart home status' },
             { name: 'Power', icon: '🔋', id: 'power', description: 'Power controls and status' },
-            { name: 'VNC Client', icon: '💻', id: 'vnc', description: 'Remote desktop connections' }
+            { name: 'VNC Client', icon: '💻', id: 'vnc', description: 'Remote desktop connections' },
+            { name: 'RDP Client', icon: '🖥️', id: 'rdp', description: 'Windows/Linux remote desktop' }
         ];
     }
 }
@@ -2865,6 +2867,9 @@ function launchApp(appId) {
         case 'vnc':
             openVNCClient();
             return;
+        case 'rdp':
+            openRDPClient();
+            return;
         default:
             title = appId;
             content = `<div>📦 ${appId}<br><small>Native app integration coming soon</small></div>`;
@@ -2984,6 +2989,16 @@ function openVNCClient() {
 
     // Open the VNC modal
     window.vncClient.open();
+}
+
+function openRDPClient() {
+    // Initialize RDP client if not already done
+    if (!window.rdpClient) {
+        window.rdpClient = new RDPClient();
+    }
+
+    // Open the RDP modal
+    window.rdpClient.open();
 }
 
 const style = document.createElement('style');

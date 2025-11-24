@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Model Manager Test</title>
+    <link rel="stylesheet" href="/css/aiModelManager.css">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: #fff; }
+        .test-container { max-width: 800px; margin: 0 auto; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #10b981; }
+        .error { background: #ef4444; }
+        .info { background: #3b82f6; }
+        button { padding: 10px 20px; margin: 5px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧠 AI Model Manager Test Suite</h1>
+
+        <div id="test-results"></div>
+
+        <div class="test-controls">
+            <button onclick="testBackendAPI()">Test Backend API</button>
+            <button onclick="testModelManager()">Test AI Model Manager Class</button>
+            <button onclick="testUI()">Test UI Rendering</button>
+            <button onclick="testAll()">Run All Tests</button>
+        </div>
+
+        <div id="ui-test-container" style="margin-top: 20px; display: none;">
+            <h2>UI Test Container</h2>
+            <div id="ui-placeholder"></div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        function addResult(test, status, message, details = null) {
+            testResults.push({ test, status, message, details });
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const container = document.getElementById('test-results');
+            container.innerHTML = testResults.map(result =>
+                `<div class="test-result ${result.status}">
+                    <strong>${result.test}:</strong> ${result.message}
+                    ${result.details ? `<br><small>${result.details}</small>` : ''}
+                </div>`
+            ).join('');
+        }
+
+        async function testBackendAPI() {
+            try {
+                // Test config endpoint
+                const configResponse = await fetch('/api/ai-model-manager/config');
+                const config = await configResponse.json();
+                addResult('Backend Config', 'success', 'Config endpoint working', `Found ${Object.keys(config).length} config sections`);
+
+                // Test models endpoint
+                const modelsResponse = await fetch('/api/ai-model-manager/models');
+                const models = await modelsResponse.json();
+                addResult('Backend Models', 'success', 'Models endpoint working', `Found ${models.ollama?.length || 0} Ollama models`);
+
+                // Test status endpoint
+                const statusResponse = await fetch('/api/ai-model-manager/status');
+                const status = await statusResponse.json();
+                addResult('Backend Status', 'success', 'Status endpoint working',
+                    `Ollama: ${status.ollama?.connected ? 'Connected' : 'Disconnected'}, OpenRouter: ${status.openrouter?.connected ? 'Connected' : 'Disconnected'}`);
+
+                // Test tasks endpoint
+                const tasksResponse = await fetch('/api/ai-model-manager/tasks');
+                const tasks = await tasksResponse.json();
+                addResult('Backend Tasks', 'success', 'Tasks endpoint working', `Found ${Object.keys(tasks.assignments || {}).length} task assignments`);
+
+            } catch (error) {
+                addResult('Backend API', 'error', 'Failed to connect to backend', error.message);
+            }
+        }
+
+        async function testModelManager() {
+            try {
+                if (typeof AIModelManager === 'undefined') {
+                    addResult('AI Model Manager Class', 'error', 'AIModelManager class not loaded');
+                    return;
+                }
+
+                // Test instantiation
+                const manager = new AIModelManager();
+                addResult('AI Model Manager Class', 'success', 'AIModelManager class loaded successfully');
+
+                // Test basic methods
+                if (typeof manager.render === 'function') {
+                    addResult('Manager Methods', 'success', 'Core methods available');
+                } else {
+                    addResult('Manager Methods', 'error', 'Core methods missing');
+                }
+
+                // Test utility methods
+                if (typeof manager.formatSize === 'function' && typeof manager.categorizeModel === 'function') {
+                    addResult('Utility Methods', 'success', 'Utility methods available');
+
+                    // Test categorization
+                    const testModel = { name: 'llava-v1.6:7b' };
+                    const category = manager.categorizeModel(testModel);
+                    addResult('Model Categorization', 'success', `Categorized ${testModel.name} as ${category}`);
+
+                    // Test size formatting
+                    const formattedSize = manager.formatSize(4000000000);
+                    addResult('Size Formatting', 'success', `Formatted 4GB as ${formattedSize}`);
+                } else {
+                    addResult('Utility Methods', 'error', 'Utility methods missing');
+                }
+
+            } catch (error) {
+                addResult('AI Model Manager Class', 'error', 'Error testing AIModelManager', error.message);
+            }
+        }
+
+        async function testUI() {
+            try {
+                if (typeof AIModelManager === 'undefined') {
+                    addResult('UI Test', 'error', 'AIModelManager class not available for UI test');
+                    return;
+                }
+
+                const manager = new AIModelManager();
+                const windowId = 'test-' + Date.now();
+
+                // Test rendering
+                const content = manager.render(windowId);
+                if (content && content.includes('ai-model-manager')) {
+                    addResult('UI Rendering', 'success', 'UI rendered successfully');
+
+                    // Display UI
+                    document.getElementById('ui-placeholder').innerHTML = content;
+                    document.getElementById('ui-test-container').style.display = 'block';
+
+                    // Test tab switching
+                    const tabButtons = document.querySelectorAll('[data-window="' + windowId + '"].tab-button');
+                    if (tabButtons.length > 0) {
+                        addResult('UI Tabs', 'success', `Found ${tabButtons.length} tab buttons`);
+
+                        // Test switching to chat tab
+                        const chatTab = document.querySelector('[data-window="' + windowId + '"][data-tab="chat"]');
+                        if (chatTab) {
+                            chatTab.click();
+                            addResult('Tab Switching', 'success', 'Successfully switched to chat tab');
+                        }
+                    } else {
+                        addResult('UI Tabs', 'error', 'No tab buttons found');
+                    }
+                } else {
+                    addResult('UI Rendering', 'error', 'UI rendering failed - no valid content');
+                }
+
+            } catch (error) {
+                addResult('UI Test', 'error', 'Error rendering UI', error.message);
+            }
+        }
+
+        async function testAll() {
+            testResults = [];
+            await testBackendAPI();
+            await testModelManager();
+            await testUI();
+        }
+
+        // Run initial test
+        window.addEventListener('load', () => {
+            addResult('Page Load', 'info', 'Test page loaded successfully');
+            if (typeof AIModelManager !== 'undefined') {
+                addResult('Script Loading', 'success', 'aiModelManager.js loaded successfully');
+            } else {
+                addResult('Script Loading', 'error', 'aiModelManager.js failed to load');
+            }
+        });
+    </script>
+
+    <script src="/js/aiModelManager.js"></script>
+</body>
+</html>

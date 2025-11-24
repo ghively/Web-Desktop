@@ -29,7 +29,7 @@ Find answers to common questions about Web Desktop v1.0.
 git clone https://github.com/your-username/web-desktop.git
 cd web-desktop
 npm install
-./startdev.sh
+./start-stack.sh
 ```
 For detailed instructions, see the [Getting Started Guide](getting-started.md).
 
@@ -46,7 +46,7 @@ For detailed instructions, see the [Getting Started Guide](getting-started.md).
 ```bash
 git pull origin main
 npm update
-./startdev.sh
+./start-stack.sh
 ```
 
 ### Q: Can I run Web Desktop on a different port?

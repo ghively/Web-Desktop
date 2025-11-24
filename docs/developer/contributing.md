@@ -40,7 +40,7 @@ Welcome to the Web Desktop contribution guide! We're excited to have you contrib
 
 3. **Start Development**
    ```bash
-   ./startdev.sh
+   ./start-stack.sh
    ```
 
 For detailed setup instructions, see the [Development Setup Guide](setup.md).

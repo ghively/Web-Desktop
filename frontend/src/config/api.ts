@@ -138,6 +138,9 @@ export const API_CONFIG = {
 
         // Comprehensive Settings
         comprehensiveSettings: '/api/comprehensive-settings',
+
+        // RDP
+        rdp: '/api/rdp',
     },
 
     // Helper function to get full endpoint URL

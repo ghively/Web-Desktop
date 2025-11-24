@@ -101,7 +101,7 @@ git clone https://github.com/your-username/web-desktop.git
 cd web-desktop
 
 # Set correct permissions
-chmod +x startdev.sh
+chmod +x start-stack.sh
 ```
 
 #### Install Dependencies

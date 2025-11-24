@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monitoring Dashboard Test</title>
+    <link rel="stylesheet" href="/css/monitoringDashboard.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1e1e2e;
+            color: #cdd6f4;
+            font-family: Arial, sans-serif;
+        }
+        .test-info {
+            background: rgba(137, 180, 250, 0.1);
+            border: 1px solid rgba(137, 180, 250, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #89b4fa;
+            color: #1e1e2e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .test-button:hover {
+            background: #74c7ec;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h1>Monitoring Dashboard Test</h1>
+        <p>This page tests the monitoring dashboard functionality. Click the button below to open the dashboard.</p>
+        <button class="test-button" onclick="testDashboard()">Open Monitoring Dashboard</button>
+        <button class="test-button" onclick="testAPI()">Test API Connection</button>
+        <div id="test-results"></div>
+    </div>
+
+    <script src="/js/monitoringDashboard.js"></script>
+    <script>
+        async function testAPI() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<p>Testing API connections...</p>';
+
+            try {
+                // Test system monitoring API
+                const systemResponse = await fetch('/api/system-monitoring');
+                const systemData = await systemResponse.json();
+
+                results.innerHTML += `
+                    <p style="color: #a6e3a1;">✓ System API: Working</p>
+                    <p>CPU Usage: ${systemData.cpu.load.currentLoad.toFixed(1)}%</p>
+                    <p>Memory Usage: ${((systemData.memory.used / systemData.memory.total) * 100).toFixed(1)}%</p>
+                `;
+
+                // Test processes API
+                const processesResponse = await fetch('/api/system-monitoring/processes');
+                const processesData = await processesResponse.json();
+
+                results.innerHTML += `
+                    <p style="color: #a6e3a1;">✓ Processes API: Working</p>
+                    <p>Total Processes: ${processesData.total}</p>
+                `;
+
+                results.innerHTML += '<p style="color: #a6e3a1; font-weight: bold;">All APIs are working correctly!</p>';
+
+            } catch (error) {
+                results.innerHTML += `<p style="color: #f38ba8;">✗ API Error: ${error.message}</p>`;
+            }
+        }
+
+        function testDashboard() {
+            if (window.monitoringDashboard) {
+                // Initialize the dashboard
+                window.monitoringDashboard.init();
+                // Show the dashboard
+                window.monitoringDashboard.show();
+
+                document.getElementById('test-results').innerHTML =
+                    '<p style="color: #a6e3a1;">✓ Dashboard initialized and opened</p>';
+            } else {
+                document.getElementById('test-results').innerHTML =
+                    '<p style="color: #f38ba8;">✗ Monitoring Dashboard not loaded</p>';
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.monitoringDashboard) {
+                document.getElementById('test-results').innerHTML =
+                    '<p style="color: #a6e3a1;">✓ Monitoring Dashboard loaded successfully</p>';
+            } else {
+                document.getElementById('test-results').innerHTML =
+                    '<p style="color: #f38ba8;">✗ Monitoring Dashboard failed to load</p>';
+            }
+        });
+    </script>
+</body>
+</html>

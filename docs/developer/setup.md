@@ -52,7 +52,7 @@ cd ../frontend && npm install
 ### Step 3: Start Development Servers
 ```bash
 # Use convenience script (recommended)
-./startdev.sh
+./start-stack.sh
 
 # Or start manually
 # Terminal 1: Backend
@@ -597,7 +597,7 @@ git pull origin main
 npm install
 
 # Start development servers
-./startdev.sh
+./start-stack.sh
 ```
 
 #### 2. Make Changes

@@ -48,7 +48,7 @@ cd web-desktop
 npm install
 
 # Start development servers
-./startdev.sh
+./start-stack.sh
 ```
 
 ### Method 2: Manual Install
